@@ -1,0 +1,4 @@
+# Shell scripts must stay LF - CRLF breaks bash on the CI runner.
+*.sh text eol=lf
+# YAML workflows likewise parsed on Linux.
+*.yml text eol=lf

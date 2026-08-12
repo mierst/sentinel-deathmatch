@@ -1,0 +1,12 @@
+build/
+dist/
+*.pbo
+*.bisign
+*.biprivatekey
+
+# local tooling / editor state - never committed
+.claude/
+CLAUDE.md
+*.local.md
+.vscode/
+.idea/

@@ -1,0 +1,15 @@
+{
+    "Enabled": 1,
+    "DebugLog": 0,
+    "MinPlayers": 2,
+    "VoteSeconds": 30,
+    "CountdownSeconds": 10,
+    "RoundSeconds": 600,
+    "ScoreboardSeconds": 15,
+    "ScoreLimit": 30,
+    "RespawnDelaySeconds": 2,
+    "SpawnProtectSeconds": 3,
+    "CorpseLifetimeSeconds": 45,
+    "MaxDeletesPerTick": 3,
+    "DropPolicy": "allow"
+}
