@@ -14,5 +14,9 @@ with these intended terms:
 - Source is public for transparency and continuity; the license is not an
   OSI open-source license and does not grant redistribution rights.
 
-Until the final license text replaces this file, the source is published for
-reading and issue reporting only, and all rights are reserved.
+**Alpha playtest grant (until the final license text replaces this file):**
+you may subscribe to the official Steam Workshop items and run them on any
+DayZ server, including monetized servers, for playtesting. Attribution stays
+intact; no repacking, re-uploading, or redistribution of the mod or its
+files. The source remains published for reading and issue reporting; all
+other rights are reserved.

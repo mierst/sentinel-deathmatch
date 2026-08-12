@@ -1,0 +1,36 @@
+[h1]Sentinel Deathmatch [ALPHA][/h1]
+
+[b]This is an ALPHA playtest build.[/b] It is playable and stable in testing, but features are incomplete, balance is placeholder, and updates may change configs and gameplay without notice. Feedback and bug reports are welcome on the GitHub issue tracker below.
+
+A round-based, fully configurable deathmatch mod for DayZ - built for lots of players shooting in one small area without killing your server FPS.
+
+[h2]What works today[/h2]
+[list]
+[*][b]Round loop[/b]: vote, countdown, live round, scoreboard - repeating automatically
+[*][b]In-game voting[/b]: players vote each round on the arena AND the weapon preset (press B during voting)
+[*][b]Operator-defined arenas[/b]: boundary + spawn points in a simple zones.json; soft-wall zone damage or hard teleport enforcement
+[*][b]Weapon presets[/b]: plain-JSON loadouts (weapon, attachments, mags, clothing, gear), validated at server boot - a typo disables the preset with a log line instead of breaking a round
+[*][b]Fast respawn[/b]: no respawn dialog, configurable delay, spawn protection, spawn selection away from enemies
+[*][b]HUD[/b]: phase + round timer, killfeed, out-of-zone warning
+[*][b]Scoreboard[/b] (press P): this-round and session leaderboard tabs
+[/list]
+
+[h2]Coming during alpha[/h2]
+[list]
+[*]DayZ Editor (.dze) arena import - build arenas in the editor, drop the file in, done
+[*]Custom branding (logos, icons, colors) for server owners
+[*]Rebindable keys, preset icons, spectator, and more
+[/list]
+
+[h2]Server setup (alpha)[/h2]
+Load this mod in -mod= (clients need it too). Strip your mission economy for arena performance (economy.xml master switches off, empty events.xml, zero infected/animals). First boot writes default configs to [b]$profile:SentinelDeathmatch\[/b]: config.json (round timings, respawn, score limit), zones.json (arenas + spawn points), presets.json (loadouts). Full setup guide and examples in the GitHub repo.
+
+[h2]Sentinel platform (optional)[/h2]
+Servers running the Sentinel Enforcer can add the companion [b]Sentinel Bridge[/b] item (server-side only) to stream round and kill events to the Sentinel platform - powering server stats and, later in the alpha, the global cross-server deathmatch leaderboard on dayz.fyi.
+
+[h2]Source, issues, license[/h2]
+Source-available on GitHub: https://github.com/mierst/sentinel-deathmatch
+Report bugs there. License: free to run on any server, including monetized servers, with attribution retained; no repacking or re-uploading. Final license text is being prepared - see LICENSE.md in the repo.
+
+[h2]Credits[/h2]
+Design informed by the DayZ modding community, with thanks to Terje Bruoygard (the abandoned DeathMatch mod remains the genre's best prior art) and InclementDab (DayZ Editor, whose .dze format this mod will read natively). No third-party code is included. Powered by Sentinel.
