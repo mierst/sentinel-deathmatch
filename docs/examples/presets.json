@@ -1,0 +1,40 @@
+{
+    "SchemaVersion": 1,
+    "Presets": [
+        {
+            "Name": "SMG Rush",
+            "IconKey": "",
+            "Enabled": 1,
+            "PrimaryClass": "MP5K",
+            "PrimaryAttachments": ["MP5k_StockBttstck"],
+            "PrimaryMagClass": "Mag_MP5_30Rnd",
+            "PrimaryMagCount": 4,
+            "SecondaryClass": "",
+            "SecondaryAttachments": [],
+            "SecondaryMagClass": "",
+            "SecondaryMagCount": 0,
+            "Clothing": ["TShirt_Blue", "Jeans_Blue", "AthleticShoes_Blue", "CourierBag"],
+            "Gear": [
+                { "ClassName": "BandageDressing", "Count": 2 }
+            ]
+        },
+        {
+            "Name": "Shotgun CQB",
+            "IconKey": "",
+            "Enabled": 1,
+            "PrimaryClass": "Izh43Shotgun",
+            "PrimaryAttachments": [],
+            "PrimaryMagClass": "",
+            "PrimaryMagCount": 0,
+            "SecondaryClass": "",
+            "SecondaryAttachments": [],
+            "SecondaryMagClass": "",
+            "SecondaryMagCount": 0,
+            "Clothing": ["TShirt_Red", "CanvasPantsMidi_Red", "AthleticShoes_Black", "CourierBag"],
+            "Gear": [
+                { "ClassName": "Ammo_12gaPellets", "Count": 3 },
+                { "ClassName": "BandageDressing", "Count": 2 }
+            ]
+        }
+    ]
+}

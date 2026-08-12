@@ -1,0 +1,25 @@
+{
+    "SchemaVersion": 1,
+    "Zones": [
+        {
+            "Name": "Demo Field",
+            "IconKey": "",
+            "Enabled": 1,
+            "CenterX": 4600.0,
+            "CenterZ": 10000.0,
+            "Radius": 250.0,
+            "WarnMargin": 30.0,
+            "Enforcement": "damage",
+            "OutOfZoneDmgPerSec": 5.0,
+            "LobbyX": 4600.0,
+            "LobbyY": 0.0,
+            "LobbyZ": 10300.0,
+            "SpawnPoints": [
+                { "X": 4750.0, "Y": 0.0, "Z": 10000.0, "Yaw": 180.0 },
+                { "X": 4600.0, "Y": 0.0, "Z": 10150.0, "Yaw": 270.0 },
+                { "X": 4450.0, "Y": 0.0, "Z": 10000.0, "Yaw": 0.0 },
+                { "X": 4600.0, "Y": 0.0, "Z": 9850.0, "Yaw": 90.0 }
+            ]
+        }
+    ]
+}

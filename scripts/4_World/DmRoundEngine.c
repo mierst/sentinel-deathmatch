@@ -1,8 +1,9 @@
 // Server round state machine.
 //
 // Performance posture: ONE repeating 500 ms Timer drives everything. There is
-// no per-frame work anywhere in this mod. The common tick path is integer
-// compares against cached deadlines - no allocation, no string work.
+// no per-frame work anywhere in this mod. The common tick path is integer/
+// float compares against cached deadlines; the player list is fetched once
+// per tick into a reused scratch array and shared with the services.
 class DmRoundEngine
 {
 	private static ref DmRoundEngine s_Instance;
@@ -10,8 +11,11 @@ class DmRoundEngine
 	private ref Timer m_TickTimer;
 	private int m_Phase = DmPhase.IDLE;
 	private int m_RoundId = 0;
-	private float m_PhaseDeadline = 0; // engine seconds; 0 = no deadline armed
+	private float m_PhaseDeadline = 0;   // engine seconds; 0 = no deadline armed
+	private float m_RoundStartedAt = 0;
 	private bool m_Started = false;
+
+	private ref array<Man> m_PlayerScratch = new array<Man>;
 
 	static DmRoundEngine GetInstance()
 	{
@@ -27,6 +31,10 @@ class DmRoundEngine
 		if (m_Started) return;
 		m_Started = true;
 
+		DmLoadoutFactory.GetInstance().ValidateAll();
+		DmZonesConfig.GetInstance(); // load + validate zones.json
+		DmCleanupService.GetInstance().Start();
+
 		m_TickTimer = new Timer(CALL_CATEGORY_SYSTEM);
 		m_TickTimer.Run(0.5, this, "OnTick", null, true);
 		Print("[DM] round engine started v" + DmVersion.VERSION);
@@ -39,16 +47,129 @@ class DmRoundEngine
 	{
 		if (!DmConfig.GetInstance().IsEnabled()) return;
 
-		// Phase 0 scaffold: population gate only. Vote/spawn/zone services
-		// arrive in later phases; transitions past IDLE are inert until then.
+		m_PlayerScratch.Clear();
+		GetGame().GetPlayers(m_PlayerScratch);
+		int playerCount = m_PlayerScratch.Count();
+		float nowSeconds = GetGame().GetTickTime();
+
+		// Population gate applies in every phase except IDLE itself: losing
+		// the room mid-anything drops the loop back to IDLE cleanly.
+		if (m_Phase != DmPhase.IDLE && playerCount < DmConfig.GetInstance().GetMinPlayers())
+		{
+			Print("[DM] population below MinPlayers - returning to IDLE");
+			DmScoreService.GetInstance().Reset();
+			TransitionTo(DmPhase.IDLE);
+			return;
+		}
+
 		if (m_Phase == DmPhase.IDLE)
 		{
-			int playerCount = CountPlayers();
 			if (playerCount >= DmConfig.GetInstance().GetMinPlayers())
 			{
-				TransitionTo(DmPhase.VOTING);
+				EnterVoting(nowSeconds);
 			}
+			return;
 		}
+
+		if (m_Phase == DmPhase.VOTING)
+		{
+			if (nowSeconds >= m_PhaseDeadline)
+			{
+				DmVoteService.GetInstance().Resolve();
+				EnterCountdown(nowSeconds);
+			}
+			return;
+		}
+
+		if (m_Phase == DmPhase.COUNTDOWN)
+		{
+			if (nowSeconds >= m_PhaseDeadline)
+			{
+				EnterLive(nowSeconds, playerCount);
+			}
+			return;
+		}
+
+		if (m_Phase == DmPhase.LIVE)
+		{
+			DmZoneService.GetInstance().Enforce(m_PlayerScratch, 0.5);
+			DmSpawnService.GetInstance().TickProtection(m_PlayerScratch, nowSeconds);
+
+			bool timeUp = nowSeconds >= m_PhaseDeadline;
+			bool scoreHit = DmScoreService.GetInstance().LeaderScore() >= DmConfig.GetInstance().GetScoreLimit();
+			if (timeUp || scoreHit)
+			{
+				EnterRoundEnd(nowSeconds);
+			}
+			return;
+		}
+
+		if (m_Phase == DmPhase.ROUNDEND)
+		{
+			if (nowSeconds >= m_PhaseDeadline)
+			{
+				EnterVoting(nowSeconds);
+			}
+			return;
+		}
+	}
+
+	private void EnterVoting(float nowSeconds)
+	{
+		DmVoteService.GetInstance().OpenVote();
+		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetVoteSeconds();
+		TransitionTo(DmPhase.VOTING);
+	}
+
+	private void EnterCountdown(float nowSeconds)
+	{
+		DmScoreService.GetInstance().Reset();
+
+		// Teleport everyone to spawn points and inject the winning loadout at
+		// countdown START: the countdown window doubles as the client's
+		// streaming warm-up for the (possibly new) arena footprint.
+		DmZoneData zone = DmZoneService.GetInstance().GetActiveZone();
+		int presetIdx = DmVoteService.GetInstance().GetActivePresetIndex();
+		for (int playerIdx = 0; playerIdx < m_PlayerScratch.Count(); playerIdx++)
+		{
+			PlayerBase pb = PlayerBase.Cast(m_PlayerScratch[playerIdx]);
+			if (!pb || !pb.IsAlive()) continue;
+
+			if (zone && zone.SpawnPoints.Count() > 0)
+			{
+				DmSpawnPointData sp = zone.SpawnPoints[playerIdx % zone.SpawnPoints.Count()];
+				pb.SetPosition(DmSpawnService.ResolveSpawnPos(sp));
+				pb.SetOrientation(Vector(sp.Yaw, 0, 0));
+			}
+			DmLoadoutFactory.GetInstance().Apply(pb, presetIdx);
+		}
+
+		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetCountdownSeconds();
+		TransitionTo(DmPhase.COUNTDOWN);
+	}
+
+	private void EnterLive(float nowSeconds, int playerCount)
+	{
+		m_RoundId = m_RoundId + 1;
+		m_RoundStartedAt = nowSeconds;
+		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetRoundSeconds();
+		TransitionTo(DmPhase.LIVE);
+
+		DmApi.OnRoundStart().Invoke(m_RoundId, DmZoneService.GetInstance().GetActiveZoneName(), DmVoteService.GetInstance().GetActivePresetName(), playerCount);
+	}
+
+	private void EnterRoundEnd(float nowSeconds)
+	{
+		int durationSeconds = nowSeconds - m_RoundStartedAt;
+		string winnerId = DmScoreService.GetInstance().LeaderId();
+
+		DmScoreService.GetInstance().PrintSummary();
+		DmCleanupService.GetInstance().ExpireAll();
+
+		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetScoreboardSeconds();
+		TransitionTo(DmPhase.ROUNDEND);
+
+		DmApi.OnRoundEnd().Invoke(m_RoundId, DmZoneService.GetInstance().GetActiveZoneName(), DmVoteService.GetInstance().GetActivePresetName(), durationSeconds, winnerId);
 	}
 
 	void TransitionTo(int nextPhase)
@@ -61,23 +182,62 @@ class DmRoundEngine
 		}
 	}
 
-	private int CountPlayers()
-	{
-		array<Man> players = new array<Man>;
-		GetGame().GetPlayers(players);
-		return players.Count();
-	}
-
 	// Called from the consolidated PlayerBase hook (capture/DmPlayerHook.c).
 	void OnPlayerKilled(PlayerBase victim, Object killerSource)
 	{
 		if (!DmConfig.GetInstance().IsEnabled()) return;
-		if (m_Phase != DmPhase.LIVE)
+		if (!victim) return;
+
+		PlayerIdentity victimIdent = victim.GetIdentity();
+		if (!victimIdent) return;
+
+		// Corpse cleanup + respawn run in every phase; scoring only in LIVE.
+		DmCleanupService.GetInstance().RegisterCorpse(victim);
+		DmSpawnService.GetInstance().ScheduleRespawn(victimIdent);
+
+		if (m_Phase != DmPhase.LIVE) return;
+
+		string killerId = "";
+		string killerName = "";
+		string weaponName = "";
+		float killDistance = 0;
+		PlayerBase killerPlayer = ExtractKillerPlayer(killerSource);
+		if (killerPlayer)
 		{
-			// Kills outside LIVE (warm-up, scoreboard) never score.
-			return;
+			PlayerIdentity killerIdent = killerPlayer.GetIdentity();
+			if (killerIdent)
+			{
+				killerId = killerIdent.GetPlainId();
+				killerName = killerIdent.GetName();
+			}
+			killDistance = vector.Distance(killerPlayer.GetPosition(), victim.GetPosition());
+			EntityAI inHands = killerPlayer.GetHumanInventory().GetEntityInHands();
+			if (inHands)
+			{
+				weaponName = inHands.GetType();
+			}
 		}
-		// Scoring lands in a later phase; the hook chain is proven now.
+
+		int newStreak = DmScoreService.GetInstance().RegisterKill(killerId, killerName, victimIdent.GetPlainId(), victimIdent.GetName());
+
+		if (killerId != "" && killerId != victimIdent.GetPlainId())
+		{
+			DmApi.OnKill().Invoke(killerId, victimIdent.GetPlainId(), weaponName, killDistance, false, newStreak);
+		}
+	}
+
+	// The killer source of EEKilled can be the weapon entity, a projectile,
+	// or the player; walk to the owning player when there is one.
+	static PlayerBase ExtractKillerPlayer(Object killerSource)
+	{
+		if (!killerSource) return null;
+
+		PlayerBase direct = PlayerBase.Cast(killerSource);
+		if (direct) return direct;
+
+		EntityAI killerEntity = EntityAI.Cast(killerSource);
+		if (!killerEntity) return null;
+		return PlayerBase.Cast(killerEntity.GetHierarchyRootPlayer());
 	}
 
 	static void SelfTest()
@@ -92,5 +252,9 @@ class DmRoundEngine
 		int transOk = 1;
 		if (probe.GetPhase() != DmPhase.VOTING) transOk = 0;
 		Print("[DM] fixture DmRoundEngine transition: expected=1 got=" + transOk.ToString() + " " + DmFixture.Verdict(transOk == 1));
+
+		int extractOk = 1;
+		if (DmRoundEngine.ExtractKillerPlayer(null)) extractOk = 0;
+		Print("[DM] fixture DmRoundEngine killer extract null: expected=1 got=" + extractOk.ToString() + " " + DmFixture.Verdict(extractOk == 1));
 	}
 }

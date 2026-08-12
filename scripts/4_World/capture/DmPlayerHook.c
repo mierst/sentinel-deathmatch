@@ -15,4 +15,32 @@ modded class PlayerBase
 
 		DmRoundEngine.GetInstance().OnPlayerKilled(this, killer);
 	}
+
+	override void OnRPC(PlayerIdentity sender, int rpc_type, ParamsReadContext ctx)
+	{
+		// Cheapest gate first: everything outside our claimed id range takes
+		// one int compare and falls through to vanilla.
+		if (rpc_type >= DmRpc.BASE && rpc_type <= DmRpc.RANGE_END)
+		{
+			if (GetGame() && GetGame().IsDedicatedServer())
+			{
+				DmHandleServerRpc(sender, rpc_type, ctx);
+			}
+			return;
+		}
+
+		super.OnRPC(sender, rpc_type, ctx);
+	}
+}
+
+// Server-side RPC routing. All client input is untrusted: bounds and phase
+// checks live in the services, rate limiting in DmVoteService.
+void DmHandleServerRpc(PlayerIdentity sender, int rpcType, ParamsReadContext ctx)
+{
+	if (rpcType == DmRpc.VOTE_CAST)
+	{
+		Param2<int, int> voteData;
+		if (!ctx.Read(voteData)) return;
+		DmVoteService.GetInstance().OnVoteCast(sender, voteData.param1, voteData.param2);
+	}
 }

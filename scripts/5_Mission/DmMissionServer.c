@@ -24,6 +24,29 @@ modded class MissionServer
 
 		DmRoundEngine.GetInstance().Start();
 	}
+
+	// Join path: new connections spawn into the deathmatch loop (at the
+	// active zone when a round is armed) with the active loadout, replacing
+	// the vanilla random-position + menu-equipment flow.
+	override PlayerBase OnClientNewEvent(PlayerIdentity identity, vector pos, ParamsReadContext ctx)
+	{
+		if (!DmConfig.GetInstance().IsEnabled())
+		{
+			return super.OnClientNewEvent(identity, pos, ctx);
+		}
+
+		float joinYaw;
+		vector joinPos = DmSpawnService.GetInstance().PickSpawnPosition(joinYaw);
+
+		PlayerBase joined = CreateCharacter(identity, joinPos, ctx, GetGame().CreateRandomPlayer());
+		if (!joined)
+		{
+			return super.OnClientNewEvent(identity, pos, ctx);
+		}
+		joined.SetOrientation(Vector(joinYaw, 0, 0));
+		DmLoadoutFactory.GetInstance().Apply(joined, DmVoteService.GetInstance().GetActivePresetIndex());
+		return joined;
+	}
 }
 
 // Boot-time fixtures. Every subsystem registers its SelfTest here; output is
@@ -35,7 +58,15 @@ void DmRunSelfTests()
 	DmPhase.SelfTest();
 	DmRpc.SelfTest();
 	DmConfig.SelfTest();
+	DmZonesConfig.SelfTest();
+	DmPresetsConfig.SelfTest();
 	DmApi.SelfTest();
+	DmZoneService.SelfTest();
+	DmSpawnService.SelfTest();
+	DmLoadoutFactory.SelfTest();
+	DmVoteService.SelfTest();
+	DmScoreService.SelfTest();
+	DmCleanupService.SelfTest();
 	DmRoundEngine.SelfTest();
 	Print("[DM] boot fixtures complete");
 }

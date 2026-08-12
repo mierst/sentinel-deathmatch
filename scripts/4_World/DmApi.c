@@ -58,6 +58,16 @@ class DmApi
 		return DmVersion.VERSION;
 	}
 
+	static string GetActiveZoneName()
+	{
+		return DmZoneService.GetInstance().GetActiveZoneName();
+	}
+
+	static string GetActivePresetName()
+	{
+		return DmVoteService.GetInstance().GetActivePresetName();
+	}
+
 	static void SelfTest()
 	{
 		int invokerOk = 1;
