@@ -23,6 +23,13 @@ modded class MissionServer
 		}
 
 		DmRoundEngine.GetInstance().Start();
+
+#ifdef SentinelEnforcer
+		// Sentinel platform feed: compiled in only where the enforcer mod is
+		// loaded (its CfgMods name is a script define). See DmSentinelConfig.c.
+		SentinelAddonRegistry.Register("deathmatch", DmVersion.VERSION);
+		DmSentinelBridge.GetInstance().Init();
+#endif
 	}
 
 	// Join path: new connections spawn into the deathmatch loop (at the
@@ -73,6 +80,7 @@ void DmRunSelfTests()
 	DmCleanupService.SelfTest();
 	DmNetServer.SelfTest();
 	DmClientState.SelfTest();
+	DmSentinelConfig.SelfTest();
 	DmRoundEngine.SelfTest();
 	Print("[DM] boot fixtures complete");
 }

@@ -1,17 +1,25 @@
-// Bridge config + emitters.
+// Sentinel platform integration, compiled into the core mod CONDITIONALLY.
 //
-// This file is deliberately a worked example of consuming Sentinel Enforcer
-// as a declarative dependency from a third-party mod: subscribe to the host
-// mod's public API, translate its events into SentinelEvent, enqueue. The
-// enforcer knows nothing about this consumer.
+// The emitters below are wrapped in #ifdef SentinelEnforcer: every loaded
+// mod's CfgMods class name becomes a script-compile define, so this code
+// exists only where the Sentinel Enforcer is actually loaded - it compiles
+// out on clients (the enforcer is -serverMod-only and never ships to them)
+// and on servers that don't run the platform. No requiredAddons anywhere, so
+// the Windows "requires addon" blocking dialog can never fire; a separate
+// bridge PBO was the earlier design and was collapsed for exactly that
+// reason. This block is also the reference example of consuming the
+// enforcer's emission surface from a third-party mod.
 //
 // Broadcasting is optional at three stacked levels, all operator-controlled:
-//   1. Enforcer master enable (SentinelConfig.IsEnabled - disabled or
-//      credential-less enforcer means nothing ever emits).
-//   2. This bridge's own config: $profile:SentinelDeathmatch\sentinel.json
+//   1. The enforcer's own master enable (disabled or credential-less
+//      enforcer means nothing ever emits).
+//   2. This config: $profile:SentinelDeathmatch\sentinel.json
 //      (EventFeed kills the whole dm.* feed; GlobalLeaderboard governs
 //      ranked participation and is read by the platform, not scripts).
 //   3. The enforcer's per-event-type capture flags (ShouldCapture).
+//
+// The config class itself compiles UNCONDITIONALLY (it references no
+// enforcer types), so sentinel.json semantics stay stable either way.
 class DmSentinelConfigData
 {
 	bool EventFeed = true;
@@ -51,8 +59,18 @@ class DmSentinelConfig
 
 	bool IsEventFeedEnabled() { return m_Data.EventFeed; }
 	bool IsGlobalLeaderboardEnabled() { return m_Data.GlobalLeaderboard; }
+
+	static void SelfTest()
+	{
+		DmSentinelConfigData defaults = new DmSentinelConfigData();
+		int defOk = 1;
+		if (!defaults.EventFeed) defOk = 0;
+		if (!defaults.GlobalLeaderboard) defOk = 0;
+		Print("[DM] fixture DmSentinelConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
+	}
 }
 
+#ifdef SentinelEnforcer
 class DmSentinelBridge
 {
 	private static ref DmSentinelBridge s_Instance;
@@ -143,13 +161,5 @@ class DmSentinelBridge
 		e.SetInt("votes_cast", votesCast);
 		SentinelEventQueue.GetInstance().Enqueue(e, false);
 	}
-
-	static void SelfTest()
-	{
-		DmSentinelConfigData defaults = new DmSentinelConfigData();
-		int defOk = 1;
-		if (!defaults.EventFeed) defOk = 0;
-		if (!defaults.GlobalLeaderboard) defOk = 0;
-		Print("[DM-Sentinel] fixture DmSentinelConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
-	}
 }
+#endif

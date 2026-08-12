@@ -7,6 +7,16 @@ passes, not before.
 
 ## [Unreleased]
 
+### Changed
+- Sentinel platform integration collapsed from the separate dm_sentinel
+  bridge PBO into the core mod behind `#ifdef SentinelEnforcer` (loaded mods
+  are compile defines). One Workshop item instead of two, and no
+  requiredAddons that could fire the unavoidable Windows "requires addon"
+  dialog on a misconfigured server. The feed remains optional at three
+  levels: enforcer master enable, sentinel.json (EventFeed,
+  GlobalLeaderboard), and per-event capture flags. Emitters compile out
+  entirely on clients and enforcer-less servers.
+
 ### Added
 - Phase 1 round services: full FSM loop (IDLE -> VOTING -> COUNTDOWN -> LIVE
   -> ROUNDEND -> VOTING, population gate back to IDLE in any phase);
