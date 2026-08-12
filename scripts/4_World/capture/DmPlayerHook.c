@@ -26,6 +26,10 @@ modded class PlayerBase
 			{
 				DmHandleServerRpc(sender, rpc_type, ctx);
 			}
+			else
+			{
+				DmHandleClientRpc(rpc_type, ctx);
+			}
 			return;
 		}
 
@@ -42,5 +46,51 @@ void DmHandleServerRpc(PlayerIdentity sender, int rpcType, ParamsReadContext ctx
 		Param2<int, int> voteData;
 		if (!ctx.Read(voteData)) return;
 		DmVoteService.GetInstance().OnVoteCast(sender, voteData.param1, voteData.param2);
+	}
+}
+
+// Client-side RPC routing: decode and hand to the state store. The UI layer
+// (5_Mission) polls the store's sequence counters - no upward module calls.
+void DmHandleClientRpc(int rpcType, ParamsReadContext ctx)
+{
+	DmClientState state = DmClientState.GetInstance();
+
+	if (rpcType == DmRpc.STATE_SYNC)
+	{
+		Param9<int, int, float, string, string, float, float, float, float> syncData;
+		if (!ctx.Read(syncData)) return;
+		state.ApplyStateSync(syncData.param1, syncData.param2, syncData.param3, syncData.param4, syncData.param5, syncData.param6, syncData.param7, syncData.param8, syncData.param9);
+		return;
+	}
+	if (rpcType == DmRpc.VOTE_OPEN)
+	{
+		Param3<float, string, string> voteOpenData;
+		if (!ctx.Read(voteOpenData)) return;
+		state.ApplyVoteOpen(voteOpenData.param1, voteOpenData.param2, voteOpenData.param3);
+		return;
+	}
+	if (rpcType == DmRpc.VOTE_RESULT)
+	{
+		Param3<string, string, int> voteResultData;
+		if (!ctx.Read(voteResultData)) return;
+		state.ApplyVoteResult(voteResultData.param1, voteResultData.param2, voteResultData.param3);
+		return;
+	}
+	if (rpcType == DmRpc.SCOREBOARD)
+	{
+		Param3<string, string, string> scoreboardData;
+		if (!ctx.Read(scoreboardData)) return;
+		state.ApplyScoreboard(scoreboardData.param1, scoreboardData.param2, scoreboardData.param3);
+		return;
+	}
+	if (rpcType == DmRpc.HUD_EVENT)
+	{
+		Param2<int, string> hudData;
+		if (!ctx.Read(hudData)) return;
+		if (hudData.param1 == 0)
+		{
+			state.ApplyKillfeed(hudData.param2);
+		}
+		return;
 	}
 }

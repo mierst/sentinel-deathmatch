@@ -153,6 +153,15 @@ function Build-Target {
         }
     }
 
+    # Data dirs that ship inside the PBO alongside scripts (layouts now;
+    # imagesets later). Referenced in-engine as "<PboPrefix>/layouts/...".
+    foreach ($dataDir in @("layouts", "imagesets")) {
+        $dsrc = Join-Path $sourceDir $dataDir
+        if (Test-Path $dsrc) {
+            Copy-Item $dsrc -Destination $stageDir -Recurse
+        }
+    }
+
     $prefixFile = Join-Path $stageDir '$PBOPREFIX$'
     Set-Content -Path $prefixFile -Value $pboPrefix -Encoding ASCII -NoNewline
 

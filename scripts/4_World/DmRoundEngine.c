@@ -42,6 +42,7 @@ class DmRoundEngine
 
 	int GetPhase() { return m_Phase; }
 	int GetRoundId() { return m_RoundId; }
+	float GetPhaseDeadline() { return m_PhaseDeadline; }
 
 	void OnTick()
 	{
@@ -58,7 +59,9 @@ class DmRoundEngine
 		{
 			Print("[DM] population below MinPlayers - returning to IDLE");
 			DmScoreService.GetInstance().Reset();
+			m_PhaseDeadline = 0;
 			TransitionTo(DmPhase.IDLE);
+			DmNetServer.GetInstance().SendStateSyncAll();
 			return;
 		}
 
@@ -119,6 +122,8 @@ class DmRoundEngine
 		DmVoteService.GetInstance().OpenVote();
 		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetVoteSeconds();
 		TransitionTo(DmPhase.VOTING);
+		DmNetServer.GetInstance().SendStateSyncAll();
+		DmNetServer.GetInstance().SendVoteOpenAll(DmConfig.GetInstance().GetVoteSeconds());
 	}
 
 	private void EnterCountdown(float nowSeconds)
@@ -146,6 +151,7 @@ class DmRoundEngine
 
 		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetCountdownSeconds();
 		TransitionTo(DmPhase.COUNTDOWN);
+		DmNetServer.GetInstance().SendStateSyncAll();
 	}
 
 	private void EnterLive(float nowSeconds, int playerCount)
@@ -154,6 +160,7 @@ class DmRoundEngine
 		m_RoundStartedAt = nowSeconds;
 		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetRoundSeconds();
 		TransitionTo(DmPhase.LIVE);
+		DmNetServer.GetInstance().SendStateSyncAll();
 
 		DmApi.OnRoundStart().Invoke(m_RoundId, DmZoneService.GetInstance().GetActiveZoneName(), DmVoteService.GetInstance().GetActivePresetName(), playerCount);
 	}
@@ -168,6 +175,8 @@ class DmRoundEngine
 
 		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetScoreboardSeconds();
 		TransitionTo(DmPhase.ROUNDEND);
+		DmNetServer.GetInstance().SendStateSyncAll();
+		DmNetServer.GetInstance().SendScoreboardAll(DmScoreService.GetInstance().BuildRowsBlob(), DmScoreService.GetInstance().BuildSessionRowsBlob(), DmScoreService.GetInstance().LeaderName());
 
 		DmApi.OnRoundEnd().Invoke(m_RoundId, DmZoneService.GetInstance().GetActiveZoneName(), DmVoteService.GetInstance().GetActivePresetName(), durationSeconds, winnerId);
 	}
@@ -223,6 +232,11 @@ class DmRoundEngine
 		if (killerId != "" && killerId != victimIdent.GetPlainId())
 		{
 			DmApi.OnKill().Invoke(killerId, victimIdent.GetPlainId(), weaponName, killDistance, false, newStreak);
+			DmNetServer.GetInstance().SendKillfeedAll(DmNetServer.FormatKillfeedLine(killerName, victimIdent.GetName(), weaponName, killDistance));
+		}
+		else
+		{
+			DmNetServer.GetInstance().SendKillfeedAll(victimIdent.GetName() + " died");
 		}
 	}
 

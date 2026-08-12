@@ -12,7 +12,10 @@ class DmScoreService
 {
 	private static ref DmScoreService s_Instance;
 
+	// Round scores reset every round; session scores accumulate across rounds
+	// for the in-game session leaderboard (cleared only on server restart).
 	private ref map<string, ref DmScoreEntry> m_Scores = new map<string, ref DmScoreEntry>;
+	private ref map<string, ref DmScoreEntry> m_SessionScores = new map<string, ref DmScoreEntry>;
 
 	static DmScoreService GetInstance()
 	{
@@ -28,28 +31,44 @@ class DmScoreService
 		m_Scores.Clear();
 	}
 
-	DmScoreEntry GetOrCreate(string playerId, string playerName)
+	private DmScoreEntry GetOrCreateIn(map<string, ref DmScoreEntry> scoreMap, string playerId, string playerName)
 	{
-		DmScoreEntry entry = m_Scores.Get(playerId);
+		DmScoreEntry entry = scoreMap.Get(playerId);
 		if (!entry)
 		{
 			entry = new DmScoreEntry();
 			entry.PlayerName = playerName;
-			m_Scores.Set(playerId, entry);
+			scoreMap.Set(playerId, entry);
 		}
 		return entry;
 	}
 
-	// Returns the killer's new streak (0 for suicide/environment deaths).
+	DmScoreEntry GetOrCreate(string playerId, string playerName)
+	{
+		return GetOrCreateIn(m_Scores, playerId, playerName);
+	}
+
+	// Returns the killer's new ROUND streak (0 for suicide/environment deaths).
 	int RegisterKill(string killerId, string killerName, string victimId, string victimName)
 	{
-		DmScoreEntry victimEntry = GetOrCreate(victimId, victimName);
+		DmScoreEntry victimEntry = GetOrCreateIn(m_Scores, victimId, victimName);
 		victimEntry.Deaths = victimEntry.Deaths + 1;
 		victimEntry.Streak = 0;
+		DmScoreEntry victimSession = GetOrCreateIn(m_SessionScores, victimId, victimName);
+		victimSession.Deaths = victimSession.Deaths + 1;
+		victimSession.Streak = 0;
 
 		if (killerId == "" || killerId == victimId) return 0;
 
-		DmScoreEntry killerEntry = GetOrCreate(killerId, killerName);
+		DmScoreEntry killerSession = GetOrCreateIn(m_SessionScores, killerId, killerName);
+		killerSession.Kills = killerSession.Kills + 1;
+		killerSession.Streak = killerSession.Streak + 1;
+		if (killerSession.Streak > killerSession.BestStreak)
+		{
+			killerSession.BestStreak = killerSession.Streak;
+		}
+
+		DmScoreEntry killerEntry = GetOrCreateIn(m_Scores, killerId, killerName);
 		killerEntry.Kills = killerEntry.Kills + 1;
 		killerEntry.Streak = killerEntry.Streak + 1;
 		if (killerEntry.Streak > killerEntry.BestStreak)
@@ -69,6 +88,55 @@ class DmScoreService
 		}
 		return best;
 	}
+
+	string LeaderName()
+	{
+		DmScoreEntry leaderEntry = m_Scores.Get(LeaderId());
+		if (!leaderEntry) return "";
+		return leaderEntry.PlayerName;
+	}
+
+	// Rows sorted by kills desc, tab-separated fields, newline rows:
+	// name\tkills\tdeaths\tbeststreak
+	static string BuildRowsBlobFor(map<string, ref DmScoreEntry> scoreMap)
+	{
+		array<string> ids = new array<string>;
+		for (int keyIdx = 0; keyIdx < scoreMap.Count(); keyIdx++)
+		{
+			ids.Insert(scoreMap.GetKey(keyIdx));
+		}
+
+		// Selection sort by kills desc - trivially small N (players/round).
+		for (int sortIdx = 0; sortIdx < ids.Count(); sortIdx++)
+		{
+			int maxAt = sortIdx;
+			for (int probeIdx = sortIdx + 1; probeIdx < ids.Count(); probeIdx++)
+			{
+				if (scoreMap.Get(ids[probeIdx]).Kills > scoreMap.Get(ids[maxAt]).Kills)
+				{
+					maxAt = probeIdx;
+				}
+			}
+			if (maxAt != sortIdx)
+			{
+				string swapId = ids[sortIdx];
+				ids[sortIdx] = ids[maxAt];
+				ids[maxAt] = swapId;
+			}
+		}
+
+		string blob = "";
+		for (int rowIdx = 0; rowIdx < ids.Count(); rowIdx++)
+		{
+			DmScoreEntry rowEntry = scoreMap.Get(ids[rowIdx]);
+			if (rowIdx > 0) blob = blob + "\n";
+			blob = blob + rowEntry.PlayerName + "\t" + rowEntry.Kills.ToString() + "\t" + rowEntry.Deaths.ToString() + "\t" + rowEntry.BestStreak.ToString();
+		}
+		return blob;
+	}
+
+	string BuildRowsBlob() { return BuildRowsBlobFor(m_Scores); }
+	string BuildSessionRowsBlob() { return BuildRowsBlobFor(m_SessionScores); }
 
 	string LeaderId()
 	{
@@ -125,5 +193,13 @@ class DmScoreService
 		probe.Reset();
 		if (probe.LeaderScore() != 0) streakResetOk = 0;
 		Print("[DM] fixture DmScoreService streak reset: expected=1 got=" + streakResetOk.ToString() + " " + DmFixture.Verdict(streakResetOk == 1));
+
+		// Session totals must survive the round reset above.
+		int sessionOk = 1;
+		if (probe.BuildRowsBlob() != "") sessionOk = 0;
+		string sessionBlob = probe.BuildSessionRowsBlob();
+		if (sessionBlob == "") sessionOk = 0;
+		if (sessionBlob.IndexOf("Killer\t2") < 0) sessionOk = 0;
+		Print("[DM] fixture DmScoreService session survives reset: expected=1 got=" + sessionOk.ToString() + " " + DmFixture.Verdict(sessionOk == 1));
 	}
 }

@@ -45,6 +45,10 @@ modded class MissionServer
 		}
 		joined.SetOrientation(Vector(joinYaw, 0, 0));
 		DmLoadoutFactory.GetInstance().Apply(joined, DmVoteService.GetInstance().GetActivePresetIndex());
+
+		// Late state sync so the new client's HUD shows the current phase
+		// (delayed - the client's mission is still initializing right now).
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DmNetServer.GetInstance().SendStateSyncTo, 3000, false, joined);
 		return joined;
 	}
 }
@@ -67,6 +71,8 @@ void DmRunSelfTests()
 	DmVoteService.SelfTest();
 	DmScoreService.SelfTest();
 	DmCleanupService.SelfTest();
+	DmNetServer.SelfTest();
+	DmClientState.SelfTest();
 	DmRoundEngine.SelfTest();
 	Print("[DM] boot fixtures complete");
 }

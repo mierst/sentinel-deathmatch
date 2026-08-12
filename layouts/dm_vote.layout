@@ -1,0 +1,310 @@
+FrameWidgetClass DmVoteRoot {
+ visible 1
+ clipchildren 0
+ position 560 190
+ size 800 700
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ scriptclass ""
+ {
+  PanelWidgetClass Backdrop {
+   visible 1
+   clipchildren 0
+   position 0 0
+   size 800 700
+   hexactpos 1
+   vexactpos 1
+   hexactsize 1
+   vexactsize 1
+   color 0.05 0.05 0.07 0.92
+   style rover
+   {
+    TextWidgetClass Title {
+     visible 1
+     ignorepointer 1
+     color 1 1 1 0.95
+     position 0 18
+     size 800 34
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "VOTE - NEXT ROUND"
+     font "gui/fonts/sdf_MetronLight24"
+     "exact text" 1
+     "exact text size" 28
+     "text halign" center
+    }
+    TextWidgetClass VoteTimer {
+     visible 1
+     ignorepointer 1
+     color 0.8 0.9 1 0.9
+     position 0 56
+     size 800 24
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     font "gui/fonts/sdf_MetronLight24"
+     "exact text" 1
+     "exact text size" 18
+     "text halign" center
+    }
+    TextWidgetClass ZoneHeader {
+     visible 1
+     ignorepointer 1
+     color 1 1 1 0.9
+     position 40 100
+     size 340 26
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "ARENA"
+     font "gui/fonts/sdf_MetronLight24"
+     "exact text" 1
+     "exact text size" 20
+     "text halign" center
+    }
+    TextWidgetClass PresetHeader {
+     visible 1
+     ignorepointer 1
+     color 1 1 1 0.9
+     position 420 100
+     size 340 26
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "WEAPONS"
+     font "gui/fonts/sdf_MetronLight24"
+     "exact text" 1
+     "exact text size" 20
+     "text halign" center
+    }
+    ButtonWidgetClass zbtn_0 {
+     visible 0
+     position 40 140
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass zbtn_1 {
+     visible 0
+     position 40 196
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass zbtn_2 {
+     visible 0
+     position 40 252
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass zbtn_3 {
+     visible 0
+     position 40 308
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass zbtn_4 {
+     visible 0
+     position 40 364
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass zbtn_5 {
+     visible 0
+     position 40 420
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass zbtn_6 {
+     visible 0
+     position 40 476
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass zbtn_7 {
+     visible 0
+     position 40 532
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass pbtn_0 {
+     visible 0
+     position 420 140
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass pbtn_1 {
+     visible 0
+     position 420 196
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass pbtn_2 {
+     visible 0
+     position 420 252
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass pbtn_3 {
+     visible 0
+     position 420 308
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass pbtn_4 {
+     visible 0
+     position 420 364
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass pbtn_5 {
+     visible 0
+     position 420 420
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass pbtn_6 {
+     visible 0
+     position 420 476
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    ButtonWidgetClass pbtn_7 {
+     visible 0
+     position 420 532
+     size 340 48
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     style rover
+    }
+    TextWidgetClass SelectionText {
+     visible 1
+     ignorepointer 1
+     color 0.8 1 0.8 0.9
+     position 0 596
+     size 800 24
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     font "gui/fonts/MetronLight14"
+     "exact text" 1
+     "exact text size" 16
+     "text halign" center
+    }
+    ButtonWidgetClass BtnClose {
+     visible 1
+     position 330 640
+     size 140 40
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "CLOSE"
+     style rover
+    }
+    TextWidgetClass Footer {
+     visible 1
+     ignorepointer 1
+     color 1 1 1 0.35
+     position 0 682
+     size 800 16
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "Global stats - dayz.fyi/dm"
+     font "gui/fonts/MetronLight14"
+     "exact text" 1
+     "exact text size" 12
+     "text halign" center
+    }
+   }
+  }
+ }
+}

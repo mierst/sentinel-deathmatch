@@ -76,6 +76,7 @@ class DmVoteService
 
 		int votesCast = m_ZoneVoteByPlayer.Count();
 		DmApi.OnVoteResult().Invoke(DmZoneService.GetInstance().GetActiveZoneName(), GetActivePresetName(), votesCast);
+		DmNetServer.GetInstance().SendVoteResultAll(DmZoneService.GetInstance().GetActiveZoneName(), GetActivePresetName(), votesCast);
 	}
 
 	string GetActivePresetName()
