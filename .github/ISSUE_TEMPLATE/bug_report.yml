@@ -1,0 +1,62 @@
+name: Bug report
+description: Something broke during play or on your server
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing the alpha. The more of this you fill in, the faster it gets fixed.
+  - type: dropdown
+    id: role
+    attributes:
+      label: I was playing as / running
+      options:
+        - Player (client)
+        - Server operator
+        - Both (I run the server I was playing on)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Mod version
+      description: From the server log line "Sentinel Deathmatch vX.Y.Z initializing", or the Workshop change notes.
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Steps, if you can make it happen again. "It happened once during a round end" is still useful.
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Round phase when it happened
+      options:
+        - WAITING / IDLE
+        - VOTING
+        - COUNTDOWN
+        - LIVE
+        - ROUNDEND / scoreboard
+        - Not sure
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server log excerpt (operators)
+      description: |
+        From the server profile folder, `script_*.log` - the `[DM]` lines around the incident,
+        plus any `SCRIPT (E)` errors. Paste as text, not screenshots, when possible.
+      render: text
+  - type: textarea
+    id: setup
+    attributes:
+      label: Server setup (operators)
+      description: Map, other mods in the -mod/-serverMod chain, and anything nonstandard in config.json / zones.json / presets.json.

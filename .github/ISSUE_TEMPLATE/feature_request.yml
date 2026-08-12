@@ -1,0 +1,25 @@
+name: Feature request
+description: Something the mod should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem or gap
+      description: What you're trying to do as a player or operator that you currently can't.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you'd like
+    validations:
+      required: true
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Who benefits
+      options:
+        - Players
+        - Server operators
+        - Both
