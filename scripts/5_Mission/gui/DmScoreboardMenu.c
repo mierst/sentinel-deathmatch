@@ -26,6 +26,22 @@ class DmScoreboardMenu extends UIScriptedMenu
 	override bool UseMouse() { return true; }
 	override bool UseKeyboard() { return true; }
 
+	// Same focus discipline as the vote menu: cursor drives the UI only.
+	override void OnShow()
+	{
+		super.OnShow();
+		SetFocus(layoutRoot);
+		GetGame().GetInput().ChangeGameFocus(1);
+		GetGame().GetUIManager().ShowUICursor(true);
+	}
+
+	override void OnHide()
+	{
+		super.OnHide();
+		GetGame().GetInput().ResetGameFocus();
+		GetGame().GetUIManager().ShowUICursor(false);
+	}
+
 	void Refresh()
 	{
 		DmClientState state = DmClientState.GetInstance();

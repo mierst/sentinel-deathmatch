@@ -33,6 +33,23 @@ class DmVoteMenu extends UIScriptedMenu
 	override bool UseMouse() { return true; }
 	override bool UseKeyboard() { return true; }
 
+	// Grab game focus while open: the cursor must drive the UI, not the
+	// character/camera behind it. Released symmetrically on hide.
+	override void OnShow()
+	{
+		super.OnShow();
+		SetFocus(layoutRoot);
+		GetGame().GetInput().ChangeGameFocus(1);
+		GetGame().GetUIManager().ShowUICursor(true);
+	}
+
+	override void OnHide()
+	{
+		super.OnHide();
+		GetGame().GetInput().ResetGameFocus();
+		GetGame().GetUIManager().ShowUICursor(false);
+	}
+
 	void RefreshOptions()
 	{
 		DmClientState state = DmClientState.GetInstance();
@@ -72,14 +89,14 @@ class DmVoteMenu extends UIScriptedMenu
 		UpdateSelectionText();
 	}
 
-	// Called from the HUD controller's tick while open.
+	// Called from the HUD controller's tick while open. Uses the SAME synced
+	// phase deadline as the HUD timer - two clocks from two RPCs drifted by
+	// their delivery gap and disagreed on screen.
 	void UpdateTimer()
 	{
 		if (!m_VoteTimer) return;
 		DmClientState state = DmClientState.GetInstance();
-		float remain = state.m_VoteEndTime - GetGame().GetTickTime();
-		if (remain < 0) remain = 0;
-		int remainInt = remain;
+		int remainInt = state.GetPhaseRemaining();
 		m_VoteTimer.SetText("Voting closes in " + remainInt.ToString() + "s");
 	}
 
