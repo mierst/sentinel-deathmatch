@@ -7,6 +7,11 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-12
+
+First alpha playtest release. Steam Workshop (hidden during initial
+testing): https://steamcommunity.com/sharedfiles/filedetails/?id=3782135939
+
 ### Changed
 - Sentinel platform integration collapsed from the separate dm_sentinel
   bridge PBO into the core mod behind `#ifdef SentinelEnforcer` (loaded mods
