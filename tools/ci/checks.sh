@@ -11,6 +11,13 @@ fail=0
 note() { echo "[checks] $1"; }
 err()  { echo "[checks] FAIL: $1"; fail=1; }
 
+# All Enforce Script source: the core PBO tree plus every addon PBO tree.
+list_script_files() {
+    find scripts addons -name '*.c' 2>/dev/null
+    ls config.cpp 2>/dev/null
+    find addons -name 'config.cpp' 2>/dev/null
+}
+
 # --- 1. ASCII-only source files -------------------------------------------
 # Non-ASCII bytes in .c/.cpp break the in-engine tokenizer.
 while IFS= read -r f; do
@@ -18,7 +25,7 @@ while IFS= read -r f; do
         err "non-ASCII bytes in $f:"
         LC_ALL=C grep -nP '[^\x00-\x7F]' "$f" | head -5 | sed 's/^/    /'
     fi
-done < <(find scripts -name '*.c' 2>/dev/null; ls config.cpp 2>/dev/null)
+done < <(list_script_files)
 
 # --- 2. No leading-+ string continuation ----------------------------------
 # A continuation line starting with + is an in-engine syntax error.
@@ -27,7 +34,7 @@ while IFS= read -r f; do
         err "leading-+ string continuation in $f (put + at end of previous line):"
         grep -nE '^[[:space:]]+\+[[:space:]]*"' "$f" | head -5 | sed 's/^/    /'
     fi
-done < <(find scripts -name '*.c' 2>/dev/null)
+done < <(find scripts addons -name '*.c' 2>/dev/null)
 
 # --- 3. Version lockstep: DmVersion.c <-> config.cpp ----------------------
 ver_code=$(grep -oE 'VERSION = "[0-9]+\.[0-9]+\.[0-9]+"' scripts/3_Game/DmVersion.c 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
@@ -40,20 +47,29 @@ else
     note "version lockstep OK ($ver_code)"
 fi
 
-# --- 4. Single chain link per modded class --------------------------------
-for cls in PlayerBase MissionServer MissionGameplay; do
-    count=$(grep -rlE "modded[[:space:]]+class[[:space:]]+$cls([[:space:]]|$)" scripts 2>/dev/null | wc -l)
-    if [ "$count" -gt 1 ]; then
-        err "multiple 'modded class $cls' blocks found ($count) - consolidate into one:"
-        grep -rlE "modded[[:space:]]+class[[:space:]]+$cls([[:space:]]|$)" scripts | sed 's/^/    /'
-    fi
-done
+# --- 4. Single chain link per modded class, PER PBO -----------------------
+# The rule is per compiled PBO: the core (scripts/) and each addons/<name>/
+# are separate PBOs, each allowed exactly one block per foreign type.
+check_chain_links() {
+    tree="$1"
+    for cls in PlayerBase MissionServer MissionGameplay; do
+        count=$(grep -rlE "modded[[:space:]]+class[[:space:]]+$cls([[:space:]]|$)" "$tree" 2>/dev/null | wc -l)
+        if [ "$count" -gt 1 ]; then
+            err "multiple 'modded class $cls' blocks in PBO tree $tree ($count) - consolidate into one:"
+            grep -rlE "modded[[:space:]]+class[[:space:]]+$cls([[:space:]]|$)" "$tree" | sed 's/^/    /'
+        fi
+    done
+}
+check_chain_links scripts
+while IFS= read -r addonTree; do
+    check_chain_links "$addonTree"
+done < <(find addons -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
 note "chain-link check done"
 
 # --- 5. No OnUpdate overrides ---------------------------------------------
-if grep -rnE 'override[[:space:]]+void[[:space:]]+OnUpdate' scripts > /dev/null 2>&1; then
+if grep -rnE 'override[[:space:]]+void[[:space:]]+OnUpdate' scripts addons > /dev/null 2>&1; then
     err "OnUpdate override found - this mod does no per-frame work (CONTRIBUTING.md):"
-    grep -rnE 'override[[:space:]]+void[[:space:]]+OnUpdate' scripts | sed 's/^/    /'
+    grep -rnE 'override[[:space:]]+void[[:space:]]+OnUpdate' scripts addons | sed 's/^/    /'
 fi
 
 # --- 6. Fixture coverage: every 4_World service registers a SelfTest ------

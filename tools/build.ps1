@@ -45,6 +45,16 @@ $Targets = @(
         PboPrefix = "SentinelDM"
         Modules   = @("3_Game", "4_World", "5_Mission")
     }
+    @{
+        # Consumer-side Sentinel Enforcer bridge. SEPARATE mod folder /
+        # Workshop item, -serverMod= only: bundling it into the core would
+        # push a hard enforcer dependency to clients (see its config.cpp).
+        Name      = "dm_sentinel"
+        SourceDir = "addons\dm_sentinel"
+        ModFolder = "@SentinelDeathmatch-Sentinel"
+        PboPrefix = "SentinelDM_Sentinel"
+        Modules   = @("4_World", "5_Mission")
+    }
 )
 
 # -----------------------------------------------------------------------------
