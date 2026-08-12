@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- No dynamic events on a deathmatch server. -->
+<events>
+</events>

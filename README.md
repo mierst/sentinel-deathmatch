@@ -35,6 +35,12 @@ This project treats server FPS as the primary feature. The engineering rules
 measured cost bounds for hot-path changes) are documented in
 [CONTRIBUTING.md](CONTRIBUTING.md) and enforced in review and CI.
 
+## Run a server
+
+A cookie-cutter quickstart - SteamCMD to running deathmatch server in under
+an hour - lives in [server-example/](server-example/README.md), including an
+example `serverDZ.cfg` and the arena mission overlay.
+
 ## Building
 
 Windows + [Mikero DePboTools](https://mikero.bytex.digital/):
