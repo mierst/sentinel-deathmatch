@@ -7,6 +7,25 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-12
+
+First live-server feedback release.
+
+### Added
+- `DisableSurvivalPressure` config (default on): water, energy, heat
+  comfort, and stamina are pinned every ~10 s - no thirst, hunger, cold, or
+  exhaustion in the arena.
+- Loadout weapons bind to the hotbar: the main weapon (primary, or the
+  secondary in pistol-only presets) lands in hands AND hotbar slot 1;
+  a sidearm alongside a primary binds to slot 2.
+- If spawning into hands is refused mid-transition, the weapon falls back
+  to the inventory instead of being silently lost.
+
+### Fixed
+- meta.cpp in the shipped mod folder now carries the item's own publishedid
+  (3782135939) - required for DZSA and launcher mod resolution on servers
+  running the mod.
+
 ## [0.1.0] - 2026-08-12
 
 First alpha playtest release. Steam Workshop (hidden during initial

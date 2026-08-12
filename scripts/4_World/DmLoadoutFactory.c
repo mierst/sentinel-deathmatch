@@ -136,9 +136,13 @@ class DmLoadoutFactory
 		DmPresetData preset = GetValidPreset(validIdx);
 		if (!preset) return;
 
+		// The main weapon goes to hands AND hotbar slot 1. When a preset has
+		// no primary (e.g. pistols-only), the secondary takes that role.
+		bool secondaryIsMain = (preset.PrimaryClass == "" && preset.SecondaryClass != "");
+
 		if (preset.PrimaryClass != "")
 		{
-			EntityAI primary = pb.GetHumanInventory().CreateInHands(preset.PrimaryClass);
+			EntityAI primary = SpawnWeaponInHands(pb, preset.PrimaryClass);
 			if (primary)
 			{
 				for (int attIdx = 0; attIdx < preset.PrimaryAttachments.Count(); attIdx++)
@@ -154,12 +158,21 @@ class DmLoadoutFactory
 						pb.GetInventory().CreateInInventory(preset.PrimaryMagClass);
 					}
 				}
+				pb.SetQuickBarEntityShortcut(primary, 0, true);
 			}
 		}
 
 		if (preset.SecondaryClass != "")
 		{
-			EntityAI secondary = EntityAI.Cast(pb.GetInventory().CreateInInventory(preset.SecondaryClass));
+			EntityAI secondary;
+			if (secondaryIsMain)
+			{
+				secondary = SpawnWeaponInHands(pb, preset.SecondaryClass);
+			}
+			else
+			{
+				secondary = EntityAI.Cast(pb.GetInventory().CreateInInventory(preset.SecondaryClass));
+			}
 			if (secondary)
 			{
 				for (int satIdx = 0; satIdx < preset.SecondaryAttachments.Count(); satIdx++)
@@ -174,8 +187,28 @@ class DmLoadoutFactory
 						pb.GetInventory().CreateInInventory(preset.SecondaryMagClass);
 					}
 				}
+				if (secondaryIsMain)
+				{
+					pb.SetQuickBarEntityShortcut(secondary, 0, true);
+				}
+				else
+				{
+					pb.SetQuickBarEntityShortcut(secondary, 1, true);
+				}
 			}
 		}
+	}
+
+	// Hands first; if the engine refuses (hands blocked mid-transition),
+	// fall back to inventory so the weapon is never silently lost.
+	private EntityAI SpawnWeaponInHands(PlayerBase pb, string weaponClass)
+	{
+		EntityAI weapon = pb.GetHumanInventory().CreateInHands(weaponClass);
+		if (!weapon)
+		{
+			weapon = EntityAI.Cast(pb.GetInventory().CreateInInventory(weaponClass));
+		}
+		return weapon;
 	}
 
 	static void SelfTest()

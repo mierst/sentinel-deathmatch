@@ -16,6 +16,7 @@ class DmRoundEngine
 	private bool m_Started = false;
 
 	private ref array<Man> m_PlayerScratch = new array<Man>;
+	private int m_TopUpCounter = 0;
 
 	static DmRoundEngine GetInstance()
 	{
@@ -52,6 +53,17 @@ class DmRoundEngine
 		GetGame().GetPlayers(m_PlayerScratch);
 		int playerCount = m_PlayerScratch.Count();
 		float nowSeconds = GetGame().GetTickTime();
+
+		// Survival pressure removal: every 20 ticks (~10 s), all phases.
+		m_TopUpCounter = m_TopUpCounter + 1;
+		if (m_TopUpCounter >= 20)
+		{
+			m_TopUpCounter = 0;
+			if (DmConfig.GetInstance().IsSurvivalPressureDisabled())
+			{
+				TopUpSurvival();
+			}
+		}
 
 		// Population gate applies in every phase except IDLE itself: losing
 		// the room mid-anything drops the loop back to IDLE cleanly.
@@ -179,6 +191,25 @@ class DmRoundEngine
 		DmNetServer.GetInstance().SendScoreboardAll(DmScoreService.GetInstance().BuildRowsBlob(), DmScoreService.GetInstance().BuildSessionRowsBlob(), DmScoreService.GetInstance().LeaderName());
 
 		DmApi.OnRoundEnd().Invoke(m_RoundId, DmZoneService.GetInstance().GetActiveZoneName(), DmVoteService.GetInstance().GetActivePresetName(), durationSeconds, winnerId);
+	}
+
+	// No thirst, hunger, cold, or exhaustion in an arena: pin the survival
+	// stats at full and stamina at max. Uses the already-fetched scratch list.
+	private void TopUpSurvival()
+	{
+		for (int topUpIdx = 0; topUpIdx < m_PlayerScratch.Count(); topUpIdx++)
+		{
+			PlayerBase pb = PlayerBase.Cast(m_PlayerScratch[topUpIdx]);
+			if (!pb || !pb.IsAlive()) continue;
+
+			pb.GetStatWater().Set(PlayerConstants.SL_WATER_MAX);
+			pb.GetStatEnergy().Set(PlayerConstants.SL_ENERGY_MAX);
+			pb.GetStatHeatComfort().Set(0);
+			if (pb.GetStaminaHandler())
+			{
+				pb.GetStaminaHandler().SetStamina(GameConstants.STAMINA_MAX);
+			}
+		}
 	}
 
 	void TransitionTo(int nextPhase)

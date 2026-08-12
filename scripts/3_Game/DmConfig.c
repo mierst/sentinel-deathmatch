@@ -27,6 +27,10 @@ class DmConfigData
 	int CorpseLifetimeSeconds = 45;
 	int MaxDeletesPerTick = 3;
 	string DropPolicy = "allow"; // "allow" | "block"
+
+	// Deathmatch is not a survival game: periodically top up water/energy,
+	// neutralize heat comfort, and refill stamina for every player.
+	bool DisableSurvivalPressure = true;
 }
 
 class DmConfig
@@ -112,6 +116,7 @@ class DmConfig
 	int GetCorpseLifetimeSeconds() { return m_Data.CorpseLifetimeSeconds; }
 	int GetMaxDeletesPerTick() { return m_Data.MaxDeletesPerTick; }
 	string GetDropPolicy() { return m_Data.DropPolicy; }
+	bool IsSurvivalPressureDisabled() { return m_Data.DisableSurvivalPressure; }
 
 	static void SelfTest()
 	{

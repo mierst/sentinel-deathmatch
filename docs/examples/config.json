@@ -11,5 +11,6 @@
     "SpawnProtectSeconds": 3,
     "CorpseLifetimeSeconds": 45,
     "MaxDeletesPerTick": 3,
-    "DropPolicy": "allow"
+    "DropPolicy": "allow",
+    "DisableSurvivalPressure": 1
 }
