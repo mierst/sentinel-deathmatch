@@ -7,6 +7,30 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-08-12
+
+Combat-readiness release: spawn, aim, fire.
+
+### Added
+- Every spawn now includes one random melee weapon from a configurable
+  `MeleePool` in presets.json (vanilla default pool: knives, machete,
+  hatchet, bat, crowbar, pipe wrench). Disable via `MeleeSpawn: 0` in
+  config.json; an empty/missing pool reseeds the defaults (the engine's
+  JSON loader clears arrays absent from older files, so empty cannot
+  mean "off").
+- Fixed hotbar layout: slot 1 gun, slots 2-3 bandages, slot 4 melee,
+  slot 5 sidearm (presets carrying both a primary and a secondary).
+
+### Changed
+- Loadout weapons now spawn ready to fire: full magazine attached (or
+  internal magazine filled) and a round chambered, via the vanilla
+  `SpawnAmmo` cascade. No more racking the bolt on spawn.
+- `PrimaryMagClass`/`SecondaryMagClass` now also accept an ammo classname
+  for internal-magazine weapons (e.g. `"Ammo_12gaPellets"` on a shotgun
+  preset) so the gun loads with exactly that type; left empty, the engine
+  picks a chamberable type at random.
+- Default "Shotgun CQB" preset loads `Ammo_12gaPellets` explicitly.
+
 ## [0.1.1] - 2026-08-12
 
 First live-server feedback release.

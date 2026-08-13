@@ -16,6 +16,9 @@ class DmPresetData
 
 	string PrimaryClass = "";
 	ref array<string> PrimaryAttachments = new array<string>;
+	// Magazine classname for mag-fed weapons; ammo classname (e.g.
+	// "Ammo_12gaPellets") for internal-magazine weapons so the gun spawns
+	// loaded with that exact type; "" lets the engine pick a chamberable type.
 	string PrimaryMagClass = "";
 	int PrimaryMagCount = 3;
 
@@ -32,6 +35,24 @@ class DmPresetsData
 {
 	int SchemaVersion = 1;
 	ref array<ref DmPresetData> Presets = new array<ref DmPresetData>;
+	// Every spawn also gets one random melee weapon from this pool (hotbar
+	// slot 4). TESTBED-PROVEN GOTCHA: the JSON loader CLEARS constructor-
+	// seeded arrays when the key is absent from an existing file, so Load()
+	// reseeds an empty pool with these defaults and persists the field back.
+	// Disabling melee is therefore config.json's MeleeSpawn, never [].
+	ref array<string> MeleePool = new array<string>;
+
+	void DmPresetsData()
+	{
+		MeleePool.Insert("CombatKnife");
+		MeleePool.Insert("HuntingKnife");
+		MeleePool.Insert("KitchenKnife");
+		MeleePool.Insert("Machete");
+		MeleePool.Insert("Hatchet");
+		MeleePool.Insert("BaseballBat");
+		MeleePool.Insert("Crowbar");
+		MeleePool.Insert("PipeWrench");
+	}
 }
 
 class DmPresetsConfig
@@ -59,6 +80,15 @@ class DmPresetsConfig
 		if (FileExist(PRESETS_PATH))
 		{
 			JsonFileLoader<DmPresetsData>.JsonLoadFile(PRESETS_PATH, m_Data);
+			// Files predating MeleePool load it as empty (the loader clears
+			// constructor-seeded arrays): reseed and persist the migration.
+			if (m_Data.MeleePool.Count() == 0)
+			{
+				DmPresetsData seed = new DmPresetsData();
+				m_Data.MeleePool = seed.MeleePool;
+				JsonFileLoader<DmPresetsData>.JsonSaveFile(PRESETS_PATH, m_Data);
+				Print("[DM] presets.json: MeleePool missing/empty - reseeded defaults");
+			}
 		}
 		else
 		{
@@ -91,7 +121,7 @@ class DmPresetsConfig
 		DmPresetData shotgun = new DmPresetData();
 		shotgun.Name = "Shotgun CQB";
 		shotgun.PrimaryClass = "Izh43Shotgun";
-		shotgun.PrimaryMagClass = "";
+		shotgun.PrimaryMagClass = "Ammo_12gaPellets";
 		shotgun.PrimaryMagCount = 0;
 		DmGearItemData shells = new DmGearItemData();
 		shells.ClassName = "Ammo_12gaPellets";
@@ -105,6 +135,14 @@ class DmPresetsConfig
 	}
 
 	int GetPresetCount() { return m_Data.Presets.Count(); }
+
+	int GetMeleePoolCount() { return m_Data.MeleePool.Count(); }
+
+	string GetMeleePoolEntry(int meleeIdx)
+	{
+		if (meleeIdx < 0 || meleeIdx >= m_Data.MeleePool.Count()) return "";
+		return m_Data.MeleePool[meleeIdx];
+	}
 
 	DmPresetData GetPreset(int presetIdx)
 	{
@@ -123,6 +161,11 @@ class DmPresetsConfig
 		if (!firstPreset) defOk = 0;
 		if (firstPreset && firstPreset.PrimaryClass == "") defOk = 0;
 		if (probe.GetPreset(99)) defOk = 0;
+		// Melee pool ships constructor-seeded and bounds-checked.
+		if (probe.GetMeleePoolCount() == 0) defOk = 0;
+		if (probe.GetMeleePoolEntry(0) == "") defOk = 0;
+		if (probe.GetMeleePoolEntry(99) != "") defOk = 0;
+		if (probe.GetMeleePoolEntry(-1) != "") defOk = 0;
 		Print("[DM] fixture DmPresetsConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 	}
 }

@@ -8,6 +8,7 @@ class DmLoadoutFactory
 	private static ref DmLoadoutFactory s_Instance;
 
 	private ref array<int> m_ValidPresetIndices = new array<int>;
+	private ref array<string> m_ValidMeleeClasses = new array<string>;
 
 	static DmLoadoutFactory GetInstance()
 	{
@@ -45,6 +46,19 @@ class DmLoadoutFactory
 			m_ValidPresetIndices.Insert(presetIdx);
 		}
 		Print("[DM] presets.json: " + m_ValidPresetIndices.Count().ToString() + " of " + presets.GetPresetCount().ToString() + " presets valid");
+
+		m_ValidMeleeClasses.Clear();
+		for (int meleeIdx = 0; meleeIdx < presets.GetMeleePoolCount(); meleeIdx++)
+		{
+			string meleeClass = presets.GetMeleePoolEntry(meleeIdx);
+			if (meleeClass == "" || !ClassExists(meleeClass))
+			{
+				Print("[DM] presets.json: MeleePool entry '" + meleeClass + "' unknown - skipped");
+				continue;
+			}
+			m_ValidMeleeClasses.Insert(meleeClass);
+		}
+		Print("[DM] presets.json: " + m_ValidMeleeClasses.Count().ToString() + " of " + presets.GetMeleePoolCount().ToString() + " melee pool entries valid");
 	}
 
 	// Returns the first unknown classname, or "" when all resolve. Static
@@ -88,6 +102,14 @@ class DmLoadoutFactory
 
 	int GetValidPresetCount() { return m_ValidPresetIndices.Count(); }
 
+	int GetValidMeleeCount() { return m_ValidMeleeClasses.Count(); }
+
+	string GetValidMeleeClass(int meleeIdx)
+	{
+		if (meleeIdx < 0 || meleeIdx >= m_ValidMeleeClasses.Count()) return "";
+		return m_ValidMeleeClasses[meleeIdx];
+	}
+
 	DmPresetData GetValidPreset(int validIdx)
 	{
 		if (validIdx < 0 || validIdx >= m_ValidPresetIndices.Count()) return null;
@@ -130,6 +152,8 @@ class DmLoadoutFactory
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(StageWeapons, 50, false, pb, validIdx);
 	}
 
+	// Hotbar layout: slot 1 gun, slots 2-3 bandages, slot 4 melee, slot 5
+	// sidearm (when a preset carries both a primary and a secondary).
 	void StageWeapons(PlayerBase pb, int validIdx)
 	{
 		if (!pb || !pb.IsAlive()) return;
@@ -149,9 +173,9 @@ class DmLoadoutFactory
 				{
 					primary.GetInventory().CreateAttachment(preset.PrimaryAttachments[attIdx]);
 				}
+				LoadWeapon(primary, preset.PrimaryMagClass);
 				if (preset.PrimaryMagClass != "")
 				{
-					primary.GetInventory().CreateAttachment(preset.PrimaryMagClass);
 					// Spares beyond the loaded one go to the player inventory.
 					for (int magIdx = 1; magIdx < preset.PrimaryMagCount; magIdx++)
 					{
@@ -179,9 +203,9 @@ class DmLoadoutFactory
 				{
 					secondary.GetInventory().CreateAttachment(preset.SecondaryAttachments[satIdx]);
 				}
+				LoadWeapon(secondary, preset.SecondaryMagClass);
 				if (preset.SecondaryMagClass != "")
 				{
-					secondary.GetInventory().CreateAttachment(preset.SecondaryMagClass);
 					for (int smagIdx = 1; smagIdx < preset.SecondaryMagCount; smagIdx++)
 					{
 						pb.GetInventory().CreateInInventory(preset.SecondaryMagClass);
@@ -193,10 +217,59 @@ class DmLoadoutFactory
 				}
 				else
 				{
-					pb.SetQuickBarEntityShortcut(secondary, 1, true);
+					pb.SetQuickBarEntityShortcut(secondary, 4, true);
 				}
 			}
 		}
+
+		BindBandages(pb);
+		SpawnMelee(pb);
+	}
+
+	// First two bandage-type items from the gear land on hotbar slots 2-3.
+	private void BindBandages(PlayerBase pb)
+	{
+		array<EntityAI> items = new array<EntityAI>;
+		pb.GetInventory().EnumerateInventory(InventoryTraversalType.PREORDER, items);
+		int slot = 1;
+		for (int itemIdx = 0; itemIdx < items.Count(); itemIdx++)
+		{
+			EntityAI item = items[itemIdx];
+			if (!item) continue;
+			string typeName = item.GetType();
+			if (typeName != "BandageDressing" && typeName != "Rag") continue;
+			pb.SetQuickBarEntityShortcut(item, slot, true);
+			slot++;
+			if (slot > 2) break;
+		}
+	}
+
+	// One random melee weapon from the validated pool, hotbar slot 4.
+	private void SpawnMelee(PlayerBase pb)
+	{
+		if (!DmConfig.GetInstance().IsMeleeSpawnEnabled()) return;
+		if (m_ValidMeleeClasses.Count() == 0) return;
+		string meleeClass = m_ValidMeleeClasses[Math.RandomInt(0, m_ValidMeleeClasses.Count())];
+		EntityAI melee = EntityAI.Cast(pb.GetInventory().CreateInInventory(meleeClass));
+		if (!melee)
+		{
+			Print("[DM] melee spawn failed for '" + meleeClass + "' (inventory full?)");
+			return;
+		}
+		pb.SetQuickBarEntityShortcut(melee, 3, true);
+	}
+
+	// Weapons spawn ready to fire: full magazine attached (or internal mag
+	// filled) AND a round chambered, via the vanilla SpawnAmmo cascade, which
+	// also fixes the weapon FSM and synchronizes to clients. magOrAmmoClass
+	// follows SpawnAmmo semantics: a magazine classname for mag-fed weapons,
+	// an ammo classname for internal-magazine weapons (Mosin, shotguns), or
+	// "" to let the engine pick a chamberable type.
+	private void LoadWeapon(EntityAI weaponEntity, string magOrAmmoClass)
+	{
+		Weapon_Base weapon = Weapon_Base.Cast(weaponEntity);
+		if (!weapon) return;
+		weapon.SpawnAmmo(magOrAmmoClass, WeaponWithAmmoFlags.CHAMBER);
 	}
 
 	// Hands first; if the engine refuses (hands blocked mid-transition),
@@ -221,6 +294,9 @@ class DmLoadoutFactory
 		if (probe.GetValidPresetCount() != 0) boundsOk = 0;
 		if (probe.GetValidPreset(0)) boundsOk = 0;
 		if (probe.GetValidPreset(-1)) boundsOk = 0;
+		if (probe.GetValidMeleeCount() != 0) boundsOk = 0;
+		if (probe.GetValidMeleeClass(0) != "") boundsOk = 0;
+		if (probe.GetValidMeleeClass(-1) != "") boundsOk = 0;
 		Print("[DM] fixture DmLoadoutFactory bounds: expected=1 got=" + boundsOk.ToString() + " " + DmFixture.Verdict(boundsOk == 1));
 	}
 }

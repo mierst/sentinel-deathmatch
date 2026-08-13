@@ -1,5 +1,9 @@
 {
     "SchemaVersion": 1,
+    "MeleePool": [
+        "CombatKnife", "HuntingKnife", "KitchenKnife", "Machete",
+        "Hatchet", "BaseballBat", "Crowbar", "PipeWrench"
+    ],
     "Presets": [
         {
             "Name": "SMG Rush",
@@ -24,7 +28,7 @@
             "Enabled": 1,
             "PrimaryClass": "Izh43Shotgun",
             "PrimaryAttachments": [],
-            "PrimaryMagClass": "",
+            "PrimaryMagClass": "Ammo_12gaPellets",
             "PrimaryMagCount": 0,
             "SecondaryClass": "",
             "SecondaryAttachments": [],

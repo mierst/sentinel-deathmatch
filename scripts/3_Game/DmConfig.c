@@ -31,6 +31,13 @@ class DmConfigData
 	// Deathmatch is not a survival game: periodically top up water/energy,
 	// neutralize heat comfort, and refill stamina for every player.
 	bool DisableSurvivalPressure = true;
+
+	// Every spawn gets one random melee weapon from presets.json's MeleePool
+	// (hotbar slot 4). The on/off switch lives here because an empty
+	// MeleePool array cannot mean "disabled": the JSON loader clears
+	// constructor-seeded arrays for files predating the field, so empty
+	// means "reseed defaults", not "off".
+	bool MeleeSpawn = true;
 }
 
 class DmConfig
@@ -117,6 +124,7 @@ class DmConfig
 	int GetMaxDeletesPerTick() { return m_Data.MaxDeletesPerTick; }
 	string GetDropPolicy() { return m_Data.DropPolicy; }
 	bool IsSurvivalPressureDisabled() { return m_Data.DisableSurvivalPressure; }
+	bool IsMeleeSpawnEnabled() { return m_Data.MeleeSpawn; }
 
 	static void SelfTest()
 	{
@@ -126,6 +134,7 @@ class DmConfig
 		if (defaults.MinPlayers != 2) defOk = 0;
 		if (defaults.RoundSeconds != 600) defOk = 0;
 		if (defaults.DropPolicy != "allow") defOk = 0;
+		if (!defaults.MeleeSpawn) defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
 		DmConfig probe = new DmConfig();
