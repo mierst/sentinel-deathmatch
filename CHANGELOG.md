@@ -7,6 +7,18 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-08-12
+
+Consensus release: when the room agrees, get to the shooting.
+
+### Added
+- Vote consensus fast-forward: once a strict majority of connected players
+  votes for the same arena+preset combo, the remaining vote window clamps
+  to `VoteConsensusSeconds` (config.json, default 10). Fires once per vote,
+  only ever shortens, and the on-screen countdown updates immediately.
+- README section on modded weapons in presets (any loaded mod's classnames
+  work; boot validation degrades gracefully across differing mod stacks).
+
 ## [0.1.2] - 2026-08-12
 
 Combat-readiness release: spawn, aim, fire.

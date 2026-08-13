@@ -79,6 +79,35 @@ class DmVoteService
 		DmNetServer.GetInstance().SendVoteResultAll(DmZoneService.GetInstance().GetActiveZoneName(), GetActivePresetName(), votesCast);
 	}
 
+	// True once a strict majority of the connected players has voted for the
+	// SAME zone+preset combo. Drives the round engine's vote fast-forward.
+	bool HasComboMajority(int playerCount)
+	{
+		if (!m_Open || playerCount <= 0) return false;
+		return ComboMajorityCount(m_ZoneVoteByPlayer, m_PresetVoteByPlayer) * 2 > playerCount;
+	}
+
+	// Largest bloc of players whose (zone, preset) votes agree. Players who
+	// have voted only one of the two don't join any bloc. Pure; fixtures.
+	static int ComboMajorityCount(map<string, int> zoneVotesByPlayer, map<string, int> presetVotesByPlayer)
+	{
+		map<string, int> comboTally = new map<string, int>;
+		int best = 0;
+		for (int voteIdx = 0; voteIdx < zoneVotesByPlayer.Count(); voteIdx++)
+		{
+			string playerId = zoneVotesByPlayer.GetKey(voteIdx);
+			int presetVote;
+			if (!presetVotesByPlayer.Find(playerId, presetVote)) continue;
+			string comboKey = zoneVotesByPlayer.GetElement(voteIdx).ToString() + "|" + presetVote.ToString();
+			int comboCount;
+			if (!comboTally.Find(comboKey, comboCount)) comboCount = 0;
+			comboCount = comboCount + 1;
+			comboTally.Set(comboKey, comboCount);
+			if (comboCount > best) best = comboCount;
+		}
+		return best;
+	}
+
 	string GetActivePresetName()
 	{
 		DmPresetData preset = DmLoadoutFactory.GetInstance().GetValidPreset(m_ActivePresetValidIdx);
@@ -143,5 +172,22 @@ class DmVoteService
 		int oobOk = 1;
 		if (DmVoteService.WinnerFromVotes(oobVotes, 3) != 2) oobOk = 0;
 		Print("[DM] fixture DmVoteService ignores out-of-bounds: expected=1 got=" + oobOk.ToString() + " " + DmFixture.Verdict(oobOk == 1));
+
+		// Combo blocs: a+b agree on (1,0); c matches zone but not preset;
+		// d voted zone only and joins no bloc.
+		map<string, int> comboZones = new map<string, int>;
+		map<string, int> comboPresets = new map<string, int>;
+		comboZones.Set("a", 1);
+		comboZones.Set("b", 1);
+		comboZones.Set("c", 1);
+		comboZones.Set("d", 0);
+		comboPresets.Set("a", 0);
+		comboPresets.Set("b", 0);
+		comboPresets.Set("c", 2);
+		int comboOk = 1;
+		if (DmVoteService.ComboMajorityCount(comboZones, comboPresets) != 2) comboOk = 0;
+		map<string, int> comboEmpty = new map<string, int>;
+		if (DmVoteService.ComboMajorityCount(comboEmpty, comboPresets) != 0) comboOk = 0;
+		Print("[DM] fixture DmVoteService combo bloc count: expected=1 got=" + comboOk.ToString() + " " + DmFixture.Verdict(comboOk == 1));
 	}
 }

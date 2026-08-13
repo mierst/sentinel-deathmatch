@@ -12,6 +12,7 @@ class DmRoundEngine
 	private int m_Phase = DmPhase.IDLE;
 	private int m_RoundId = 0;
 	private float m_PhaseDeadline = 0;   // engine seconds; 0 = no deadline armed
+	private bool m_VoteFastForwarded = false; // consensus clamp fired this vote
 	private float m_RoundStartedAt = 0;
 	private bool m_Started = false;
 
@@ -88,6 +89,19 @@ class DmRoundEngine
 
 		if (m_Phase == DmPhase.VOTING)
 		{
+			// Consensus fast-forward: a strict majority on one zone+preset
+			// combo clamps the remaining window (once; never extends).
+			if (!m_VoteFastForwarded && DmVoteService.GetInstance().HasComboMajority(playerCount))
+			{
+				m_VoteFastForwarded = true;
+				float consensusDeadline = nowSeconds + DmConfig.GetInstance().GetVoteConsensusSeconds();
+				if (consensusDeadline < m_PhaseDeadline)
+				{
+					m_PhaseDeadline = consensusDeadline;
+					DmNetServer.GetInstance().SendStateSyncAll();
+					Print("[DM] vote consensus reached - closing vote in " + DmConfig.GetInstance().GetVoteConsensusSeconds().ToString() + "s");
+				}
+			}
 			if (nowSeconds >= m_PhaseDeadline)
 			{
 				DmVoteService.GetInstance().Resolve();
@@ -131,6 +145,7 @@ class DmRoundEngine
 
 	private void EnterVoting(float nowSeconds)
 	{
+		m_VoteFastForwarded = false;
 		DmVoteService.GetInstance().OpenVote();
 		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetVoteSeconds();
 		TransitionTo(DmPhase.VOTING);

@@ -41,6 +41,25 @@ A cookie-cutter quickstart - SteamCMD to running deathmatch server in under
 an hour - lives in [server-example/](server-example/README.md), including an
 example `serverDZ.cfg` and the arena mission overlay.
 
+### Modded weapons
+
+Presets are not limited to vanilla. Any classname from any mod your server
+loads works in `presets.json` - .50 cals, 20mm anti-materiel rifles, .408s,
+whatever your mod stack provides. Put the weapon's classname in
+`PrimaryClass`, its magazine in `PrimaryMagClass` (or the ammo classname for
+internal-magazine rifles), and its attachments in `PrimaryAttachments`,
+exactly as you would for vanilla gear.
+
+Every classname is validated against the server's config tree at boot: an
+entry the server can't resolve disables that preset with a log line instead
+of breaking rounds, so a preset file shared between servers with different
+mod stacks degrades gracefully.
+
+Long-range presets deserve a matching arena - crank the zone `Radius`
+toward the single-bubble limit and make sure `networkRangeFar` covers the
+zone diameter (see the zones example), or snipers will be shooting at
+players the server never told their client about.
+
 ## Building
 
 Windows + [Mikero DePboTools](https://mikero.bytex.digital/):

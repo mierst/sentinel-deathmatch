@@ -16,6 +16,11 @@ class DmConfigData
 
 	int MinPlayers = 2;
 	int VoteSeconds = 30;
+	// Consensus fast-forward: once a strict majority of connected players
+	// votes for the SAME zone+preset combo, the remaining vote window clamps
+	// to this many seconds (only ever shortens). Set >= VoteSeconds to
+	// effectively disable.
+	int VoteConsensusSeconds = 10;
 	int CountdownSeconds = 10;
 	int RoundSeconds = 600;
 	int ScoreboardSeconds = 15;
@@ -99,6 +104,7 @@ class DmConfig
 	{
 		if (m_Data.MinPlayers < 1) m_Data.MinPlayers = 1;
 		if (m_Data.VoteSeconds < 5) m_Data.VoteSeconds = 5;
+		if (m_Data.VoteConsensusSeconds < 3) m_Data.VoteConsensusSeconds = 3;
 		if (m_Data.CountdownSeconds < 3) m_Data.CountdownSeconds = 3;
 		if (m_Data.RoundSeconds < 60) m_Data.RoundSeconds = 60;
 		if (m_Data.ScoreboardSeconds < 5) m_Data.ScoreboardSeconds = 5;
@@ -114,6 +120,7 @@ class DmConfig
 
 	int GetMinPlayers() { return m_Data.MinPlayers; }
 	int GetVoteSeconds() { return m_Data.VoteSeconds; }
+	int GetVoteConsensusSeconds() { return m_Data.VoteConsensusSeconds; }
 	int GetCountdownSeconds() { return m_Data.CountdownSeconds; }
 	int GetRoundSeconds() { return m_Data.RoundSeconds; }
 	int GetScoreboardSeconds() { return m_Data.ScoreboardSeconds; }
@@ -135,6 +142,7 @@ class DmConfig
 		if (defaults.RoundSeconds != 600) defOk = 0;
 		if (defaults.DropPolicy != "allow") defOk = 0;
 		if (!defaults.MeleeSpawn) defOk = 0;
+		if (defaults.VoteConsensusSeconds != 10) defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
 		DmConfig probe = new DmConfig();
