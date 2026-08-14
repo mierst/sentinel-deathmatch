@@ -85,6 +85,18 @@ class DmClientState
 		m_ScoreboardSeq = m_ScoreboardSeq + 1;
 	}
 
+	// Zone grace countdown (HUD_EVENT type 1). Freshness-gated on read: the
+	// server only sends while the player is outside, so a stale value just
+	// ages out rather than needing an explicit clear.
+	int m_ZoneCountdownSeconds = 0;
+	float m_ZoneCountdownAt = 0;
+
+	void ApplyZoneCountdown(int secondsLeft)
+	{
+		m_ZoneCountdownSeconds = secondsLeft;
+		m_ZoneCountdownAt = GetGame().GetTickTime();
+	}
+
 	void ApplyKillfeed(string line)
 	{
 		m_KillfeedLines.InsertAt(line, 0);

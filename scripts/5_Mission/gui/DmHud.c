@@ -110,6 +110,20 @@ class DmHudController
 				if (overshoot > -state.m_ZoneWarnMargin) warn = true;
 			}
 		}
+		if (warn)
+		{
+			// Append the server's authoritative grace countdown while it is
+			// fresh (the server sends roughly one update per second).
+			float countdownAge = GetGame().GetTickTime() - state.m_ZoneCountdownAt;
+			if (state.m_ZoneCountdownAt > 0 && countdownAge < 2.0)
+			{
+				m_WarnText.SetText("RETURN TO THE ZONE - " + state.m_ZoneCountdownSeconds.ToString());
+			}
+			else
+			{
+				m_WarnText.SetText("RETURN TO THE ZONE");
+			}
+		}
 		m_WarnText.Show(warn);
 	}
 

@@ -13,6 +13,8 @@ class DmZoneService
 	// the killfeed can say "left the zone" instead of "died").
 	private ref map<string, float> m_OutsideSince = new map<string, float>;
 	private ref map<string, bool> m_PendingZoneKills = new map<string, bool>;
+	// Last whole second each outside player was shown (dedups the RPC).
+	private ref map<string, int> m_CountdownSent = new map<string, int>;
 
 	static DmZoneService GetInstance()
 	{
@@ -28,6 +30,7 @@ class DmZoneService
 		m_ActiveZone = zone;
 		m_OutsideSince.Clear();
 		m_PendingZoneKills.Clear();
+		m_CountdownSent.Clear();
 	}
 
 	// True exactly once per zone-enforcement death of this player.
@@ -75,7 +78,11 @@ class DmZoneService
 			if (overshoot <= 0)
 			{
 				// Back inside: forgive any running grace timer.
-				if (playerId != "") m_OutsideSince.Remove(playerId);
+				if (playerId != "")
+				{
+					m_OutsideSince.Remove(playerId);
+					m_CountdownSent.Remove(playerId);
+				}
 				continue;
 			}
 
@@ -90,14 +97,26 @@ class DmZoneService
 				float sinceSeconds;
 				if (!m_OutsideSince.Find(playerId, sinceSeconds))
 				{
-					m_OutsideSince.Set(playerId, nowSeconds);
-					continue;
+					sinceSeconds = nowSeconds;
+					m_OutsideSince.Set(playerId, sinceSeconds);
 				}
-				if (nowSeconds - sinceSeconds >= m_ActiveZone.OutOfZoneKillSeconds)
+				float remainSeconds = m_ActiveZone.OutOfZoneKillSeconds - (nowSeconds - sinceSeconds);
+				if (remainSeconds <= 0)
 				{
 					m_OutsideSince.Remove(playerId);
 					m_PendingZoneKills.Set(playerId, true);
 					pb.SetHealth("GlobalHealth", "Health", 0);
+					continue;
+				}
+				// The offender sees the authoritative timer: one tiny RPC
+				// whenever the displayed second changes, nobody else pays.
+				int remainInt = Math.Ceil(remainSeconds);
+				int lastSent;
+				if (!m_CountdownSent.Find(playerId, lastSent)) lastSent = -1;
+				if (remainInt != lastSent)
+				{
+					m_CountdownSent.Set(playerId, remainInt);
+					DmNetServer.GetInstance().SendZoneCountdownTo(pb, remainInt);
 				}
 			}
 			else

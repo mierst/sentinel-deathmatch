@@ -7,6 +7,15 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-08-14
+
+### Added
+- The zone warning now shows the actual grace countdown
+  ("RETURN TO THE ZONE - 7"): the server pushes its authoritative timer
+  to the offending player once per displayed second - nobody else pays
+  any traffic - and the HUD falls back to the plain warning if an update
+  hasn't arrived within 2 s.
+
 ## [0.1.5] - 2026-08-14
 
 Boundary release: see the edge, change the map.

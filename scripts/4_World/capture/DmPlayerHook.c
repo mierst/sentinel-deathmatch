@@ -95,6 +95,10 @@ void DmHandleClientRpc(int rpcType, ParamsReadContext ctx)
 		{
 			state.ApplyKillfeed(hudData.param2);
 		}
+		if (hudData.param1 == 1)
+		{
+			state.ApplyZoneCountdown(hudData.param2.ToInt());
+		}
 		return;
 	}
 }

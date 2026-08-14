@@ -104,6 +104,16 @@ class DmNetServer
 		SendParamToAll(DmRpc.SCOREBOARD, new Param3<string, string, string>(rowsBlob, sessionRowsBlob, winnerName));
 	}
 
+	// Zone grace countdown, targeted at the player who is outside. Rides
+	// HUD_EVENT as type 1; type 0 stays the killfeed.
+	void SendZoneCountdownTo(PlayerBase pb, int secondsLeft)
+	{
+		if (!pb) return;
+		PlayerIdentity ident = pb.GetIdentity();
+		if (!ident) return;
+		GetGame().RPCSingleParam(pb, DmRpc.HUD_EVENT, new Param2<int, string>(1, secondsLeft.ToString()), true, ident);
+	}
+
 	void SendKillfeedAll(string line)
 	{
 		SendParamToAll(DmRpc.HUD_EVENT, new Param2<int, string>(0, line));
