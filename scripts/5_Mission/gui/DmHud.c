@@ -51,6 +51,7 @@ class DmHudController
 
 		UpdatePhaseAndTimer(state);
 		UpdateKillfeed(state, nowSeconds);
+		DmZoneMarkers.GetInstance().Update(state);
 		UpdateZoneWarning(state);
 		UpdateInfo(state, nowSeconds);
 		HandleSequences(state);

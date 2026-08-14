@@ -7,6 +7,20 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-08-14
+
+Boundary release: see the edge, change the map.
+
+### Added
+- In-world zone edge markers: red smoke pillars along the boundary arc,
+  visible whenever you're within 60 m of the edge (either side). Client-
+  side only, a sliding window of at most 7 emitters near the player -
+  never the whole ring - and positions snap to a fixed arc grid.
+- `/mapvote` chat command: once two thirds of the lobby (rounded up) has
+  typed it, the round ends on the spot and arena+preset voting reopens.
+  Progress announces in the killfeed; each player counts once per round;
+  the command is swallowed before it reaches chat.
+
 ## [0.1.4] - 2026-08-14
 
 Live-playtest release: everything a solo tester couldn't see or survive.

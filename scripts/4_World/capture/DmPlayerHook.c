@@ -47,6 +47,10 @@ void DmHandleServerRpc(PlayerIdentity sender, int rpcType, ParamsReadContext ctx
 		if (!ctx.Read(voteData)) return;
 		DmVoteService.GetInstance().OnVoteCast(sender, voteData.param1, voteData.param2);
 	}
+	if (rpcType == DmRpc.MAP_VOTE)
+	{
+		DmRoundEngine.GetInstance().OnMapVoteCall(sender);
+	}
 }
 
 // Client-side RPC routing: decode and hand to the state store. The UI layer

@@ -82,5 +82,6 @@ void DmRunSelfTests()
 	DmClientState.SelfTest();
 	DmSentinelConfig.SelfTest();
 	DmRoundEngine.SelfTest();
+	DmZoneMarkers.SelfTest();
 	Print("[DM] boot fixtures complete");
 }

@@ -12,6 +12,7 @@ class DmVoteService
 	private ref map<string, int> m_ZoneVoteByPlayer = new map<string, int>;
 	private ref map<string, int> m_PresetVoteByPlayer = new map<string, int>;
 	private ref map<string, float> m_LastCastAt = new map<string, float>;
+	private ref map<string, bool> m_MapVoteCalls = new map<string, bool>;
 
 	private int m_ActiveZoneEnabledIdx = 0;
 	private int m_ActivePresetValidIdx = 0;
@@ -34,6 +35,27 @@ class DmVoteService
 		m_ZoneVoteByPlayer.Clear();
 		m_PresetVoteByPlayer.Clear();
 		m_LastCastAt.Clear();
+		m_MapVoteCalls.Clear();
+	}
+
+	// /mapvote tally (accumulates during LIVE, cleared when the next vote
+	// opens). Returns true only for a player's FIRST call.
+	bool RegisterMapVoteCall(string playerId)
+	{
+		if (playerId == "") return false;
+		bool already;
+		if (m_MapVoteCalls.Find(playerId, already)) return false;
+		m_MapVoteCalls.Set(playerId, true);
+		return true;
+	}
+
+	int GetMapVoteCallCount() { return m_MapVoteCalls.Count(); }
+
+	// Two thirds of the lobby, rounded up, never below 1. Pure; fixtures.
+	static int MapVoteNeeded(int playerCount)
+	{
+		if (playerCount < 1) return 1;
+		return (playerCount * 2 + 2) / 3;
 	}
 
 	// RPC entry (PlayerBase.OnRPC routes here). All input is untrusted.
@@ -189,5 +211,22 @@ class DmVoteService
 		map<string, int> comboEmpty = new map<string, int>;
 		if (DmVoteService.ComboMajorityCount(comboEmpty, comboPresets) != 0) comboOk = 0;
 		Print("[DM] fixture DmVoteService combo bloc count: expected=1 got=" + comboOk.ToString() + " " + DmFixture.Verdict(comboOk == 1));
+
+		// /mapvote: two-thirds rounded up, dedup per player, cleared on open.
+		int mapVoteOk = 1;
+		if (DmVoteService.MapVoteNeeded(1) != 1) mapVoteOk = 0;
+		if (DmVoteService.MapVoteNeeded(2) != 2) mapVoteOk = 0;
+		if (DmVoteService.MapVoteNeeded(3) != 2) mapVoteOk = 0;
+		if (DmVoteService.MapVoteNeeded(5) != 4) mapVoteOk = 0;
+		if (DmVoteService.MapVoteNeeded(6) != 4) mapVoteOk = 0;
+		if (DmVoteService.MapVoteNeeded(0) != 1) mapVoteOk = 0;
+		DmVoteService mvProbe = new DmVoteService();
+		if (!mvProbe.RegisterMapVoteCall("a")) mapVoteOk = 0;
+		if (mvProbe.RegisterMapVoteCall("a")) mapVoteOk = 0;
+		if (mvProbe.RegisterMapVoteCall("")) mapVoteOk = 0;
+		if (mvProbe.GetMapVoteCallCount() != 1) mapVoteOk = 0;
+		mvProbe.OpenVote();
+		if (mvProbe.GetMapVoteCallCount() != 0) mapVoteOk = 0;
+		Print("[DM] fixture DmVoteService mapvote threshold: expected=1 got=" + mapVoteOk.ToString() + " " + DmFixture.Verdict(mapVoteOk == 1));
 	}
 }

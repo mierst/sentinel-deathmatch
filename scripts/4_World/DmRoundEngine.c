@@ -143,6 +143,27 @@ class DmRoundEngine
 		}
 	}
 
+	// /mapvote entry (RPC-routed). Two thirds of the lobby ends the round on
+	// the spot and reopens arena+preset voting.
+	void OnMapVoteCall(PlayerIdentity sender)
+	{
+		if (m_Phase != DmPhase.LIVE || !sender) return;
+		if (!DmVoteService.GetInstance().RegisterMapVoteCall(sender.GetPlainId())) return;
+
+		m_PlayerScratch.Clear();
+		GetGame().GetPlayers(m_PlayerScratch);
+		int callCount = DmVoteService.GetInstance().GetMapVoteCallCount();
+		int neededCount = DmVoteService.MapVoteNeeded(m_PlayerScratch.Count());
+		DmNetServer.GetInstance().SendKillfeedAll(sender.GetName() + " called a map vote (" + callCount.ToString() + "/" + neededCount.ToString() + ")");
+
+		if (callCount >= neededCount)
+		{
+			Print("[DM] map vote passed (" + callCount.ToString() + "/" + neededCount.ToString() + ") - ending round");
+			DmNetServer.GetInstance().SendKillfeedAll("Map vote passed - back to the lobby");
+			EnterVoting(GetGame().GetTickTime());
+		}
+	}
+
 	private void EnterVoting(float nowSeconds)
 	{
 		m_VoteFastForwarded = false;

@@ -15,6 +15,7 @@ class DmRpc
 	static const int VOTE_RESULT = 0x44D00004; // server->client: winners + tallies
 	static const int SCOREBOARD  = 0x44D00005; // server->client: end-of-round rows
 	static const int HUD_EVENT   = 0x44D00006; // server->client: killfeed line, zone warning
+	static const int MAP_VOTE    = 0x44D00007; // client->server: /mapvote chat command
 	static const int RANGE_END   = 0x44D0000F;
 
 	static void SelfTest()
