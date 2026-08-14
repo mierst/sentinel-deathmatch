@@ -9,6 +9,8 @@ class DmLoadoutFactory
 
 	private ref array<int> m_ValidPresetIndices = new array<int>;
 	private ref array<string> m_ValidMeleeClasses = new array<string>;
+	// steam64 -> validated full clothing replacement.
+	private ref map<string, ref array<string>> m_ValidCosmetics = new map<string, ref array<string>>;
 
 	static DmLoadoutFactory GetInstance()
 	{
@@ -59,6 +61,41 @@ class DmLoadoutFactory
 			m_ValidMeleeClasses.Insert(meleeClass);
 		}
 		Print("[DM] presets.json: " + m_ValidMeleeClasses.Count().ToString() + " of " + presets.GetMeleePoolCount().ToString() + " melee pool entries valid");
+
+		m_ValidCosmetics.Clear();
+		for (int cosIdx = 0; cosIdx < presets.GetCosmeticCount(); cosIdx++)
+		{
+			DmPlayerCosmeticData cosmetic = presets.GetCosmetic(cosIdx);
+			if (!cosmetic || cosmetic.SteamId == "" || cosmetic.Clothing.Count() == 0) continue;
+			bool cosmeticOk = true;
+			for (int ccIdx = 0; ccIdx < cosmetic.Clothing.Count(); ccIdx++)
+			{
+				if (!ClassExists(cosmetic.Clothing[ccIdx]))
+				{
+					Print("[DM] presets.json: PlayerCosmetics for " + cosmetic.SteamId + " references unknown classname '" + cosmetic.Clothing[ccIdx] + "' - entry disabled");
+					cosmeticOk = false;
+					break;
+				}
+			}
+			if (cosmeticOk) m_ValidCosmetics.Set(cosmetic.SteamId, cosmetic.Clothing);
+		}
+		if (presets.GetCosmeticCount() > 0)
+		{
+			Print("[DM] presets.json: " + m_ValidCosmetics.Count().ToString() + " of " + presets.GetCosmeticCount().ToString() + " player cosmetics valid");
+		}
+	}
+
+	// The clothing list this player actually spawns in: their cosmetic
+	// override when one exists, else the preset's list.
+	array<string> ResolveClothing(PlayerBase pb, DmPresetData preset)
+	{
+		PlayerIdentity ident = pb.GetIdentity();
+		if (ident)
+		{
+			array<string> cosmeticClothing;
+			if (m_ValidCosmetics.Find(ident.GetPlainId(), cosmeticClothing)) return cosmeticClothing;
+		}
+		return preset.Clothing;
 	}
 
 	// Returns the first unknown classname, or "" when all resolve. Static
@@ -137,9 +174,10 @@ class DmLoadoutFactory
 		DmPresetData preset = GetValidPreset(validIdx);
 		if (!preset) return;
 
-		for (int clothIdx = 0; clothIdx < preset.Clothing.Count(); clothIdx++)
+		array<string> clothingList = ResolveClothing(pb, preset);
+		for (int clothIdx = 0; clothIdx < clothingList.Count(); clothIdx++)
 		{
-			pb.GetInventory().CreateInInventory(preset.Clothing[clothIdx]);
+			pb.GetInventory().CreateInInventory(clothingList[clothIdx]);
 		}
 		for (int gearIdx = 0; gearIdx < preset.Gear.Count(); gearIdx++)
 		{

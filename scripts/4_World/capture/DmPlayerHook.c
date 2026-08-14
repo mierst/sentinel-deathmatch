@@ -7,6 +7,13 @@
 // Other files contribute free functions that this block calls.
 modded class PlayerBase
 {
+	// Last-attacker memory (server-side): lets the round engine credit kills
+	// the death event itself can't attribute - bleed-outs, uncon finishes,
+	// respawn-while-unconscious - instead of charging the victim a penalty.
+	PlayerBase m_DmLastAttacker;
+	float m_DmLastAttackedAt;
+	PlayerBase m_DmUnconnedBy;
+
 	override void EEKilled(Object killer)
 	{
 		super.EEKilled(killer);
@@ -14,6 +21,54 @@ modded class PlayerBase
 		if (!GetGame() || !GetGame().IsDedicatedServer()) return;
 
 		DmRoundEngine.GetInstance().OnPlayerKilled(this, killer);
+	}
+
+	override void EEHitBy(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)
+	{
+		super.EEHitBy(damageResult, damageType, source, component, dmgZone, ammo, modelPos, speedCoef);
+
+		if (!GetGame() || !GetGame().IsDedicatedServer()) return;
+
+		PlayerBase attacker = DmRoundEngine.ExtractKillerPlayer(source);
+		if (attacker && attacker != this)
+		{
+			m_DmLastAttacker = attacker;
+			m_DmLastAttackedAt = GetGame().GetTickTime();
+		}
+	}
+
+	override void OnUnconsciousStart()
+	{
+		super.OnUnconsciousStart();
+
+		if (!GetGame() || !GetGame().IsDedicatedServer()) return;
+
+		// Whoever put us down owns this state - and the death, however long
+		// we lie here and however it ends (finished, bled out, respawned).
+		if (m_DmLastAttacker && GetGame().GetTickTime() - m_DmLastAttackedAt <= 10.0)
+		{
+			m_DmUnconnedBy = m_DmLastAttacker;
+		}
+
+		if (DmConfig.GetInstance().IsEnabled() && DmConfig.GetInstance().IsUnconsciousnessDisabled())
+		{
+			// Arena rule: uncon = dead. Next frame, outside the uncon
+			// transition itself.
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DmFinishUnconKill, 100, false);
+		}
+	}
+
+	override void OnUnconsciousStop(int pCurrentCommandID)
+	{
+		super.OnUnconsciousStop(pCurrentCommandID);
+		m_DmUnconnedBy = null;
+	}
+
+	void DmFinishUnconKill()
+	{
+		if (!IsAlive()) return;
+		if (!IsUnconscious()) return;
+		SetHealth("GlobalHealth", "Health", 0);
 	}
 
 	override void OnRPC(PlayerIdentity sender, int rpc_type, ParamsReadContext ctx)

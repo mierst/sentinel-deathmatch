@@ -7,6 +7,24 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-08-14
+
+### Added
+- `DisableUnconsciousness` (config.json, default on): going unconscious
+  kills outright - arena rounds have no room for a 3-minute nap.
+- Last-attacker memory: deaths the engine can't attribute directly -
+  bleed-outs, unconscious finishes, choosing respawn while unconscious -
+  now credit whoever actually put the victim down. The kill-point
+  penalty only applies to genuinely self-inflicted deaths; respawning
+  while unconscious never costs a kill.
+- `PlayerCosmetics` in presets.json: per-steam64 full clothing override,
+  validated at boot like everything else. Weapons and gear unaffected.
+
+### Fixed
+- Scoreboard columns actually align now: rows render into four
+  independent column widgets (names left, numbers right) instead of one
+  space-padded text blob, which a proportional font could never line up.
+
 ## [0.1.6] - 2026-08-14
 
 ### Added

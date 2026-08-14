@@ -273,11 +273,32 @@ class DmRoundEngine
 
 		if (m_Phase != DmPhase.LIVE) return;
 
+		// Zone enforcement owns its deaths outright - no attribution fallback,
+		// or a shot taken seconds before walking out would claim the credit.
+		bool zoneKill = DmZoneService.GetInstance().ConsumeZoneKill(victimIdent.GetPlainId());
+
 		string killerId = "";
 		string killerName = "";
 		string weaponName = "";
 		float killDistance = 0;
 		PlayerBase killerPlayer = ExtractKillerPlayer(killerSource);
+		if (killerPlayer == victim) killerPlayer = null;
+		if (!zoneKill && !killerPlayer)
+		{
+			// The death event can't name a killer (bleed-out, uncon finish,
+			// respawn while unconscious): fall back to the victim's
+			// last-attacker memory. Recent hits win; whoever caused the
+			// current unconsciousness owns it with no time limit.
+			float attributionNow = GetGame().GetTickTime();
+			if (victim.m_DmLastAttacker && victim.m_DmLastAttacker != victim && attributionNow - victim.m_DmLastAttackedAt <= 10.0)
+			{
+				killerPlayer = victim.m_DmLastAttacker;
+			}
+			else if (victim.m_DmUnconnedBy && victim.m_DmUnconnedBy != victim)
+			{
+				killerPlayer = victim.m_DmUnconnedBy;
+			}
+		}
 		if (killerPlayer)
 		{
 			PlayerIdentity killerIdent = killerPlayer.GetIdentity();
@@ -305,7 +326,7 @@ class DmRoundEngine
 		{
 			// No killer to credit: the death itself costs a kill point.
 			DmScoreService.GetInstance().RegisterPenalty(victimIdent.GetPlainId(), victimIdent.GetName());
-			if (DmZoneService.GetInstance().ConsumeZoneKill(victimIdent.GetPlainId()))
+			if (zoneKill)
 			{
 				DmNetServer.GetInstance().SendKillfeedAll(victimIdent.GetName() + " left the zone");
 			}

@@ -1,5 +1,11 @@
 {
     "SchemaVersion": 1,
+    "PlayerCosmetics": [
+        {
+            "SteamId": "76561190000000000",
+            "Clothing": ["QuiltedJacket_Orange", "JumpsuitPants_Red", "AthleticShoes_Black", "TaloonBag_Orange", "ConstructionHelmet_Orange", "PlateCarrierVest", "Armband_Orange", "SportGlasses_Orange"]
+        }
+    ],
     "MeleePool": [
         "CombatKnife", "HuntingKnife", "KitchenKnife", "Machete",
         "Hatchet", "BaseballBat", "Crowbar", "PipeWrench"

@@ -31,10 +31,22 @@ class DmPresetData
 	ref array<ref DmGearItemData> Gear = new array<ref DmGearItemData>;
 }
 
+// Per-player cosmetic override: this steam64 always spawns in this exact
+// clothing list (replaces the preset's Clothing entirely; weapons and gear
+// untouched). Validated at boot like everything else.
+class DmPlayerCosmeticData
+{
+	string SteamId = "";
+	ref array<string> Clothing = new array<string>;
+}
+
 class DmPresetsData
 {
 	int SchemaVersion = 1;
 	ref array<ref DmPresetData> Presets = new array<ref DmPresetData>;
+	// Default empty - the array-clearing loader gotcha doesn't apply when
+	// empty IS the default.
+	ref array<ref DmPlayerCosmeticData> PlayerCosmetics = new array<ref DmPlayerCosmeticData>;
 	// Every spawn also gets one random melee weapon from this pool (hotbar
 	// slot 4). TESTBED-PROVEN GOTCHA: the JSON loader CLEARS constructor-
 	// seeded arrays when the key is absent from an existing file, so Load()
@@ -112,6 +124,8 @@ class DmPresetsConfig
 		smg.Clothing.Insert("Jeans_Blue");
 		smg.Clothing.Insert("AthleticShoes_Blue");
 		smg.Clothing.Insert("CourierBag");
+		smg.Clothing.Insert("BallisticHelmet_Black");
+		smg.Clothing.Insert("PlateCarrierVest_Black");
 		DmGearItemData bandage = new DmGearItemData();
 		bandage.ClassName = "BandageDressing";
 		bandage.Count = 2;
@@ -131,12 +145,22 @@ class DmPresetsConfig
 		shotgun.Clothing.Insert("CanvasPantsMidi_Red");
 		shotgun.Clothing.Insert("AthleticShoes_Black");
 		shotgun.Clothing.Insert("CourierBag");
+		shotgun.Clothing.Insert("BallisticHelmet_Desert");
+		shotgun.Clothing.Insert("PlateCarrierVest_Desert");
 		m_Data.Presets.Insert(shotgun);
 	}
 
 	int GetPresetCount() { return m_Data.Presets.Count(); }
 
 	int GetMeleePoolCount() { return m_Data.MeleePool.Count(); }
+
+	int GetCosmeticCount() { return m_Data.PlayerCosmetics.Count(); }
+
+	DmPlayerCosmeticData GetCosmetic(int cosmeticIdx)
+	{
+		if (cosmeticIdx < 0 || cosmeticIdx >= m_Data.PlayerCosmetics.Count()) return null;
+		return m_Data.PlayerCosmetics[cosmeticIdx];
+	}
 
 	string GetMeleePoolEntry(int meleeIdx)
 	{

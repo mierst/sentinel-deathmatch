@@ -48,6 +48,11 @@ class DmConfigData
 	// survives the victim's death/respawn blackout, which the 8 s HUD rows
 	// do not.
 	bool KillfeedToChat = true;
+
+	// Arena rule: going unconscious kills you outright (credited to whoever
+	// put you down via the last-attacker memory). Turn off to keep vanilla
+	// unconsciousness.
+	bool DisableUnconsciousness = true;
 }
 
 class DmConfig
@@ -138,6 +143,7 @@ class DmConfig
 	bool IsSurvivalPressureDisabled() { return m_Data.DisableSurvivalPressure; }
 	bool IsMeleeSpawnEnabled() { return m_Data.MeleeSpawn; }
 	bool IsKillfeedToChatEnabled() { return m_Data.KillfeedToChat; }
+	bool IsUnconsciousnessDisabled() { return m_Data.DisableUnconsciousness; }
 
 	static void SelfTest()
 	{
@@ -150,6 +156,7 @@ class DmConfig
 		if (!defaults.MeleeSpawn) defOk = 0;
 		if (defaults.VoteConsensusSeconds != 10) defOk = 0;
 		if (!defaults.KillfeedToChat) defOk = 0;
+		if (!defaults.DisableUnconsciousness) defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
 		DmConfig probe = new DmConfig();

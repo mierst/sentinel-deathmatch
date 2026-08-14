@@ -2,7 +2,13 @@
 // toggled with the scoreboard key during LIVE (shows the last-received rows).
 class DmScoreboardMenu extends UIScriptedMenu
 {
-	private MultilineTextWidget m_RowsText;
+	// Four aligned columns (names left, numbers right): one multiline widget
+	// per column beats per-row widgets and beats space-padding, which never
+	// lines up in a proportional font.
+	private MultilineTextWidget m_ColName;
+	private MultilineTextWidget m_ColK;
+	private MultilineTextWidget m_ColD;
+	private MultilineTextWidget m_ColStreak;
 	private TextWidget m_WinnerText;
 	private ButtonWidget m_BtnClose;
 	private ButtonWidget m_BtnRound;
@@ -14,7 +20,10 @@ class DmScoreboardMenu extends UIScriptedMenu
 	override Widget Init()
 	{
 		layoutRoot = GetGame().GetWorkspace().CreateWidgets("SentinelDM/layouts/dm_scoreboard.layout");
-		m_RowsText = MultilineTextWidget.Cast(layoutRoot.FindAnyWidget("RowsText"));
+		m_ColName = MultilineTextWidget.Cast(layoutRoot.FindAnyWidget("ColName"));
+		m_ColK = MultilineTextWidget.Cast(layoutRoot.FindAnyWidget("ColK"));
+		m_ColD = MultilineTextWidget.Cast(layoutRoot.FindAnyWidget("ColD"));
+		m_ColStreak = MultilineTextWidget.Cast(layoutRoot.FindAnyWidget("ColStreak"));
 		m_WinnerText = TextWidget.Cast(layoutRoot.FindAnyWidget("WinnerText"));
 		m_BtnClose = ButtonWidget.Cast(layoutRoot.FindAnyWidget("BtnClose"));
 		m_BtnRound = ButtonWidget.Cast(layoutRoot.FindAnyWidget("BtnRound"));
@@ -62,30 +71,40 @@ class DmScoreboardMenu extends UIScriptedMenu
 			}
 		}
 
-		if (m_RowsText)
+		if (m_ColName && m_ColK && m_ColD && m_ColStreak)
 		{
 			string sourceBlob = state.m_ScoreboardBlob;
 			if (m_ShowSession) sourceBlob = state.m_SessionBlob;
 
-			// Rows arrive as name\tK\tD\tstreak lines; render with padded
-			// columns (monospace-ish enough at this font size for v1).
+			// Rows arrive as name\tK\tD\tstreak lines; fan the fields out
+			// into the four column widgets, one line per row in each.
 			array<string> rows = new array<string>;
 			DmClientState.SplitBlob(sourceBlob, rows);
-			string rendered = "";
+			string nameLines = "";
+			string kLines = "";
+			string dLines = "";
+			string streakLines = "";
 			for (int rowIdx = 0; rowIdx < rows.Count(); rowIdx++)
 			{
 				array<string> fields = new array<string>;
 				rows[rowIdx].Split("\t", fields);
 				if (fields.Count() < 4) continue;
-				string paddedName = fields[0];
-				while (paddedName.Length() < 40)
+				if (nameLines != "")
 				{
-					paddedName = paddedName + " ";
+					nameLines = nameLines + "\n";
+					kLines = kLines + "\n";
+					dLines = dLines + "\n";
+					streakLines = streakLines + "\n";
 				}
-				if (rowIdx > 0) rendered = rendered + "\n";
-				rendered = rendered + paddedName + fields[1] + "      " + fields[2] + "      " + fields[3];
+				nameLines = nameLines + fields[0];
+				kLines = kLines + fields[1];
+				dLines = dLines + fields[2];
+				streakLines = streakLines + fields[3];
 			}
-			m_RowsText.SetText(rendered);
+			m_ColName.SetText(nameLines);
+			m_ColK.SetText(kLines);
+			m_ColD.SetText(dLines);
+			m_ColStreak.SetText(streakLines);
 		}
 	}
 

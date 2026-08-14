@@ -75,28 +75,76 @@ FrameWidgetClass DmScoreboardRoot {
      text "SESSION"
      style editor_quad_dark
     }
-    TextWidgetClass HeaderRow {
+    TextWidgetClass HeaderName {
      visible 1
      ignorepointer 1
      color 1 1 1 0.6
      position 60 134
-     size 680 22
+     size 320 22
      hexactpos 1
      vexactpos 1
      hexactsize 1
      vexactsize 1
-     text "PLAYER                                            K      D      STREAK"
+     text "PLAYER"
      font "gui/fonts/MetronLight14"
      "exact text" 1
      "exact text size" 15
      "text halign" left
     }
-    MultilineTextWidgetClass RowsText {
+    TextWidgetClass HeaderK {
+     visible 1
+     ignorepointer 1
+     color 1 1 1 0.6
+     position 420 134
+     size 80 22
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "K"
+     font "gui/fonts/MetronLight14"
+     "exact text" 1
+     "exact text size" 15
+     "text halign" right
+    }
+    TextWidgetClass HeaderD {
+     visible 1
+     ignorepointer 1
+     color 1 1 1 0.6
+     position 500 134
+     size 80 22
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "D"
+     font "gui/fonts/MetronLight14"
+     "exact text" 1
+     "exact text size" 15
+     "text halign" right
+    }
+    TextWidgetClass HeaderStreak {
+     visible 1
+     ignorepointer 1
+     color 1 1 1 0.6
+     position 600 134
+     size 140 22
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "STREAK"
+     font "gui/fonts/MetronLight14"
+     "exact text" 1
+     "exact text size" 15
+     "text halign" right
+    }
+    MultilineTextWidgetClass ColName {
      visible 1
      ignorepointer 1
      color 1 1 1 0.9
      position 60 162
-     size 680 460
+     size 320 460
      hexactpos 1
      vexactpos 1
      hexactsize 1
@@ -106,6 +154,54 @@ FrameWidgetClass DmScoreboardRoot {
      "exact text" 1
      "exact text size" 16
      "text halign" left
+    }
+    MultilineTextWidgetClass ColK {
+     visible 1
+     ignorepointer 1
+     color 1 1 1 0.9
+     position 420 162
+     size 80 460
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     font "gui/fonts/MetronLight14"
+     "exact text" 1
+     "exact text size" 16
+     "text halign" right
+    }
+    MultilineTextWidgetClass ColD {
+     visible 1
+     ignorepointer 1
+     color 1 1 1 0.9
+     position 500 162
+     size 80 460
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     font "gui/fonts/MetronLight14"
+     "exact text" 1
+     "exact text size" 16
+     "text halign" right
+    }
+    MultilineTextWidgetClass ColStreak {
+     visible 1
+     ignorepointer 1
+     color 1 1 1 0.9
+     position 600 162
+     size 140 460
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text ""
+     font "gui/fonts/MetronLight14"
+     "exact text" 1
+     "exact text size" 16
+     "text halign" right
     }
     ButtonWidgetClass BtnClose {
      visible 1
