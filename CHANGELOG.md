@@ -7,6 +7,18 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.12] - 2026-08-14
+
+### Added
+- DayZ Editor arena import: a zone's `DzeFile` references a JSON `.dze` in
+  `$profile:SentinelDeathmatch\arenas\` and the mod spawns it - no
+  converter, no loader mod. Objects materialize when the arena wins a vote
+  (before anyone teleports in) and retire a full round after it rotates
+  out; same-arena repeats touch nothing. Classnames validate at boot (a
+  bad arena disables its zone loudly), object budgets are configurable
+  (`MaxArenaObjects`, spawn/delete per-tick rates), EditorOnly markers are
+  skipped, and `.p3d` path placements are deferred to a later release.
+
 ## [0.1.11] - 2026-08-14
 
 ### Added

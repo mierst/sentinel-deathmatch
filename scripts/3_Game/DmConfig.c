@@ -53,6 +53,13 @@ class DmConfigData
 	// put you down via the last-attacker memory). Turn off to keep vanilla
 	// unconsciousness.
 	bool DisableUnconsciousness = true;
+
+	// .dze arena object budgets (DmArenaService). Spawns drain during the
+	// countdown into an empty network bubble; deletes drain during the next
+	// cycle's vote window.
+	int MaxArenaObjects = 1000;
+	int MaxArenaSpawnsPerTick = 50;
+	int MaxArenaDeletesPerTick = 25;
 }
 
 class DmConfig
@@ -123,6 +130,9 @@ class DmConfig
 		if (m_Data.SpawnProtectSeconds < 0) m_Data.SpawnProtectSeconds = 0;
 		if (m_Data.CorpseLifetimeSeconds < 5) m_Data.CorpseLifetimeSeconds = 5;
 		if (m_Data.MaxDeletesPerTick < 1) m_Data.MaxDeletesPerTick = 1;
+		if (m_Data.MaxArenaObjects < 1) m_Data.MaxArenaObjects = 1;
+		if (m_Data.MaxArenaSpawnsPerTick < 1) m_Data.MaxArenaSpawnsPerTick = 1;
+		if (m_Data.MaxArenaDeletesPerTick < 1) m_Data.MaxArenaDeletesPerTick = 1;
 	}
 
 	bool IsEnabled() { return m_CachedEnabled; }
@@ -144,6 +154,9 @@ class DmConfig
 	bool IsMeleeSpawnEnabled() { return m_Data.MeleeSpawn; }
 	bool IsKillfeedToChatEnabled() { return m_Data.KillfeedToChat; }
 	bool IsUnconsciousnessDisabled() { return m_Data.DisableUnconsciousness; }
+	int GetMaxArenaObjects() { return m_Data.MaxArenaObjects; }
+	int GetMaxArenaSpawnsPerTick() { return m_Data.MaxArenaSpawnsPerTick; }
+	int GetMaxArenaDeletesPerTick() { return m_Data.MaxArenaDeletesPerTick; }
 
 	static void SelfTest()
 	{
@@ -157,6 +170,8 @@ class DmConfig
 		if (defaults.VoteConsensusSeconds != 10) defOk = 0;
 		if (!defaults.KillfeedToChat) defOk = 0;
 		if (!defaults.DisableUnconsciousness) defOk = 0;
+		if (defaults.MaxArenaObjects != 1000) defOk = 0;
+		if (defaults.MaxArenaSpawnsPerTick != 50) defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
 		DmConfig probe = new DmConfig();

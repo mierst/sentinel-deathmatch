@@ -35,6 +35,7 @@ class DmRoundEngine
 
 		DmLoadoutFactory.GetInstance().ValidateAll();
 		DmZonesConfig.GetInstance(); // load + validate zones.json
+		DmArenaService.GetInstance().LoadAll(); // .dze sets; may disable zones
 		DmCleanupService.GetInstance().Start();
 
 		m_TickTimer = new Timer(CALL_CATEGORY_SYSTEM);
@@ -94,6 +95,10 @@ class DmRoundEngine
 			return;
 		}
 
+		// Arena object churn: spawns drain in any phase (mostly countdown),
+		// retired arenas fall only in VOTING/IDLE (their bubbles are empty).
+		DmArenaService.GetInstance().Tick(m_Phase);
+
 		if (m_Phase == DmPhase.VOTING)
 		{
 			// Consensus fast-forward: a strict majority on one zone+preset
@@ -112,6 +117,9 @@ class DmRoundEngine
 			if (nowSeconds >= m_PhaseDeadline)
 			{
 				DmVoteService.GetInstance().Resolve();
+				// Winning arena materializes BEFORE the countdown teleports
+				// anyone into its bubble (spawns drain over the countdown).
+				DmArenaService.GetInstance().OnArenaChosen(DmZoneService.GetInstance().GetActiveZoneName());
 				EnterCountdown(nowSeconds);
 			}
 			return;

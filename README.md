@@ -41,6 +41,23 @@ A cookie-cutter quickstart - SteamCMD to running deathmatch server in under
 an hour - lives in [server-example/](server-example/README.md), including an
 example `serverDZ.cfg` and the arena mission overlay.
 
+### Custom arenas from DayZ Editor
+
+Build an arena in DayZ Editor, save it, drop the JSON `.dze` file in
+`$profile:SentinelDeathmatch\arenas\`, and reference it from the zone in
+`zones.json` (`"DzeFile": "my_arena.dze"`). The mod reads the file directly -
+no converter and no loader mod required. When that arena wins a vote its
+objects materialize before anyone is teleported in; when it rotates out they
+are removed a full round later, after everyone has long left the area.
+
+Rules of the road: classname objects only for now (`.p3d` path placements
+are skipped with a log); every classname is validated against the server's
+config at boot, and an arena referencing a mod the server doesn't run is
+disabled loudly rather than failing mid-round; keep object counts sane
+(warning above 300, hard refusal above the configurable `MaxArenaObjects`).
+Binary `.dze` saves aren't readable - re-save as JSON in the Editor. See
+[docs/examples/arenas/](docs/examples/arenas/) for the file shape.
+
 ### Modded weapons
 
 Presets are not limited to vanilla. Any classname from any mod your server

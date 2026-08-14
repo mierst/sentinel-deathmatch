@@ -29,6 +29,11 @@ class DmZoneData
 	float OutOfZoneDmgPerSec = 5.0;
 	float OutOfZoneKillSeconds = 10.0;
 
+	// Optional DayZ Editor .dze object set for this arena: a plain filename
+	// inside $profile:SentinelDeathmatch\arenas\. Spawned when this zone
+	// wins a vote (see DmArenaService).
+	string DzeFile = "";
+
 	float LobbyX = 0;
 	float LobbyY = 0;
 	float LobbyZ = 0;
@@ -141,6 +146,22 @@ class DmZonesConfig
 	}
 
 	int GetEnabledCount() { return m_EnabledIndices.Count(); }
+
+	// Post-load disable (e.g. an arena file that can't materialize): pulls
+	// the zone from the enabled list so votes can never land on it.
+	void DisableZoneByName(string zoneName)
+	{
+		for (int enabledIdx = 0; enabledIdx < m_EnabledIndices.Count(); enabledIdx++)
+		{
+			DmZoneData zone = m_Data.Zones[m_EnabledIndices[enabledIdx]];
+			if (zone && zone.Name == zoneName)
+			{
+				m_EnabledIndices.RemoveOrdered(enabledIdx);
+				Print("[DM] zones.json: zone '" + zoneName + "' disabled post-load");
+				return;
+			}
+		}
+	}
 
 	DmZoneData GetEnabledZone(int enabledIdx)
 	{
