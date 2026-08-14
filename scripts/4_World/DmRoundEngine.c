@@ -66,6 +66,13 @@ class DmRoundEngine
 			}
 		}
 
+		// Everyone connected appears on the leaderboard immediately; new rows
+		// (fresh joins, post-reset reseeds) push a silent standings update.
+		if (DmScoreService.GetInstance().EnsurePlayers(m_PlayerScratch))
+		{
+			DmNetServer.GetInstance().SendScoreboardAll(DmScoreService.GetInstance().BuildRowsBlob(), DmScoreService.GetInstance().BuildSessionRowsBlob(), "");
+		}
+
 		// Population gate applies in every phase except IDLE itself: losing
 		// the room mid-anything drops the loop back to IDLE cleanly.
 		if (m_Phase != DmPhase.IDLE && playerCount < DmConfig.GetInstance().GetMinPlayers())
@@ -141,6 +148,31 @@ class DmRoundEngine
 			}
 			return;
 		}
+	}
+
+	// Join/leave announcements. Deduped per steam64 so a respawn or engine
+	// double-fire can never spam the feed: announced on FIRST connect,
+	// cleared (and announced) on disconnect.
+	private ref map<string, bool> m_AnnouncedPlayers = new map<string, bool>;
+
+	void OnPlayerJoined(PlayerIdentity identity)
+	{
+		if (!identity) return;
+		string joinedId = identity.GetPlainId();
+		bool alreadyAnnounced;
+		if (m_AnnouncedPlayers.Find(joinedId, alreadyAnnounced)) return;
+		m_AnnouncedPlayers.Set(joinedId, true);
+		DmNetServer.GetInstance().SendKillfeedAll(identity.GetName() + " joined");
+	}
+
+	void OnPlayerLeft(PlayerIdentity identity)
+	{
+		if (!identity) return;
+		string leftId = identity.GetPlainId();
+		bool wasAnnounced;
+		if (!m_AnnouncedPlayers.Find(leftId, wasAnnounced)) return;
+		m_AnnouncedPlayers.Remove(leftId);
+		DmNetServer.GetInstance().SendKillfeedAll(identity.GetName() + " left");
 	}
 
 	// /mapvote entry (RPC-routed). Two thirds of the lobby ends the round on

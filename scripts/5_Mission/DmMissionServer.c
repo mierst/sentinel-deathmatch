@@ -32,6 +32,24 @@ modded class MissionServer
 #endif
 	}
 
+	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity)
+	{
+		super.InvokeOnConnect(player, identity);
+		if (DmConfig.GetInstance().IsEnabled())
+		{
+			DmRoundEngine.GetInstance().OnPlayerJoined(identity);
+		}
+	}
+
+	override void PlayerDisconnected(PlayerBase player, PlayerIdentity identity, string uid)
+	{
+		if (DmConfig.GetInstance().IsEnabled())
+		{
+			DmRoundEngine.GetInstance().OnPlayerLeft(identity);
+		}
+		super.PlayerDisconnected(player, identity, uid);
+	}
+
 	// Join path: new connections spawn into the deathmatch loop (at the
 	// active zone when a round is armed) with the active loadout, replacing
 	// the vanilla random-position + menu-equipment flow.

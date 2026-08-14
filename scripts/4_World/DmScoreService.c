@@ -48,6 +48,33 @@ class DmScoreService
 		return GetOrCreateIn(m_Scores, playerId, playerName);
 	}
 
+	// Every connected player owns a row even before their first kill or
+	// death - a leaderboard that hides clean players reads as broken.
+	// Returns true when any new row appeared (caller pushes an update).
+	bool EnsurePlayers(array<Man> players)
+	{
+		bool changed = false;
+		for (int playerIdx = 0; playerIdx < players.Count(); playerIdx++)
+		{
+			Man man = players[playerIdx];
+			if (!man) continue;
+			PlayerIdentity ident = man.GetIdentity();
+			if (!ident) continue;
+			string playerId = ident.GetPlainId();
+			if (!m_Scores.Contains(playerId))
+			{
+				GetOrCreateIn(m_Scores, playerId, ident.GetName());
+				changed = true;
+			}
+			if (!m_SessionScores.Contains(playerId))
+			{
+				GetOrCreateIn(m_SessionScores, playerId, ident.GetName());
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
 	// Deaths with nobody to credit (suicide, zone enforcement) cost the
 	// victim a kill on top of the death - going negative is allowed.
 	void RegisterPenalty(string playerId, string playerName)

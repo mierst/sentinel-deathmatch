@@ -7,6 +7,14 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-08-14
+
+### Added
+- The leaderboard shows every connected player from the moment they join,
+  not just those who already have a kill or death.
+- Join/leave announcements in the killfeed and chat, deduplicated so
+  respawns never spam the feed.
+
 ## [0.1.10] - 2026-08-14
 
 ### Added
