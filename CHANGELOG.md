@@ -7,6 +7,21 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-08-14
+
+### Fixed
+- Client freeze when approaching the zone edge: the marker system spawned
+  its whole pillar window (up to 7 heavy smoke emitters) in one frame, and
+  the first spawn also paid the particle asset load. Pillars now light one
+  per tick, and the asset load happens hidden at mission start.
+- Vote menu could fail to appear for the whole vote window: any open menu
+  (the chat box included - fatal if you were mid-/mapvote at the
+  transition) vetoed the one-shot auto-open, stranding players in a vote
+  they couldn't see. The open now retries every tick until it lands, and
+  a standing HUD hint ("Voting open - press B") covers the gap.
+- /mapvote outside a live round now answers in chat instead of being
+  silently ignored - typing it during a vote window used to just vanish.
+
 ## [0.1.8] - 2026-08-14
 
 ### Added

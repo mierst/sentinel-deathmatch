@@ -104,6 +104,23 @@ class DmNetServer
 		SendParamToAll(DmRpc.SCOREBOARD, new Param3<string, string, string>(rowsBlob, sessionRowsBlob, winnerName));
 	}
 
+	// Direct chat line to one player (command feedback etc.).
+	void SendChatTo(PlayerIdentity ident, string text)
+	{
+		if (!ident) return;
+		m_SendScratch.Clear();
+		GetGame().GetPlayers(m_SendScratch);
+		for (int findIdx = 0; findIdx < m_SendScratch.Count(); findIdx++)
+		{
+			Man target = m_SendScratch[findIdx];
+			if (target.GetIdentity() == ident)
+			{
+				GetGame().ChatMP(target, text, "colorAction");
+				return;
+			}
+		}
+	}
+
 	// Zone grace countdown, targeted at the player who is outside. Rides
 	// HUD_EVENT as type 1; type 0 stays the killfeed.
 	void SendZoneCountdownTo(PlayerBase pb, int secondsLeft)

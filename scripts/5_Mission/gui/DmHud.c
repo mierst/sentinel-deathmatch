@@ -15,6 +15,11 @@ class DmHudController
 	private ref Timer m_UpdateTimer;
 
 	private int m_SeenVoteSeq = 0;
+	// Vote-menu auto-open must survive a blocked first attempt: any open
+	// menu (the CHAT INPUT included - both playtesters were mid-/mapvote)
+	// vetoes ShowScriptedMenu, and a one-shot open left players voteless in
+	// a running vote window (live 08-14). Retry every tick while wanted.
+	private bool m_VoteMenuWanted = false;
 	private int m_SeenScoreboardSeq = 0;
 	private int m_SeenVoteResultSeq = 0;
 	private float m_InfoClearAt = 0;
@@ -43,6 +48,8 @@ class DmHudController
 
 		m_UpdateTimer = new Timer(CALL_CATEGORY_GUI);
 		m_UpdateTimer.Run(0.5, this, "OnTick", null, true);
+		// Pay the smoke-particle asset load now, not at first zone approach.
+		GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallLater(PrewarmMarkers, 5000, false);
 		Print("[DM] HUD initialized");
 	}
 
@@ -57,6 +64,11 @@ class DmHudController
 		UpdateZoneWarning(state);
 		UpdateInfo(state, nowSeconds);
 		HandleSequences(state);
+	}
+
+	void PrewarmMarkers()
+	{
+		DmZoneMarkers.GetInstance().Prewarm();
 	}
 
 	private void UpdatePhaseAndTimer(DmClientState state)
@@ -141,16 +153,47 @@ class DmHudController
 			m_InfoText.Show(false);
 			m_InfoClearAt = 0;
 		}
+		// Standing hint whenever a vote is running and the menu isn't up
+		// (blocked auto-open, or the player closed it): B reopens it.
+		if (m_InfoClearAt == 0)
+		{
+			bool voteMenuOpen = m_VoteMenu && GetGame().GetUIManager().GetMenu() == m_VoteMenu;
+			if (state.m_Phase == DmPhase.VOTING && !voteMenuOpen)
+			{
+				m_InfoText.SetText("Voting open - press B to choose arena + weapons");
+				m_InfoText.Show(true);
+			}
+			else
+			{
+				m_InfoText.Show(false);
+			}
+		}
 	}
 
 	private void HandleSequences(DmClientState state)
 	{
-		// New vote window -> open the vote menu (unless another menu is up).
+		// New vote window -> the vote menu is wanted until it actually opens
+		// (or the window ends). OpenVoteMenu itself never fights another menu.
 		if (state.m_VoteSeq != m_SeenVoteSeq)
 		{
 			m_SeenVoteSeq = state.m_VoteSeq;
 			CloseScoreboard();
-			OpenVoteMenu();
+			m_VoteMenuWanted = true;
+		}
+		if (m_VoteMenuWanted)
+		{
+			if (state.m_Phase != DmPhase.VOTING)
+			{
+				m_VoteMenuWanted = false;
+			}
+			else if (m_VoteMenu && GetGame().GetUIManager().GetMenu() == m_VoteMenu)
+			{
+				m_VoteMenuWanted = false; // opened; a manual close now sticks
+			}
+			else
+			{
+				OpenVoteMenu();
+			}
 		}
 
 		// New scoreboard data: auto-open ONLY at round end. During LIVE the

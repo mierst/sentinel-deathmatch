@@ -147,7 +147,14 @@ class DmRoundEngine
 	// the spot and reopens arena+preset voting.
 	void OnMapVoteCall(PlayerIdentity sender)
 	{
-		if (m_Phase != DmPhase.LIVE || !sender) return;
+		if (!sender) return;
+		if (m_Phase != DmPhase.LIVE)
+		{
+			// Silent ignores stranded a whole lobby once (both playtesters
+			// typed /mapvote during a vote window and assumed it counted).
+			DmNetServer.GetInstance().SendChatTo(sender, "Map vote only counts during a live round.");
+			return;
+		}
 		if (!DmVoteService.GetInstance().RegisterMapVoteCall(sender.GetPlainId())) return;
 
 		m_PlayerScratch.Clear();

@@ -102,7 +102,10 @@ class DmZoneMarkers
 			StopPillar(stale[staleIdx]);
 		}
 
-		// Light missing slots.
+		// Light missing slots - at most ONE spawn per tick. Spawning the whole
+		// window in a single frame hitched clients hard enough to read as a
+		// freeze (live playtest 08-14); staggered, the window fills over ~3 s
+		// as you approach and nobody notices the cost.
 		for (int wantIdx = 0; wantIdx < wanted.Count(); wantIdx++)
 		{
 			int slot = wanted.GetKey(wantIdx);
@@ -115,6 +118,29 @@ class DmZoneMarkers
 			vector markPos = Vector(markX, GetGame().SurfaceY(markX, markZ), markZ);
 			Particle pillar = ParticleManager.GetInstance().PlayInWorld(ParticleList.GRENADE_M18_RED_LOOP, markPos);
 			if (pillar) m_Pillars.Set(slot, pillar);
+			break;
+		}
+	}
+
+	// First-ever particle spawn also pays the asset load (textures, effect
+	// data) - milliseconds of stall that must not land mid-firefight. Burn
+	// it at mission start instead: one emitter far underground, stopped two
+	// seconds later, before the player is anywhere near combat.
+	private Particle m_PrewarmParticle;
+
+	void Prewarm()
+	{
+		if (m_PrewarmParticle) return;
+		m_PrewarmParticle = ParticleManager.GetInstance().PlayInWorld(ParticleList.GRENADE_M18_RED_LOOP, Vector(0, -200, 0));
+		GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallLater(StopPrewarm, 2000, false);
+	}
+
+	void StopPrewarm()
+	{
+		if (m_PrewarmParticle)
+		{
+			m_PrewarmParticle.Stop();
+			m_PrewarmParticle = null;
 		}
 	}
 
