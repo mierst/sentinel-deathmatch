@@ -7,6 +7,13 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-08-14
+
+### Added
+- Full heal at round start: blood, bleeding sources, shock, and broken
+  legs all reset when the countdown teleports everyone in - last round's
+  wounds stay in last round.
+
 ## [0.1.9] - 2026-08-14
 
 ### Fixed

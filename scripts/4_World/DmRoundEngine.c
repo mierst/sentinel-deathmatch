@@ -201,12 +201,28 @@ class DmRoundEngine
 				pb.SetPosition(DmSpawnService.ResolveSpawnPos(sp));
 				pb.SetOrientation(Vector(sp.Yaw, 0, 0));
 			}
+			FullHealPlayer(pb);
 			DmLoadoutFactory.GetInstance().Apply(pb, presetIdx);
 		}
 
 		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetCountdownSeconds();
 		TransitionTo(DmPhase.COUNTDOWN);
 		DmNetServer.GetInstance().SendStateSyncAll();
+	}
+
+	// Every round starts from a clean body: last round's blood loss, bleeds,
+	// shock, and broken legs don't carry over. Survival stats (water/energy)
+	// are the pressure-removal loop's job.
+	private void FullHealPlayer(PlayerBase pb)
+	{
+		pb.SetHealth("GlobalHealth", "Health", pb.GetMaxHealth("GlobalHealth", "Health"));
+		pb.SetHealth("GlobalHealth", "Blood", pb.GetMaxHealth("GlobalHealth", "Blood"));
+		pb.SetHealth("GlobalHealth", "Shock", pb.GetMaxHealth("GlobalHealth", "Shock"));
+		if (pb.GetBleedingManagerServer())
+		{
+			pb.GetBleedingManagerServer().RemoveAllSources();
+		}
+		pb.SetBrokenLegs(eBrokenLegs.NO_BROKEN_LEGS);
 	}
 
 	private void EnterLive(float nowSeconds, int playerCount)

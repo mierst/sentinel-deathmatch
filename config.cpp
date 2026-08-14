@@ -22,7 +22,7 @@ class CfgMods
 		dir = "SentinelDM";
 		name = "Sentinel Deathmatch";
 		author = "Sentinel";
-		version = "0.1.9";
+		version = "0.1.10";
 		type = "mod";
 		dependencies[] = { "Game", "World", "Mission" };
 		class defs
