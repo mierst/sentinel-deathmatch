@@ -61,7 +61,7 @@ modded class MissionServer
 		}
 
 		float joinYaw;
-		vector joinPos = DmSpawnService.GetInstance().PickSpawnPosition(joinYaw);
+		vector joinPos = DmSpawnService.GetInstance().PickSpawnPosition(joinYaw, Vector(0, 0, 0));
 
 		PlayerBase joined = CreateCharacter(identity, joinPos, ctx, GetGame().CreateRandomPlayer());
 		if (!joined)

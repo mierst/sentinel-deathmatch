@@ -28,6 +28,9 @@ class DmConfigData
 
 	int RespawnDelaySeconds = 2;
 	int SpawnProtectSeconds = 3;
+	// Spawn points closer than this to where the player died are avoided on
+	// respawn (0 disables). Falls back to all points on tiny arenas.
+	int RespawnAvoidDeathMeters = 75;
 
 	int CorpseLifetimeSeconds = 45;
 	int MaxDeletesPerTick = 3;
@@ -128,6 +131,7 @@ class DmConfig
 		if (m_Data.ScoreLimit < 1) m_Data.ScoreLimit = 1;
 		if (m_Data.RespawnDelaySeconds < 0) m_Data.RespawnDelaySeconds = 0;
 		if (m_Data.SpawnProtectSeconds < 0) m_Data.SpawnProtectSeconds = 0;
+		if (m_Data.RespawnAvoidDeathMeters < 0) m_Data.RespawnAvoidDeathMeters = 0;
 		if (m_Data.CorpseLifetimeSeconds < 5) m_Data.CorpseLifetimeSeconds = 5;
 		if (m_Data.MaxDeletesPerTick < 1) m_Data.MaxDeletesPerTick = 1;
 		if (m_Data.MaxArenaObjects < 1) m_Data.MaxArenaObjects = 1;
@@ -147,6 +151,7 @@ class DmConfig
 	int GetScoreLimit() { return m_Data.ScoreLimit; }
 	int GetRespawnDelaySeconds() { return m_Data.RespawnDelaySeconds; }
 	int GetSpawnProtectSeconds() { return m_Data.SpawnProtectSeconds; }
+	int GetRespawnAvoidDeathMeters() { return m_Data.RespawnAvoidDeathMeters; }
 	int GetCorpseLifetimeSeconds() { return m_Data.CorpseLifetimeSeconds; }
 	int GetMaxDeletesPerTick() { return m_Data.MaxDeletesPerTick; }
 	string GetDropPolicy() { return m_Data.DropPolicy; }
@@ -172,6 +177,7 @@ class DmConfig
 		if (!defaults.DisableUnconsciousness) defOk = 0;
 		if (defaults.MaxArenaObjects != 1000) defOk = 0;
 		if (defaults.MaxArenaSpawnsPerTick != 50) defOk = 0;
+		if (defaults.RespawnAvoidDeathMeters != 75) defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
 		DmConfig probe = new DmConfig();

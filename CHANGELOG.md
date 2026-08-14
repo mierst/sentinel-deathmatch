@@ -7,6 +7,14 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.13] - 2026-08-14
+
+### Added
+- Respawns avoid the death spot: spawn points within
+  `RespawnAvoidDeathMeters` (default 75, 0 disables) of where the player
+  died are filtered out before the away-from-enemies pick, with a
+  fallback to all points on tiny arenas.
+
 ## [0.1.12] - 2026-08-14
 
 ### Added

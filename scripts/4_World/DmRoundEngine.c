@@ -332,7 +332,7 @@ class DmRoundEngine
 
 		// Corpse cleanup + respawn run in every phase; scoring only in LIVE.
 		DmCleanupService.GetInstance().RegisterCorpse(victim);
-		DmSpawnService.GetInstance().ScheduleRespawn(victimIdent);
+		DmSpawnService.GetInstance().ScheduleRespawn(victimIdent, victim.GetPosition());
 
 		if (m_Phase != DmPhase.LIVE) return;
 

@@ -25,17 +25,47 @@ class DmSpawnService
 	// over plain arrays so fixtures cover it without a live server.
 	static int BestSpawnIndex(array<ref DmSpawnPointData> points, array<vector> enemyPositions)
 	{
+		return BestSpawnIndexAvoiding(points, enemyPositions, Vector(0, 0, 0), 0);
+	}
+
+	// Same scoring, but spawn points within avoidRadiusMeters of deathPos are
+	// filtered out first - nobody respawns on top of where they just died.
+	// If the filter would empty the list every point stays a candidate
+	// (a tiny arena beats no spawn at all). Pure; fixtures.
+	static int BestSpawnIndexAvoiding(array<ref DmSpawnPointData> points, array<vector> enemyPositions, vector deathPos, float avoidRadiusMeters)
+	{
 		if (!points || points.Count() == 0) return -1;
-		if (!enemyPositions || enemyPositions.Count() == 0)
+
+		array<int> candidates = new array<int>;
+		if (avoidRadiusMeters > 0)
 		{
-			return Math.RandomInt(0, points.Count());
+			float avoidSq = avoidRadiusMeters * avoidRadiusMeters;
+			for (int filterIdx = 0; filterIdx < points.Count(); filterIdx++)
+			{
+				DmSpawnPointData fsp = points[filterIdx];
+				float fdx = fsp.X - deathPos[0];
+				float fdz = fsp.Z - deathPos[2];
+				if (fdx * fdx + fdz * fdz >= avoidSq) candidates.Insert(filterIdx);
+			}
+		}
+		if (candidates.Count() == 0)
+		{
+			for (int allIdx = 0; allIdx < points.Count(); allIdx++)
+			{
+				candidates.Insert(allIdx);
+			}
 		}
 
-		int bestIdx = 0;
-		float bestScore = -1;
-		for (int pointIdx = 0; pointIdx < points.Count(); pointIdx++)
+		if (!enemyPositions || enemyPositions.Count() == 0)
 		{
-			DmSpawnPointData sp = points[pointIdx];
+			return candidates[Math.RandomInt(0, candidates.Count())];
+		}
+
+		int bestIdx = candidates[0];
+		float bestScore = -1;
+		for (int candIdx = 0; candIdx < candidates.Count(); candIdx++)
+		{
+			DmSpawnPointData sp = points[candidates[candIdx]];
 			float nearestSq = 9999999999.0;
 			for (int enemyIdx = 0; enemyIdx < enemyPositions.Count(); enemyIdx++)
 			{
@@ -48,7 +78,7 @@ class DmSpawnService
 			if (nearestSq > bestScore)
 			{
 				bestScore = nearestSq;
-				bestIdx = pointIdx;
+				bestIdx = candidates[candIdx];
 			}
 		}
 		return bestIdx;
@@ -65,8 +95,10 @@ class DmSpawnService
 		return Vector(sp.X, y, sp.Z);
 	}
 
-	// Choose a spawn position in the active zone, away from living enemies.
-	vector PickSpawnPosition(out float outYaw)
+	// Choose a spawn position in the active zone, away from living enemies
+	// and away from deathPos (pass "0 0 0" when there is no death, e.g. a
+	// fresh join).
+	vector PickSpawnPosition(out float outYaw, vector deathPos)
 	{
 		outYaw = 0;
 		DmZoneData zone = DmZoneService.GetInstance().GetActiveZone();
@@ -97,27 +129,28 @@ class DmSpawnService
 			}
 		}
 
-		int chosenIdx = BestSpawnIndex(zone.SpawnPoints, enemyPositions);
+		int chosenIdx = BestSpawnIndexAvoiding(zone.SpawnPoints, enemyPositions, deathPos, DmConfig.GetInstance().GetRespawnAvoidDeathMeters());
 		if (chosenIdx < 0) chosenIdx = 0;
 		DmSpawnPointData chosen = zone.SpawnPoints[chosenIdx];
 		outYaw = chosen.Yaw;
 		return ResolveSpawnPos(chosen);
 	}
 
-	// EEKilled entry: schedule the server-driven respawn.
-	void ScheduleRespawn(PlayerIdentity identity)
+	// EEKilled entry: schedule the server-driven respawn. deathPos keeps the
+	// respawn away from the corpse.
+	void ScheduleRespawn(PlayerIdentity identity, vector deathPos)
 	{
 		if (!identity) return;
 		int delayMs = DmConfig.GetInstance().GetRespawnDelaySeconds() * 1000;
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DoRespawn, delayMs, false, identity);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DoRespawn, delayMs, false, identity, deathPos);
 	}
 
-	void DoRespawn(PlayerIdentity identity)
+	void DoRespawn(PlayerIdentity identity, vector deathPos)
 	{
 		if (!identity) return;
 
 		float spawnYaw;
-		vector spawnPos = PickSpawnPosition(spawnYaw);
+		vector spawnPos = PickSpawnPosition(spawnYaw, deathPos);
 
 		// 4_World cannot reference MissionServer (5_Mission type), so this
 		// uses the same 3_Game primitives MissionServer.CreateCharacter
@@ -207,5 +240,14 @@ class DmSpawnService
 		int emptyPick = DmSpawnService.BestSpawnIndex(points, new array<vector>);
 		if (emptyPick < 0 || emptyPick > 1) pickOk = 0;
 		Print("[DM] fixture DmSpawnService.BestSpawnIndex: expected=1 got=" + pickOk.ToString() + " " + DmFixture.Verdict(pickOk == 1));
+
+		// Death avoidance: dying at the far point must exclude it even though
+		// the enemy stands on the near point (avoidance beats enemy distance);
+		// an avoid radius covering every point falls back to the full set.
+		int avoidOk = 1;
+		if (DmSpawnService.BestSpawnIndexAvoiding(points, enemies, Vector(500, 0, 0), 75) != 0) avoidOk = 0;
+		if (DmSpawnService.BestSpawnIndexAvoiding(points, enemies, Vector(250, 0, 0), 10000) != 1) avoidOk = 0;
+		if (DmSpawnService.BestSpawnIndexAvoiding(points, enemies, Vector(0, 0, 0), 0) != 1) avoidOk = 0;
+		Print("[DM] fixture DmSpawnService avoid-death: expected=1 got=" + avoidOk.ToString() + " " + DmFixture.Verdict(avoidOk == 1));
 	}
 }
