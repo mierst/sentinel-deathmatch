@@ -1,0 +1,86 @@
+{
+    "MapName": "chernarusplus",
+    "EditorObjects": [
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:center",
+            "Position": [4520.0, 318.0, 8295.0],
+            "Orientation": [0.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:edge",
+            "Position": [4345.0, 300.0, 8125.0],
+            "Orientation": [0.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:spawn",
+            "Position": [4468.0, 0.0, 8278.0],
+            "Orientation": [110.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:spawn",
+            "Position": [4558.0, 0.0, 8330.0],
+            "Orientation": [215.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:spawn",
+            "Position": [4577.0, 0.0, 8240.0],
+            "Orientation": [305.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:spawn",
+            "Position": [4445.0, 0.0, 8330.0],
+            "Orientation": [140.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:spawn",
+            "Position": [4420.0, 0.0, 8205.0],
+            "Orientation": [40.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:spawn",
+            "Position": [4520.0, 0.0, 8232.0],
+            "Orientation": [0.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:lobby",
+            "Position": [4520.0, 0.0, 8570.0],
+            "Orientation": [180.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        }
+    ]
+}
