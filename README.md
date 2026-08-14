@@ -50,12 +50,29 @@ no converter and no loader mod required. When that arena wins a vote its
 objects materialize before anyone is teleported in; when it rotates out they
 are removed a full round later, after everyone has long left the area.
 
+**The whole arena can live in the Editor** via `dm:` markers: rename any
+placed object (its DisplayName) to a directive and it becomes geometry
+instead of scenery - it never spawns in-game:
+
+| Marker | Meaning |
+|---|---|
+| `dm:center` | the combat zone's center |
+| `dm:edge` | sizes the circle - farthest edge marker from center wins; drag it out for a bigger arena |
+| `dm:spawn` | a spawn point; the marker's rotation is the spawn facing, its exact height is kept (rooftops work) |
+| `dm:lobby` | the pre-round lobby position |
+
+Any geometry the markers provide overrides the zone's numbers in
+`zones.json`; anything missing falls back to them. That means an "arena"
+over an existing map location - a military compound, a village - needs no
+placed scenery at all: markers only, ten minutes in the Editor.
+
 Rules of the road: classname objects only for now (`.p3d` path placements
 are skipped with a log); every classname is validated against the server's
 config at boot, and an arena referencing a mod the server doesn't run is
 disabled loudly rather than failing mid-round; keep object counts sane
-(warning above 300, hard refusal above the configurable `MaxArenaObjects`).
-Binary `.dze` saves aren't readable - re-save as JSON in the Editor. See
+(warning above 300, hard refusal above the configurable `MaxArenaObjects`);
+derived radii clamp to 50-300 m (the single-network-bubble rule). Binary
+`.dze` saves aren't readable - re-save as JSON in the Editor. See
 [docs/examples/arenas/](docs/examples/arenas/) for the file shape.
 
 ### Modded weapons

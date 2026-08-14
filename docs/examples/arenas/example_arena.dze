@@ -2,6 +2,42 @@
     "MapName": "chernarusplus",
     "EditorObjects": [
         {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:center",
+            "Position": [4600.0, 339.5, 10000.0],
+            "Orientation": [0.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:edge",
+            "Position": [4850.0, 339.5, 10000.0],
+            "Orientation": [0.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:spawn",
+            "Position": [4750.0, 339.5, 10000.0],
+            "Orientation": [180.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
+            "Type": "Land_Misc_Barrel_Blue",
+            "DisplayName": "dm:spawn",
+            "Position": [4450.0, 339.5, 10000.0],
+            "Orientation": [0.0, 0.0, 0.0],
+            "Scale": 1.0,
+            "EditorOnly": false,
+            "Simulate": false
+        },
+        {
             "Type": "Land_Container_1Mo",
             "DisplayName": "container cover A",
             "Position": [4620.0, 339.5, 10010.0],

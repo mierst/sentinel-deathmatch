@@ -7,6 +7,16 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.14] - 2026-08-14
+
+### Added
+- `dm:` markers make the ENTIRE arena Editor-authored: rename any placed
+  object to `dm:center`, `dm:edge` (farthest sizes the circle),
+  `dm:spawn` (rotation = facing, height kept), or `dm:lobby` and it
+  becomes zone geometry instead of scenery. Marker geometry overrides
+  zones.json; derived radii clamp to 50-300 m. An arena over an existing
+  map location needs markers only - no placed objects at all.
+
 ## [0.1.13] - 2026-08-14
 
 ### Added

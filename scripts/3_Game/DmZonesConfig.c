@@ -145,6 +145,16 @@ class DmZonesConfig
 		Print("[DM] zones.json: " + m_EnabledIndices.Count().ToString() + " of " + m_Data.Zones.Count().ToString() + " zones enabled");
 	}
 
+	// Raw access (all zones, pre-validation) - the arena loader applies .dze
+	// marker geometry to raw zones and then re-runs Validate().
+	int GetZoneCount() { return m_Data.Zones.Count(); }
+
+	DmZoneData GetZone(int zoneIdx)
+	{
+		if (zoneIdx < 0 || zoneIdx >= m_Data.Zones.Count()) return null;
+		return m_Data.Zones[zoneIdx];
+	}
+
 	int GetEnabledCount() { return m_EnabledIndices.Count(); }
 
 	// Post-load disable (e.g. an arena file that can't materialize): pulls
