@@ -8,6 +8,12 @@ class DmZoneService
 
 	private DmZoneData m_ActiveZone;
 
+	// "countdown" enforcement state: when each player was first seen outside,
+	// and which deaths this service caused (consumed by the round engine so
+	// the killfeed can say "left the zone" instead of "died").
+	private ref map<string, float> m_OutsideSince = new map<string, float>;
+	private ref map<string, bool> m_PendingZoneKills = new map<string, bool>;
+
 	static DmZoneService GetInstance()
 	{
 		if (!s_Instance)
@@ -17,7 +23,21 @@ class DmZoneService
 		return s_Instance;
 	}
 
-	void SetActiveZone(DmZoneData zone) { m_ActiveZone = zone; }
+	void SetActiveZone(DmZoneData zone)
+	{
+		m_ActiveZone = zone;
+		m_OutsideSince.Clear();
+		m_PendingZoneKills.Clear();
+	}
+
+	// True exactly once per zone-enforcement death of this player.
+	bool ConsumeZoneKill(string playerId)
+	{
+		bool pending;
+		if (!m_PendingZoneKills.Find(playerId, pending)) return false;
+		m_PendingZoneKills.Remove(playerId);
+		return pending;
+	}
 	DmZoneData GetActiveZone() { return m_ActiveZone; }
 
 	string GetActiveZoneName()
@@ -47,11 +67,38 @@ class DmZoneService
 
 			vector pos = pb.GetPosition();
 			float overshoot = OutDistance2D(pos[0], pos[2], m_ActiveZone.CenterX, m_ActiveZone.CenterZ, m_ActiveZone.Radius);
-			if (overshoot <= 0) continue;
+
+			string playerId = "";
+			PlayerIdentity ident = pb.GetIdentity();
+			if (ident) playerId = ident.GetPlainId();
+
+			if (overshoot <= 0)
+			{
+				// Back inside: forgive any running grace timer.
+				if (playerId != "") m_OutsideSince.Remove(playerId);
+				continue;
+			}
 
 			if (m_ActiveZone.Enforcement == "teleport")
 			{
 				TeleportToNearestSpawn(pb);
+			}
+			else if (m_ActiveZone.Enforcement == "countdown")
+			{
+				if (playerId == "") continue;
+				float nowSeconds = GetGame().GetTickTime();
+				float sinceSeconds;
+				if (!m_OutsideSince.Find(playerId, sinceSeconds))
+				{
+					m_OutsideSince.Set(playerId, nowSeconds);
+					continue;
+				}
+				if (nowSeconds - sinceSeconds >= m_ActiveZone.OutOfZoneKillSeconds)
+				{
+					m_OutsideSince.Remove(playerId);
+					m_PendingZoneKills.Set(playerId, true);
+					pb.SetHealth("GlobalHealth", "Health", 0);
+				}
 			}
 			else
 			{

@@ -22,10 +22,12 @@ class DmZoneData
 	float Radius = 200;
 	float WarnMargin = 30;
 
-	// "damage" = soft wall (BR-gas style, scales with overshoot)
-	// "teleport" = snap back to nearest spawn point
+	// "damage"    = soft wall (BR-gas style, scales with overshoot)
+	// "teleport"  = snap back to nearest spawn point
+	// "countdown" = grace timer outside, then instant death + score penalty
 	string Enforcement = "damage";
 	float OutOfZoneDmgPerSec = 5.0;
+	float OutOfZoneKillSeconds = 10.0;
 
 	float LobbyX = 0;
 	float LobbyY = 0;
@@ -127,11 +129,12 @@ class DmZonesConfig
 				Print("[DM] zones.json: zone '" + zone.Name + "' needs >= 2 SpawnPoints - disabled");
 				continue;
 			}
-			if (zone.Enforcement != "damage" && zone.Enforcement != "teleport")
+			if (zone.Enforcement != "damage" && zone.Enforcement != "teleport" && zone.Enforcement != "countdown")
 			{
 				Print("[DM] zones.json: zone '" + zone.Name + "' unknown Enforcement '" + zone.Enforcement + "' - using 'damage'");
 				zone.Enforcement = "damage";
 			}
+			if (zone.OutOfZoneKillSeconds < 3.0) zone.OutOfZoneKillSeconds = 3.0;
 			m_EnabledIndices.Insert(zoneIdx);
 		}
 		Print("[DM] zones.json: " + m_EnabledIndices.Count().ToString() + " of " + m_Data.Zones.Count().ToString() + " zones enabled");

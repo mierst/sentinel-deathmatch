@@ -107,6 +107,18 @@ class DmNetServer
 	void SendKillfeedAll(string line)
 	{
 		SendParamToAll(DmRpc.HUD_EVENT, new Param2<int, string>(0, line));
+
+		// Chat copy: unlike the 8 s HUD rows, chat scrollback survives the
+		// victim's own death/respawn blackout.
+		if (!DmConfig.GetInstance().IsKillfeedToChatEnabled()) return;
+		m_SendScratch.Clear();
+		GetGame().GetPlayers(m_SendScratch);
+		for (int chatIdx = 0; chatIdx < m_SendScratch.Count(); chatIdx++)
+		{
+			Man chatTarget = m_SendScratch[chatIdx];
+			if (!chatTarget.GetIdentity()) continue;
+			GetGame().ChatMP(chatTarget, line, "colorAction");
+		}
 	}
 
 	// Pure formatter so the fixture can cover it.

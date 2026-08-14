@@ -282,7 +282,16 @@ class DmRoundEngine
 		}
 		else
 		{
-			DmNetServer.GetInstance().SendKillfeedAll(victimIdent.GetName() + " died");
+			// No killer to credit: the death itself costs a kill point.
+			DmScoreService.GetInstance().RegisterPenalty(victimIdent.GetPlainId(), victimIdent.GetName());
+			if (DmZoneService.GetInstance().ConsumeZoneKill(victimIdent.GetPlainId()))
+			{
+				DmNetServer.GetInstance().SendKillfeedAll(victimIdent.GetName() + " left the zone");
+			}
+			else
+			{
+				DmNetServer.GetInstance().SendKillfeedAll(victimIdent.GetName() + " died");
+			}
 		}
 	}
 

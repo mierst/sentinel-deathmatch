@@ -7,6 +7,28 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-08-14
+
+Live-playtest release: everything a solo tester couldn't see or survive.
+
+### Added
+- Killfeed lines are also delivered to every player's chat
+  (`KillfeedToChat` in config.json, default on). The HUD rows expire after
+  8 seconds - which the victim spends dead; chat scrollback survives the
+  respawn blackout.
+- New zone enforcement mode `"countdown"`: leave the arena and a grace
+  timer (`OutOfZoneKillSeconds`, default 10, floor 3) starts; return to be
+  forgiven, stay out and die instantly. The killfeed reports it as
+  "left the zone".
+- Score penalties: deaths with nobody to credit - suicides and zone
+  enforcement - now cost the victim a kill point on top of the death.
+  Negative scores are allowed.
+
+### Fixed
+- Vote menu and scoreboard now draw their semi-transparent backdrops. The
+  layouts referenced a panel style the engine doesn't ship, so every
+  background silently rendered as nothing and text floated over the world.
+
 ## [0.1.3] - 2026-08-12
 
 Consensus release: when the room agrees, get to the shooting.

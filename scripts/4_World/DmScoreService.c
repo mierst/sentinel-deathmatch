@@ -48,6 +48,16 @@ class DmScoreService
 		return GetOrCreateIn(m_Scores, playerId, playerName);
 	}
 
+	// Deaths with nobody to credit (suicide, zone enforcement) cost the
+	// victim a kill on top of the death - going negative is allowed.
+	void RegisterPenalty(string playerId, string playerName)
+	{
+		DmScoreEntry roundEntry = GetOrCreateIn(m_Scores, playerId, playerName);
+		roundEntry.Kills = roundEntry.Kills - 1;
+		DmScoreEntry sessionEntry = GetOrCreateIn(m_SessionScores, playerId, playerName);
+		sessionEntry.Kills = sessionEntry.Kills - 1;
+	}
+
 	// Returns the killer's new ROUND streak (0 for suicide/environment deaths).
 	int RegisterKill(string killerId, string killerName, string victimId, string victimName)
 	{
@@ -201,5 +211,16 @@ class DmScoreService
 		if (sessionBlob == "") sessionOk = 0;
 		if (sessionBlob.IndexOf("Killer\t2") < 0) sessionOk = 0;
 		Print("[DM] fixture DmScoreService session survives reset: expected=1 got=" + sessionOk.ToString() + " " + DmFixture.Verdict(sessionOk == 1));
+
+		// Penalty deaths cost a kill and may go negative, in round AND session.
+		DmScoreService penaltyProbe = new DmScoreService();
+		penaltyProbe.RegisterKill("", "", "p1", "Loner");
+		penaltyProbe.RegisterPenalty("p1", "Loner");
+		int penaltyOk = 1;
+		DmScoreEntry p1Entry = penaltyProbe.GetOrCreate("p1", "Loner");
+		if (p1Entry.Kills != -1) penaltyOk = 0;
+		if (p1Entry.Deaths != 1) penaltyOk = 0;
+		if (penaltyProbe.BuildSessionRowsBlob().IndexOf("Loner\t-1") < 0) penaltyOk = 0;
+		Print("[DM] fixture DmScoreService penalty negative: expected=1 got=" + penaltyOk.ToString() + " " + DmFixture.Verdict(penaltyOk == 1));
 	}
 }

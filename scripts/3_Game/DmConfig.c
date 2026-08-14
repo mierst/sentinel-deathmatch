@@ -43,6 +43,11 @@ class DmConfigData
 	// constructor-seeded arrays for files predating the field, so empty
 	// means "reseed defaults", not "off".
 	bool MeleeSpawn = true;
+
+	// Killfeed lines also land in each player's chat: chat scrollback
+	// survives the victim's death/respawn blackout, which the 8 s HUD rows
+	// do not.
+	bool KillfeedToChat = true;
 }
 
 class DmConfig
@@ -132,6 +137,7 @@ class DmConfig
 	string GetDropPolicy() { return m_Data.DropPolicy; }
 	bool IsSurvivalPressureDisabled() { return m_Data.DisableSurvivalPressure; }
 	bool IsMeleeSpawnEnabled() { return m_Data.MeleeSpawn; }
+	bool IsKillfeedToChatEnabled() { return m_Data.KillfeedToChat; }
 
 	static void SelfTest()
 	{
@@ -143,6 +149,7 @@ class DmConfig
 		if (defaults.DropPolicy != "allow") defOk = 0;
 		if (!defaults.MeleeSpawn) defOk = 0;
 		if (defaults.VoteConsensusSeconds != 10) defOk = 0;
+		if (!defaults.KillfeedToChat) defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
 		DmConfig probe = new DmConfig();
