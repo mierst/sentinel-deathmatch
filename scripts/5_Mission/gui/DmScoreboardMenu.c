@@ -65,6 +65,10 @@ class DmScoreboardMenu extends UIScriptedMenu
 			{
 				m_WinnerText.SetText("Winner: " + state.m_WinnerName);
 			}
+			else if (state.m_Phase == DmPhase.LIVE)
+			{
+				m_WinnerText.SetText("Round standings");
+			}
 			else
 			{
 				m_WinnerText.SetText("");

@@ -335,6 +335,11 @@ class DmRoundEngine
 				DmNetServer.GetInstance().SendKillfeedAll(victimIdent.GetName() + " died");
 			}
 		}
+
+		// Live standings: every scoring change pushes fresh rows so an open
+		// scoreboard doubles as the in-round leaderboard (kills are the only
+		// mutation, so this is strictly event-driven).
+		DmNetServer.GetInstance().SendScoreboardAll(DmScoreService.GetInstance().BuildRowsBlob(), DmScoreService.GetInstance().BuildSessionRowsBlob(), "");
 	}
 
 	// The killer source of EEKilled can be the weapon entity, a projectile,

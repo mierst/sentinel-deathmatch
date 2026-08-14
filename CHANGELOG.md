@@ -7,6 +7,18 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-08-14
+
+### Added
+- In-round leaderboard: the server pushes fresh standings after every
+  scoring change, so opening the scoreboard mid-round shows live
+  numbers ("Round standings") instead of last round's result. Auto-open
+  still only happens at round end.
+
+### Changed
+- HUD killfeed lines each draw on their own semi-transparent backing
+  strip, with breathing room between the text and the screen edge.
+
 ## [0.1.7] - 2026-08-14
 
 ### Added

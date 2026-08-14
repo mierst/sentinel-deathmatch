@@ -10,6 +10,7 @@ class DmHudController
 	private TextWidget m_InfoText;
 	private TextWidget m_WarnText;
 	private ref array<TextWidget> m_KillfeedRows = new array<TextWidget>;
+	private ref array<Widget> m_KillfeedRowBgs = new array<Widget>;
 
 	private ref Timer m_UpdateTimer;
 
@@ -37,6 +38,7 @@ class DmHudController
 		for (int rowIdx = 0; rowIdx < 5; rowIdx++)
 		{
 			m_KillfeedRows.Insert(TextWidget.Cast(m_Root.FindAnyWidget("kf_" + rowIdx.ToString())));
+			m_KillfeedRowBgs.Insert(m_Root.FindAnyWidget("kfbg_" + rowIdx.ToString()));
 		}
 
 		m_UpdateTimer = new Timer(CALL_CATEGORY_GUI);
@@ -92,6 +94,10 @@ class DmHudController
 				}
 			}
 			row.Show(rowLive);
+			if (rowIdx < m_KillfeedRowBgs.Count() && m_KillfeedRowBgs[rowIdx])
+			{
+				m_KillfeedRowBgs[rowIdx].Show(rowLive);
+			}
 		}
 	}
 
@@ -147,12 +153,18 @@ class DmHudController
 			OpenVoteMenu();
 		}
 
-		// New scoreboard (ROUNDEND) -> show it.
+		// New scoreboard data: auto-open ONLY at round end. During LIVE the
+		// server pushes standings after every kill (the in-round leaderboard);
+		// an open scoreboard refreshes from state each tick, so mid-round
+		// updates land silently.
 		if (state.m_ScoreboardSeq != m_SeenScoreboardSeq)
 		{
 			m_SeenScoreboardSeq = state.m_ScoreboardSeq;
-			CloseVoteMenu();
-			OpenScoreboard();
+			if (state.m_Phase == DmPhase.ROUNDEND)
+			{
+				CloseVoteMenu();
+				OpenScoreboard();
+			}
 		}
 
 		// Vote result -> transient info line.
