@@ -14,6 +14,12 @@ class DmHudController
 
 	private ref Timer m_UpdateTimer;
 
+	// Server-driven respawn leaves the vanilla death-screen focus state
+	// behind (free cursor, UI focus) because the client never clicks the
+	// respawn button that would normally dismiss it. Watch for our player
+	// entity being swapped for a live one and restore game focus.
+	private Man m_LastOwnPlayer;
+
 	private int m_SeenVoteSeq = 0;
 	// Vote-menu auto-open must survive a blocked first attempt: any open
 	// menu (the CHAT INPUT included - both playtesters were mid-/mapvote)
@@ -64,6 +70,30 @@ class DmHudController
 		UpdateZoneWarning(state);
 		UpdateInfo(state, nowSeconds);
 		HandleSequences(state);
+		WatchRespawnFocus();
+	}
+
+	private void WatchRespawnFocus()
+	{
+		Man ownPlayer = GetGame().GetPlayer();
+		if (ownPlayer && ownPlayer.IsAlive() && m_LastOwnPlayer && ownPlayer != m_LastOwnPlayer)
+		{
+			// Fresh body: give the death-screen leftovers a beat to settle,
+			// then reclaim focus (guarded - never fights a real menu).
+			GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallLater(RestoreGameFocus, 250, false);
+		}
+		if (ownPlayer) m_LastOwnPlayer = ownPlayer;
+	}
+
+	void RestoreGameFocus()
+	{
+		if (GetGame().GetUIManager().GetMenu()) return; // a menu owns the cursor
+		Man ownPlayer = GetGame().GetPlayer();
+		if (!ownPlayer || !ownPlayer.IsAlive()) return;
+		GetGame().GetInput().ResetGameFocus();
+		GetGame().GetUIManager().ShowUICursor(false);
+		Mission mission = GetGame().GetMission();
+		if (mission) mission.PlayerControlEnable(true);
 	}
 
 	void PrewarmMarkers()

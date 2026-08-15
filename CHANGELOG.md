@@ -7,6 +7,15 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.15] - 2026-08-15
+
+### Fixed
+- Respawning no longer strands the mouse cursor on screen (the vanilla
+  death-screen focus state lingered because server-driven respawn never
+  clicks the respawn button). The HUD now detects the body swap and
+  restores game focus automatically - no more ESC-in, ESC-out dance,
+  and the cursor can't wander onto a second monitor mid-fight.
+
 ## [0.1.14] - 2026-08-14
 
 ### Added
