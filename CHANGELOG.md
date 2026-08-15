@@ -7,6 +7,17 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.19] - 2026-08-15
+
+### Fixed
+- Stuck on "You are dead": v0.1.16 assumed the client auto-initiates
+  respawn with the dialog disabled - it does not; the respawn login can
+  only be opened client-side (the ESC-menu button's native call). The
+  mod's client HUD now makes that exact call automatically 2 s after
+  death, so auto-respawn is back AND rides the engine's own login flow.
+  This closes the respawn saga: no timer race, no duplicate bodies, no
+  login-timeout kicks, no stuck death screen.
+
 ## [0.1.18] - 2026-08-15
 
 ### Fixed

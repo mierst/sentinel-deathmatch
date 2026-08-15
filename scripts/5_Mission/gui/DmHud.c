@@ -73,6 +73,13 @@ class DmHudController
 		WatchRespawnFocus();
 	}
 
+	// Auto-respawn: the engine's respawn login can ONLY be opened by the
+	// client (g_Game.RespawnPlayer() - the same native call the ESC-menu
+	// Respawn button makes; no server-side equivalent exists, which is why
+	// the old server-timer respawn raced the login FSM). This presses that
+	// invisible button 2 s after death, so the player never touches a menu.
+	private bool m_AutoRespawnRequested = false;
+
 	private void WatchRespawnFocus()
 	{
 		Man ownPlayer = GetGame().GetPlayer();
@@ -82,7 +89,40 @@ class DmHudController
 			// then reclaim focus (guarded - never fights a real menu).
 			GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallLater(RestoreGameFocus, 250, false);
 		}
-		if (ownPlayer) m_LastOwnPlayer = ownPlayer;
+		if (ownPlayer)
+		{
+			if (ownPlayer.IsAlive())
+			{
+				m_AutoRespawnRequested = false;
+			}
+			else if (!m_AutoRespawnRequested)
+			{
+				m_AutoRespawnRequested = true;
+				GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallLater(RequestAutoRespawn, 2000, false);
+			}
+			m_LastOwnPlayer = ownPlayer;
+		}
+	}
+
+	// Mirrors the vanilla InGameMenu respawn button's sequence exactly.
+	void RequestAutoRespawn()
+	{
+		Man ownPlayer = GetGame().GetPlayer();
+		if (!ownPlayer || ownPlayer.IsAlive()) return;
+		if (!g_Game.CanRespawnPlayer())
+		{
+			// Engine not ready yet (death still settling): retry shortly.
+			GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallLater(RequestAutoRespawn, 1000, false);
+			return;
+		}
+		g_Game.GetMenuDefaultCharacterData(false).SetRandomCharacterForced(true);
+		g_Game.RespawnPlayer();
+		PlayerBase deadBody = PlayerBase.Cast(ownPlayer);
+		if (deadBody)
+		{
+			deadBody.SimulateDeath(true);
+			GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(deadBody.ShowDeadScreen, true, 0);
+		}
 	}
 
 	void RestoreGameFocus()
