@@ -7,6 +7,19 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.16] - 2026-08-15
+
+### Fixed
+- "Login timed out (WaitPreloadCamRespawnState)" kicks on respawn: the
+  mod's server-timer respawn raced the client's own auto-respawn login
+  (the respawn dialog is disabled, so the client initiates one itself),
+  sometimes creating duplicate bodies and stranding the client's login
+  state machine. Respawn now rides the engine's own respawn login
+  end-to-end - the mod only remembers the death position (60 s memory)
+  so the new spawn still avoids the death spot, and spawn protection now
+  applies on this path too. `RespawnDelaySeconds` is deprecated (respawn
+  timing is the client's death-screen flow now).
+
 ## [0.1.15] - 2026-08-15
 
 ### Fixed

@@ -26,6 +26,9 @@ class DmConfigData
 	int ScoreboardSeconds = 15;
 	int ScoreLimit = 30;
 
+	// DEPRECATED (v0.1.16): respawn timing is client-driven now (the engine
+	// respawn login), so this no longer delays anything. Field kept per the
+	// append-only schema rule.
 	int RespawnDelaySeconds = 2;
 	int SpawnProtectSeconds = 3;
 	// Spawn points closer than this to where the player died are avoided on

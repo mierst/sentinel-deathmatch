@@ -136,37 +136,52 @@ class DmSpawnService
 		return ResolveSpawnPos(chosen);
 	}
 
-	// EEKilled entry: schedule the server-driven respawn. deathPos keeps the
-	// respawn away from the corpse.
-	void ScheduleRespawn(PlayerIdentity identity, vector deathPos)
+	// ---- death memory (client-driven respawn) ----
+	//
+	// Respawn is executed by the ENGINE's own respawn login: with the
+	// respawn dialog disabled the client auto-sends its respawn event, the
+	// login flow re-enters OnClientNewEvent, and our mission override spawns
+	// the new body. A parallel server-timer respawn (the original design)
+	// raced that login FSM and produced duplicate bodies plus
+	// "Login timed out (WaitPreloadCamRespawnState)" kicks - never again.
+	// All EEKilled leaves behind is the death position, consumed by the next
+	// spawn pick so the respawn still avoids the death spot.
+
+	static const float DEATH_MEMORY_SECONDS = 60.0;
+
+	private ref map<string, vector> m_DeathPos = new map<string, vector>;
+	private ref map<string, float> m_DeathAt = new map<string, float>;
+
+	void NoteDeath(PlayerIdentity identity, vector deathPos)
 	{
 		if (!identity) return;
-		int delayMs = DmConfig.GetInstance().GetRespawnDelaySeconds() * 1000;
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DoRespawn, delayMs, false, identity, deathPos);
+		NoteDeathById(identity.GetPlainId(), deathPos, GetGame().GetTickTime());
 	}
 
-	void DoRespawn(PlayerIdentity identity, vector deathPos)
+	void NoteDeathById(string playerId, vector deathPos, float nowSeconds)
 	{
-		if (!identity) return;
+		m_DeathPos.Set(playerId, deathPos);
+		m_DeathAt.Set(playerId, nowSeconds);
+	}
 
-		float spawnYaw;
-		vector spawnPos = PickSpawnPosition(spawnYaw, deathPos);
+	vector ConsumeDeathPos(PlayerIdentity identity)
+	{
+		if (!identity) return Vector(0, 0, 0);
+		return ConsumeDeathPosById(identity.GetPlainId(), GetGame().GetTickTime());
+	}
 
-		// 4_World cannot reference MissionServer (5_Mission type), so this
-		// uses the same 3_Game primitives MissionServer.CreateCharacter
-		// wraps: CreatePlayer + SelectPlayer.
-		Entity playerEnt = GetGame().CreatePlayer(identity, GetGame().CreateRandomPlayer(), spawnPos, 0, "NONE");
-		PlayerBase fresh = PlayerBase.Cast(playerEnt);
-		if (!fresh)
-		{
-			Print("[DM] WARNING: respawn CreatePlayer failed for " + identity.GetName());
-			return;
-		}
-		GetGame().SelectPlayer(identity, fresh);
-		fresh.SetOrientation(Vector(spawnYaw, 0, 0));
-
-		ApplyProtection(fresh);
-		DmLoadoutFactory.GetInstance().Apply(fresh, DmVoteService.GetInstance().GetActivePresetIndex());
+	// One-shot and freshness-gated: a stale death (a rejoin minutes later)
+	// must not bias the join spawn. Pure over explicit time; fixtures.
+	vector ConsumeDeathPosById(string playerId, float nowSeconds)
+	{
+		vector deathPos;
+		if (!m_DeathPos.Find(playerId, deathPos)) return Vector(0, 0, 0);
+		float diedAt;
+		m_DeathAt.Find(playerId, diedAt);
+		m_DeathPos.Remove(playerId);
+		m_DeathAt.Remove(playerId);
+		if (nowSeconds - diedAt > DEATH_MEMORY_SECONDS) return Vector(0, 0, 0);
+		return deathPos;
 	}
 
 	void ApplyProtection(PlayerBase pb)
@@ -249,5 +264,19 @@ class DmSpawnService
 		if (DmSpawnService.BestSpawnIndexAvoiding(points, enemies, Vector(250, 0, 0), 10000) != 1) avoidOk = 0;
 		if (DmSpawnService.BestSpawnIndexAvoiding(points, enemies, Vector(0, 0, 0), 0) != 1) avoidOk = 0;
 		Print("[DM] fixture DmSpawnService avoid-death: expected=1 got=" + avoidOk.ToString() + " " + DmFixture.Verdict(avoidOk == 1));
+
+		// Death memory: one-shot consume, freshness-gated.
+		DmSpawnService memProbe = new DmSpawnService();
+		int memOk = 1;
+		memProbe.NoteDeathById("p1", Vector(100, 0, 200), 1000.0);
+		vector recalled = memProbe.ConsumeDeathPosById("p1", 1010.0);
+		if (recalled[0] != 100 || recalled[2] != 200) memOk = 0;
+		vector second = memProbe.ConsumeDeathPosById("p1", 1011.0);
+		if (second[0] != 0 || second[2] != 0) memOk = 0;
+		memProbe.NoteDeathById("p2", Vector(50, 0, 50), 1000.0);
+		vector stale = memProbe.ConsumeDeathPosById("p2", 1000.0 + DEATH_MEMORY_SECONDS + 1.0);
+		if (stale[0] != 0 || stale[2] != 0) memOk = 0;
+		if (memProbe.ConsumeDeathPosById("never-died", 1000.0) != Vector(0, 0, 0)) memOk = 0;
+		Print("[DM] fixture DmSpawnService death memory: expected=1 got=" + memOk.ToString() + " " + DmFixture.Verdict(memOk == 1));
 	}
 }

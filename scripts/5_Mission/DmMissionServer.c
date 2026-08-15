@@ -60,8 +60,11 @@ modded class MissionServer
 			return super.OnClientNewEvent(identity, pos, ctx);
 		}
 
+		// Respawns arrive here too (engine respawn login): a recorded death
+		// position steers the pick away from where they just fell.
 		float joinYaw;
-		vector joinPos = DmSpawnService.GetInstance().PickSpawnPosition(joinYaw, Vector(0, 0, 0));
+		vector deathPos = DmSpawnService.GetInstance().ConsumeDeathPos(identity);
+		vector joinPos = DmSpawnService.GetInstance().PickSpawnPosition(joinYaw, deathPos);
 
 		PlayerBase joined = CreateCharacter(identity, joinPos, ctx, GetGame().CreateRandomPlayer());
 		if (!joined)
@@ -69,6 +72,7 @@ modded class MissionServer
 			return super.OnClientNewEvent(identity, pos, ctx);
 		}
 		joined.SetOrientation(Vector(joinYaw, 0, 0));
+		DmSpawnService.GetInstance().ApplyProtection(joined);
 		DmLoadoutFactory.GetInstance().Apply(joined, DmVoteService.GetInstance().GetActivePresetIndex());
 
 		// Late state sync so the new client's HUD shows the current phase
