@@ -7,6 +7,21 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.17] - 2026-08-15
+
+### Added
+- Meta-presets via `RandomFrom` in presets.json: a preset naming other
+  presets becomes a per-spawn random pick among them - "Free For All"
+  gives every player in the lobby a different loadout every life.
+  Members must be ordinary presets; unknown names are skipped and an
+  empty membership disables the meta-preset loudly.
+
+### Fixed
+- Last round's dropped guns no longer litter the arena: a round-start
+  sweep queues every loose ground item inside the chosen zone through
+  the rate-limited cleanup pipe. Items held by players, items inside
+  containers, and arena furniture are untouched.
+
 ## [0.1.16] - 2026-08-15
 
 ### Fixed

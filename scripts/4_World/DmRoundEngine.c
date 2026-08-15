@@ -229,6 +229,9 @@ class DmRoundEngine
 		// countdown START: the countdown window doubles as the client's
 		// streaming warm-up for the (possibly new) arena footprint.
 		DmZoneData zone = DmZoneService.GetInstance().GetActiveZone();
+
+		// Last round's dropped guns are not this round's loot.
+		DmCleanupService.GetInstance().SweepGroundItems(zone);
 		int presetIdx = DmVoteService.GetInstance().GetActivePresetIndex();
 		for (int playerIdx = 0; playerIdx < m_PlayerScratch.Count(); playerIdx++)
 		{

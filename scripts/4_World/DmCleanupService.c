@@ -49,6 +49,39 @@ class DmCleanupService
 		m_Corpses.Insert(new DmCorpseRecord(body, deadline));
 	}
 
+	// Round-start sweep: loose items on the ground inside the chosen zone
+	// (last round's dropped guns, mags, bandages) are queued for immediate
+	// deletion through the same rate-limited pipe as corpses. Skips anything
+	// held by a player, anything inside a container hierarchy, and the arena
+	// system's own placed objects.
+	void SweepGroundItems(DmZoneData zone)
+	{
+		if (!zone) return;
+
+		vector sweepCenter = Vector(zone.CenterX, GetGame().SurfaceY(zone.CenterX, zone.CenterZ), zone.CenterZ);
+		array<Object> nearby = new array<Object>;
+		array<CargoBase> proxyCargos = new array<CargoBase>;
+		GetGame().GetObjectsAtPosition(sweepCenter, zone.Radius + zone.WarnMargin, nearby, proxyCargos);
+
+		int swept = 0;
+		float nowSeconds = GetGame().GetTickTime();
+		for (int objIdx = 0; objIdx < nearby.Count(); objIdx++)
+		{
+			ItemBase looseItem = ItemBase.Cast(nearby[objIdx]);
+			if (!looseItem) continue;
+			if (looseItem.GetHierarchyRootPlayer()) continue; // in someone's hands/inventory
+			if (looseItem.GetHierarchyParent()) continue;     // inside a container
+			if (DmArenaService.GetInstance().IsArenaObject(looseItem)) continue;
+			// Deadline of now = deleted by the very next sweep ticks.
+			m_Corpses.Insert(new DmCorpseRecord(looseItem, nowSeconds));
+			swept = swept + 1;
+		}
+		if (swept > 0)
+		{
+			Print("[DM] cleanup: " + swept.ToString() + " loose ground items queued for round-start sweep");
+		}
+	}
+
 	int GetPendingCount() { return m_Corpses.Count(); }
 
 	void OnSweep()

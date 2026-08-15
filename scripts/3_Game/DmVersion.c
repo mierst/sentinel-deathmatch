@@ -11,5 +11,5 @@
 //   4. Commit, tag vX.Y.Z after smoke passes, push with tags.
 class DmVersion
 {
-	static const string VERSION = "0.1.16";
+	static const string VERSION = "0.1.17";
 }

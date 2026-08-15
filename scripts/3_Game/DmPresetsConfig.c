@@ -29,6 +29,12 @@ class DmPresetData
 
 	ref array<string> Clothing = new array<string>;
 	ref array<ref DmGearItemData> Gear = new array<ref DmGearItemData>;
+
+	// Meta-preset: when non-empty this preset is a random pick among the
+	// NAMED presets - every spawn rolls again, so a lobby on "Free For All"
+	// fights with mixed loadouts. Members must be ordinary presets
+	// (no meta-in-meta). All other fields on a meta-preset are ignored.
+	ref array<string> RandomFrom = new array<string>;
 }
 
 // Per-player cosmetic override: this steam64 always spawns in this exact
@@ -174,11 +180,19 @@ class DmPresetsConfig
 		return m_Data.Presets[presetIdx];
 	}
 
+	// Fixture helper: an instance carrying only the in-code defaults, no file
+	// I/O - other subsystems' fixtures resolve against it.
+	static DmPresetsConfig MakeDefaultsProbe()
+	{
+		DmPresetsConfig defaultsProbe = new DmPresetsConfig();
+		defaultsProbe.m_Data = new DmPresetsData();
+		defaultsProbe.WriteDefaults();
+		return defaultsProbe;
+	}
+
 	static void SelfTest()
 	{
-		DmPresetsConfig probe = new DmPresetsConfig();
-		probe.m_Data = new DmPresetsData();
-		probe.WriteDefaults();
+		DmPresetsConfig probe = MakeDefaultsProbe();
 		int defOk = 1;
 		if (probe.GetPresetCount() != 2) defOk = 0;
 		DmPresetData firstPreset = probe.GetPreset(0);

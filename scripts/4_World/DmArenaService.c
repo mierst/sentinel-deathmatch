@@ -377,6 +377,19 @@ class DmArenaService
 	int GetPendingSpawnCount() { return m_SpawnQueue.Count(); }
 	int GetActiveObjectCount() { return m_ActiveObjects.Count(); }
 
+	// The round-start ground sweep must never eat arena furniture.
+	bool IsArenaObject(Object worldObj)
+	{
+		if (!worldObj) return false;
+		if (m_ActiveObjects.Find(worldObj) >= 0) return true;
+		for (int retIdx = 0; retIdx < m_RetiredByZone.Count(); retIdx++)
+		{
+			array<Object> retiredSet = m_RetiredByZone.GetElement(retIdx);
+			if (retiredSet && retiredSet.Find(worldObj) >= 0) return true;
+		}
+		return false;
+	}
+
 	static void SelfTest()
 	{
 		int arenaOk = 1;

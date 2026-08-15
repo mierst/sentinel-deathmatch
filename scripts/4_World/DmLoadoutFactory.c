@@ -9,6 +9,8 @@ class DmLoadoutFactory
 
 	private ref array<int> m_ValidPresetIndices = new array<int>;
 	private ref array<string> m_ValidMeleeClasses = new array<string>;
+	// raw meta-preset index -> raw member preset indices.
+	private ref map<int, ref array<int>> m_MetaMembers = new map<int, ref array<int>>;
 	// steam64 -> validated full clothing replacement.
 	private ref map<string, ref array<string>> m_ValidCosmetics = new map<string, ref array<string>>;
 
@@ -27,12 +29,15 @@ class DmLoadoutFactory
 	void ValidateAll()
 	{
 		m_ValidPresetIndices.Clear();
+		m_MetaMembers.Clear();
 		DmPresetsConfig presets = DmPresetsConfig.GetInstance();
 
+		// Pass 1: ordinary presets.
 		for (int presetIdx = 0; presetIdx < presets.GetPresetCount(); presetIdx++)
 		{
 			DmPresetData preset = presets.GetPreset(presetIdx);
 			if (!preset.Enabled) continue;
+			if (preset.RandomFrom.Count() > 0) continue; // meta: pass 2
 
 			string badClass = FindInvalidClassname(preset);
 			if (badClass != "")
@@ -46,6 +51,27 @@ class DmLoadoutFactory
 				continue;
 			}
 			m_ValidPresetIndices.Insert(presetIdx);
+		}
+
+		// Pass 2: meta-presets resolve against the pass-1 survivors.
+		for (int metaIdx = 0; metaIdx < presets.GetPresetCount(); metaIdx++)
+		{
+			DmPresetData metaPreset = presets.GetPreset(metaIdx);
+			if (!metaPreset.Enabled || metaPreset.RandomFrom.Count() == 0) continue;
+			if (metaPreset.Name == "")
+			{
+				Print("[DM] presets.json: meta-preset " + metaIdx.ToString() + " has no Name - disabled");
+				continue;
+			}
+			array<int> memberIndices = ResolveMetaMembers(presets, m_ValidPresetIndices, metaPreset);
+			if (memberIndices.Count() == 0)
+			{
+				Print("[DM] presets.json: meta-preset '" + metaPreset.Name + "' has no valid members - disabled");
+				continue;
+			}
+			m_MetaMembers.Set(metaIdx, memberIndices);
+			m_ValidPresetIndices.Insert(metaIdx);
+			Print("[DM] presets.json: meta-preset '" + metaPreset.Name + "' -> " + memberIndices.Count().ToString() + " member loadouts");
 		}
 		Print("[DM] presets.json: " + m_ValidPresetIndices.Count().ToString() + " of " + presets.GetPresetCount().ToString() + " presets valid");
 
@@ -153,25 +179,55 @@ class DmLoadoutFactory
 		return DmPresetsConfig.GetInstance().GetPreset(m_ValidPresetIndices[validIdx]);
 	}
 
-	// Apply a validated preset (by valid-index). Stage 1 runs next frame.
-	void Apply(PlayerBase pb, int validIdx)
+	// Membership by NAME against the pass-1 valid raw indices; a meta can
+	// never contain itself or another meta. Pure; fixtures.
+	static array<int> ResolveMetaMembers(DmPresetsConfig presets, array<int> validRawIndices, DmPresetData metaPreset)
 	{
-		DmPresetData preset = GetValidPreset(validIdx);
-		if (!pb || !preset) return;
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(StageClear, 25, false, pb, validIdx);
+		array<int> memberIndices = new array<int>;
+		for (int nameIdx = 0; nameIdx < metaPreset.RandomFrom.Count(); nameIdx++)
+		{
+			string memberName = metaPreset.RandomFrom[nameIdx];
+			for (int validIdx = 0; validIdx < validRawIndices.Count(); validIdx++)
+			{
+				DmPresetData candidate = presets.GetPreset(validRawIndices[validIdx]);
+				if (candidate && candidate.Name == memberName && candidate.RandomFrom.Count() == 0)
+				{
+					memberIndices.Insert(validRawIndices[validIdx]);
+					break;
+				}
+			}
+		}
+		return memberIndices;
 	}
 
-	void StageClear(PlayerBase pb, int validIdx)
+	// Apply a validated preset (by valid-index). A meta-preset rolls one of
+	// its members HERE - once per spawn - and the concrete raw index rides
+	// through the staging chain. Stage 1 runs next frame.
+	void Apply(PlayerBase pb, int validIdx)
+	{
+		if (!pb) return;
+		if (validIdx < 0 || validIdx >= m_ValidPresetIndices.Count()) return;
+		int rawIdx = m_ValidPresetIndices[validIdx];
+		array<int> memberIndices;
+		if (m_MetaMembers.Find(rawIdx, memberIndices) && memberIndices.Count() > 0)
+		{
+			rawIdx = memberIndices[Math.RandomInt(0, memberIndices.Count())];
+		}
+		if (!DmPresetsConfig.GetInstance().GetPreset(rawIdx)) return;
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(StageClear, 25, false, pb, rawIdx);
+	}
+
+	void StageClear(PlayerBase pb, int rawPresetIdx)
 	{
 		if (!pb || !pb.IsAlive()) return;
 		pb.ClearInventory();
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(StageClothing, 50, false, pb, validIdx);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(StageClothing, 50, false, pb, rawPresetIdx);
 	}
 
-	void StageClothing(PlayerBase pb, int validIdx)
+	void StageClothing(PlayerBase pb, int rawPresetIdx)
 	{
 		if (!pb || !pb.IsAlive()) return;
-		DmPresetData preset = GetValidPreset(validIdx);
+		DmPresetData preset = DmPresetsConfig.GetInstance().GetPreset(rawPresetIdx);
 		if (!preset) return;
 
 		array<string> clothingList = ResolveClothing(pb, preset);
@@ -187,15 +243,15 @@ class DmLoadoutFactory
 				pb.GetInventory().CreateInInventory(gearItem.ClassName);
 			}
 		}
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(StageWeapons, 50, false, pb, validIdx);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(StageWeapons, 50, false, pb, rawPresetIdx);
 	}
 
 	// Hotbar layout: slot 1 gun, slots 2-3 bandages, slot 4 melee, slot 5
 	// sidearm (when a preset carries both a primary and a secondary).
-	void StageWeapons(PlayerBase pb, int validIdx)
+	void StageWeapons(PlayerBase pb, int rawPresetIdx)
 	{
 		if (!pb || !pb.IsAlive()) return;
-		DmPresetData preset = GetValidPreset(validIdx);
+		DmPresetData preset = DmPresetsConfig.GetInstance().GetPreset(rawPresetIdx);
 		if (!preset) return;
 
 		// The main weapon goes to hands AND hotbar slot 1. When a preset has
@@ -336,5 +392,26 @@ class DmLoadoutFactory
 		if (probe.GetValidMeleeClass(0) != "") boundsOk = 0;
 		if (probe.GetValidMeleeClass(-1) != "") boundsOk = 0;
 		Print("[DM] fixture DmLoadoutFactory bounds: expected=1 got=" + boundsOk.ToString() + " " + DmFixture.Verdict(boundsOk == 1));
+
+		// Meta-preset member resolution: order follows RandomFrom, unknown
+		// names are skipped, and a meta can never contain a meta.
+		DmPresetsConfig presetProbe = DmPresetsConfig.MakeDefaultsProbe(); // SMG Rush(0), Shotgun CQB(1)
+		array<int> validRaw = new array<int>;
+		validRaw.Insert(0);
+		validRaw.Insert(1);
+		DmPresetData metaProbe = new DmPresetData();
+		metaProbe.Name = "Free For All";
+		metaProbe.RandomFrom.Insert("Shotgun CQB");
+		metaProbe.RandomFrom.Insert("SMG Rush");
+		metaProbe.RandomFrom.Insert("No Such Preset");
+		array<int> members = ResolveMetaMembers(presetProbe, validRaw, metaProbe);
+		int metaOk = 1;
+		if (members.Count() != 2) metaOk = 0;
+		if (members.Count() == 2 && (members[0] != 1 || members[1] != 0)) metaOk = 0;
+		DmPresetData emptyMeta = new DmPresetData();
+		emptyMeta.Name = "Empty";
+		emptyMeta.RandomFrom.Insert("No Such Preset");
+		if (ResolveMetaMembers(presetProbe, validRaw, emptyMeta).Count() != 0) metaOk = 0;
+		Print("[DM] fixture DmLoadoutFactory meta members: expected=1 got=" + metaOk.ToString() + " " + DmFixture.Verdict(metaOk == 1));
 	}
 }
