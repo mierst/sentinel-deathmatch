@@ -51,6 +51,12 @@ never spawn. Anything they provide overrides the zone's numbers in
 A marker's `Type` can be any object - it's just your visual handle while
 editing and skips classname validation.
 
+Note `DisplayName` is the Editor's per-placement label (rename the object in
+the Editor's placed-objects list), not the item's in-game name - it lives
+only in the save file and the game never reads it. If renaming in the Editor
+is awkward, edit the saved JSON in a text editor instead; the result is
+identical.
+
 ## Wiring it up
 
 1. Drop the file in `$profile:SentinelDeathmatch\arenas\` (plain filename,
