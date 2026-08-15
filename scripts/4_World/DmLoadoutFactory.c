@@ -265,7 +265,7 @@ class DmLoadoutFactory
 			{
 				for (int attIdx = 0; attIdx < preset.PrimaryAttachments.Count(); attIdx++)
 				{
-					primary.GetInventory().CreateAttachment(preset.PrimaryAttachments[attIdx]);
+					AttachToWeapon(primary, preset.PrimaryAttachments[attIdx]);
 				}
 				LoadWeapon(primary, preset.PrimaryMagClass);
 				if (preset.PrimaryMagClass != "")
@@ -295,7 +295,7 @@ class DmLoadoutFactory
 			{
 				for (int satIdx = 0; satIdx < preset.SecondaryAttachments.Count(); satIdx++)
 				{
-					secondary.GetInventory().CreateAttachment(preset.SecondaryAttachments[satIdx]);
+					AttachToWeapon(secondary, preset.SecondaryAttachments[satIdx]);
 				}
 				LoadWeapon(secondary, preset.SecondaryMagClass);
 				if (preset.SecondaryMagClass != "")
@@ -351,6 +351,16 @@ class DmLoadoutFactory
 			return;
 		}
 		pb.SetQuickBarEntityShortcut(melee, 3, true);
+	}
+
+	// Direct slot first; when the piece mounts onto another attachment (a
+	// scope onto a rail base - modded packs love this), fall through to a
+	// nested-inventory placement, which searches the weapon's attachment
+	// tree. List order matters: base before scope.
+	private void AttachToWeapon(EntityAI weapon, string attachmentClass)
+	{
+		if (weapon.GetInventory().CreateAttachment(attachmentClass)) return;
+		weapon.GetInventory().CreateInInventory(attachmentClass);
 	}
 
 	// Weapons spawn ready to fire: full magazine attached (or internal mag

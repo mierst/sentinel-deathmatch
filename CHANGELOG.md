@@ -7,6 +7,14 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.18] - 2026-08-15
+
+### Fixed
+- Preset attachments that mount onto another attachment (a scope onto a
+  rail base - common in modded weapon packs) now land correctly: direct
+  slot attach first, nested-inventory placement as fallback. List order
+  matters: base before scope.
+
 ## [0.1.17] - 2026-08-15
 
 ### Added
