@@ -12,5 +12,12 @@
     "CorpseLifetimeSeconds": 45,
     "MaxDeletesPerTick": 3,
     "DropPolicy": "allow",
-    "DisableSurvivalPressure": 1
+    "DisableSurvivalPressure": 1,
+    "AnnouncementIntervalSeconds": 300,
+    "Announcements": [
+        "Join our Discord: discord.gg/your-invite",
+        "Type /mapvote to call an early map vote."
+    ],
+    "AnnouncementColor": "colorImportant",
+    "WelcomeMessage": "Welcome! Discord: discord.gg/your-invite"
 }

@@ -7,6 +7,17 @@ passes, not before.
 
 ## [Unreleased]
 
+### Added
+- Server announcements: `Announcements` (list of lines) rotates one chat
+  line to everyone every `AnnouncementIntervalSeconds` (default 300, 30 s
+  floor, 0 = off; default list empty = off) in `AnnouncementColor`
+  (colorImportant/colorAction/colorFriendly/colorStatusChannel). The
+  schedule arms on the first player of a session, so an empty server
+  never spams its own log and the first line lands one interval after
+  someone is there to read it. Lines are flattened to single chat rows.
+- `WelcomeMessage`: one chat line to each player ~6 s after their first
+  connect of the session (respawns do not repeat it). Empty = off.
+
 ## [0.1.19] - 2026-08-15
 
 ### Fixed

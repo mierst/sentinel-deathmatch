@@ -67,7 +67,10 @@ Add `"-serverMod=@SentinelEnforcer"` if you run the Enforcer. Linux binary:
 `DayZServer`. The first boot writes default configs to
 `profile\SentinelDeathmatch\`:
 
-- `config.json` - round timings, score limit, respawn, min players
+- `config.json` - round timings, score limit, respawn, min players, and
+  the chat announcements (`Announcements` list rotated every
+  `AnnouncementIntervalSeconds`, plus a one-shot `WelcomeMessage` on first
+  connect - the natural place for a Discord invite)
 - `zones.json` - arenas: boundary circle + spawn points (a demo arena on
   Chernarus is written so the loop works out of the box)
 - `presets.json` - two vanilla-weapon loadouts to start from
