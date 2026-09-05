@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.20] - 2026-09-05
+
 ### Added
 - Server announcements: `Announcements` (list of lines) rotates one chat
   line to everyone every `AnnouncementIntervalSeconds` (default 300, 30 s
