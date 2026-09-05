@@ -64,9 +64,20 @@ class DmNetServer
 		SendParamToAll(DmRpc.STATE_SYNC, BuildStateSyncParam());
 	}
 
+	// Join-time client option switches (config-driven, server-decided).
+	void SendClientOptionsTo(PlayerBase pb)
+	{
+		if (!pb) return;
+		PlayerIdentity optIdent = pb.GetIdentity();
+		if (!optIdent) return;
+		int mask = DmClientOpts.Pack(DmConfig.GetInstance().IsChatHistoryOnOpenEnabled());
+		GetGame().RPCSingleParam(pb, DmRpc.CLIENT_OPTS, new Param1<int>(mask), true, optIdent);
+	}
+
 	void SendStateSyncTo(PlayerBase pb)
 	{
 		if (!pb) return;
+		SendClientOptionsTo(pb);
 		PlayerIdentity ident = pb.GetIdentity();
 		if (!ident) return;
 		GetGame().RPCSingleParam(pb, DmRpc.STATE_SYNC, BuildStateSyncParam(), true, ident);

@@ -67,10 +67,12 @@ Add `"-serverMod=@SentinelEnforcer"` if you run the Enforcer. Linux binary:
 `DayZServer`. The first boot writes default configs to
 `profile\SentinelDeathmatch\`:
 
-- `config.json` - round timings, score limit, respawn, min players, and
-  the chat announcements (`Announcements` list rotated every
+- `config.json` - round timings, score limit, respawn, min players, the
+  chat announcements (`Announcements` list rotated every
   `AnnouncementIntervalSeconds`, plus a one-shot `WelcomeMessage` on first
-  connect - the natural place for a Discord invite)
+  connect - the natural place for a Discord invite), and `ChatHistoryOnOpen`
+  (off by default: keeps the last chat lines visible while the chat box is
+  open instead of letting them fade)
 - `zones.json` - arenas: boundary circle + spawn points (a demo arena on
   Chernarus is written so the loop works out of the box)
 - `presets.json` - two vanilla-weapon loadouts to start from
@@ -98,6 +100,21 @@ Reference copies of all config files live in `../docs/examples/`.
 - Port-forward/allow UDP 2302-2305 and the Steam query port 27016.
 - Players need only the Sentinel Deathmatch Workshop item - the in-game
   browser and launchers resolve it automatically from the server's mod list.
+
+## Running alongside other mods
+
+The mod only ever *adds* to vanilla classes and calls through to whatever
+was there before, so it stacks with the usual server-side mods. Two things
+worth knowing:
+
+- **Chat mods.** DayZ Expansion Chat and LBmaster Advanced Groups replace
+  the chat UI with their own scrollable history. When either is loaded the
+  mod's `ChatHistoryOnOpen` feature is compiled out automatically (the boot
+  log says `chat history override: compiled out`) and you keep theirs.
+- **Chat-command mods (Community Online Tools and similar).** They read
+  `/` commands from the chat box and swallow them. List
+  `@SentinelDeathmatch` *after* such mods in `-mod=` so `/mapvote` reaches
+  this mod first; it clears the box and passes everything else through.
 
 ## Troubleshooting
 

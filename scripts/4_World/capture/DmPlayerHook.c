@@ -156,4 +156,11 @@ void DmHandleClientRpc(int rpcType, ParamsReadContext ctx)
 		}
 		return;
 	}
+	if (rpcType == DmRpc.CLIENT_OPTS)
+	{
+		Param1<int> optsData;
+		if (!ctx.Read(optsData)) return;
+		state.ApplyClientOptions(optsData.param1);
+		return;
+	}
 }
