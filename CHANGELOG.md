@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.21] - 2026-09-05
+
 ### Added
 - `ChatHistoryOnOpen` (config.json, default off): while the chat box is
   open, the last 12 vanilla chat lines stay visible instead of having
