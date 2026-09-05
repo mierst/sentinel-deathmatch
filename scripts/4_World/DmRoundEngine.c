@@ -40,6 +40,7 @@ class DmRoundEngine
 
 		m_TickTimer = new Timer(CALL_CATEGORY_SYSTEM);
 		m_TickTimer.Run(0.5, this, "OnTick", null, true);
+		DmAnnounceService.GetInstance().LogBootSummary();
 		Print("[DM] round engine started v" + DmVersion.VERSION);
 	}
 
@@ -66,6 +67,11 @@ class DmRoundEngine
 				TopUpSurvival();
 			}
 		}
+
+		// Rotating announcements (Discord invite etc.): all phases, IDLE
+		// included - a lone player waiting for a lobby is exactly who should
+		// see the invite.
+		DmAnnounceService.GetInstance().Tick(playerCount, nowSeconds);
 
 		// Everyone connected appears on the leaderboard immediately; new rows
 		// (fresh joins, post-reset reseeds) push a silent standings update.
@@ -171,6 +177,13 @@ class DmRoundEngine
 		if (m_AnnouncedPlayers.Find(joinedId, alreadyAnnounced)) return;
 		m_AnnouncedPlayers.Set(joinedId, true);
 		DmNetServer.GetInstance().SendKillfeedAll(identity.GetName() + " joined");
+
+		// Welcome line rides the same first-connect dedup, deferred past the
+		// client's mission init (same reason the join state sync is delayed).
+		if (DmConfig.GetInstance().GetWelcomeMessage() != "")
+		{
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DmAnnounceService.GetInstance().SendWelcome, 6000, false, identity);
+		}
 	}
 
 	void OnPlayerLeft(PlayerIdentity identity)

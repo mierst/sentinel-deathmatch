@@ -1,7 +1,8 @@
 // Server -> client sends. Event-driven only: state syncs on phase change and
 // join, vote windows at open/close, scoreboard at round end, killfeed lines
 // per kill. Nothing periodic - the client HUD counts down to a synced
-// deadline locally.
+// deadline locally. (The one scheduled send, rotating announcements, is a
+// plain chat line paced in minutes by DmAnnounceService off the 500 ms tick.)
 //
 // Sends are targeted per player object (the proven scripted-RPC reception
 // path is the target object's OnRPC on the receiving side).
@@ -138,13 +139,21 @@ class DmNetServer
 		// Chat copy: unlike the 8 s HUD rows, chat scrollback survives the
 		// victim's own death/respawn blackout.
 		if (!DmConfig.GetInstance().IsKillfeedToChatEnabled()) return;
+		SendChatAll(line, "colorAction");
+	}
+
+	// Chat line to every connected player. colorClass is a vanilla ChatLine
+	// style name (colorAction / colorImportant / colorFriendly /
+	// colorStatusChannel); DmConfig validates the announcement one at load.
+	void SendChatAll(string text, string colorClass)
+	{
 		m_SendScratch.Clear();
 		GetGame().GetPlayers(m_SendScratch);
 		for (int chatIdx = 0; chatIdx < m_SendScratch.Count(); chatIdx++)
 		{
 			Man chatTarget = m_SendScratch[chatIdx];
 			if (!chatTarget.GetIdentity()) continue;
-			GetGame().ChatMP(chatTarget, line, "colorAction");
+			GetGame().ChatMP(chatTarget, text, colorClass);
 		}
 	}
 

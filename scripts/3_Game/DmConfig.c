@@ -66,6 +66,21 @@ class DmConfigData
 	int MaxArenaObjects = 1000;
 	int MaxArenaSpawnsPerTick = 50;
 	int MaxArenaDeletesPerTick = 25;
+
+	// Rotating server announcements (Discord invite, rules, whatever): one
+	// line from Announcements lands in every connected player's chat every
+	// AnnouncementIntervalSeconds, cycling through the list in order. Empty
+	// list or interval 0 = off. The default list is deliberately EMPTY (so
+	// an absent key on older files loads as "off", not as "reseed").
+	// AnnouncementColor: colorImportant (red) | colorAction (white) |
+	// colorFriendly (green) | colorStatusChannel (grey).
+	int AnnouncementIntervalSeconds = 300;
+	ref array<string> Announcements = new array<string>;
+	string AnnouncementColor = "colorImportant";
+
+	// One-shot line sent to each player a few seconds after their FIRST
+	// connect of the session (respawns do not repeat it). Empty = off.
+	string WelcomeMessage = "";
 }
 
 class DmConfig
@@ -140,6 +155,45 @@ class DmConfig
 		if (m_Data.MaxArenaObjects < 1) m_Data.MaxArenaObjects = 1;
 		if (m_Data.MaxArenaSpawnsPerTick < 1) m_Data.MaxArenaSpawnsPerTick = 1;
 		if (m_Data.MaxArenaDeletesPerTick < 1) m_Data.MaxArenaDeletesPerTick = 1;
+
+		// Announcements: 0 = off, otherwise a 30 s floor so a typo cannot
+		// turn chat into a wall of red. Blank/newline-only lines are dropped
+		// (chat rows are single-line); embedded newlines are flattened.
+		if (m_Data.AnnouncementIntervalSeconds < 0) m_Data.AnnouncementIntervalSeconds = 0;
+		if (m_Data.AnnouncementIntervalSeconds > 0 && m_Data.AnnouncementIntervalSeconds < 30) m_Data.AnnouncementIntervalSeconds = 30;
+		SanitizeAnnouncements();
+		if (!IsKnownChatColor(m_Data.AnnouncementColor)) m_Data.AnnouncementColor = "colorImportant";
+		m_Data.WelcomeMessage = FlattenLine(m_Data.WelcomeMessage);
+	}
+
+	static bool IsKnownChatColor(string colorClass)
+	{
+		if (colorClass == "colorImportant") return true;
+		if (colorClass == "colorAction") return true;
+		if (colorClass == "colorFriendly") return true;
+		if (colorClass == "colorStatusChannel") return true;
+		return false;
+	}
+
+	static string FlattenLine(string text)
+	{
+		string flat = text;
+		flat.Replace("\r", " ");
+		flat.Replace("\n", " ");
+		return flat.Trim();
+	}
+
+	private void SanitizeAnnouncements()
+	{
+		if (!m_Data.Announcements) m_Data.Announcements = new array<string>;
+		ref array<string> kept = new array<string>;
+		for (int annIdx = 0; annIdx < m_Data.Announcements.Count(); annIdx++)
+		{
+			string line = FlattenLine(m_Data.Announcements[annIdx]);
+			if (line == "") continue;
+			kept.Insert(line);
+		}
+		m_Data.Announcements = kept;
 	}
 
 	bool IsEnabled() { return m_CachedEnabled; }
@@ -165,6 +219,16 @@ class DmConfig
 	int GetMaxArenaObjects() { return m_Data.MaxArenaObjects; }
 	int GetMaxArenaSpawnsPerTick() { return m_Data.MaxArenaSpawnsPerTick; }
 	int GetMaxArenaDeletesPerTick() { return m_Data.MaxArenaDeletesPerTick; }
+	int GetAnnouncementIntervalSeconds() { return m_Data.AnnouncementIntervalSeconds; }
+	int GetAnnouncementCount() { return m_Data.Announcements.Count(); }
+	string GetAnnouncementColor() { return m_Data.AnnouncementColor; }
+	string GetWelcomeMessage() { return m_Data.WelcomeMessage; }
+
+	string GetAnnouncement(int annIdx)
+	{
+		if (annIdx < 0 || annIdx >= m_Data.Announcements.Count()) return "";
+		return m_Data.Announcements[annIdx];
+	}
 
 	static void SelfTest()
 	{
@@ -181,16 +245,43 @@ class DmConfig
 		if (defaults.MaxArenaObjects != 1000) defOk = 0;
 		if (defaults.MaxArenaSpawnsPerTick != 50) defOk = 0;
 		if (defaults.RespawnAvoidDeathMeters != 75) defOk = 0;
+		if (defaults.AnnouncementIntervalSeconds != 300) defOk = 0;
+		if (defaults.Announcements.Count() != 0) defOk = 0;
+		if (defaults.AnnouncementColor != "colorImportant") defOk = 0;
+		if (defaults.WelcomeMessage != "") defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
 		DmConfig probe = new DmConfig();
 		probe.m_Data = new DmConfigData();
 		probe.m_Data.VoteSeconds = 0;
 		probe.m_Data.MaxDeletesPerTick = -5;
+		probe.m_Data.AnnouncementIntervalSeconds = 5;
+		probe.m_Data.AnnouncementColor = "hotpink";
 		probe.ClampLoadedValues();
 		int clampOk = 1;
 		if (probe.m_Data.VoteSeconds != 5) clampOk = 0;
 		if (probe.m_Data.MaxDeletesPerTick != 1) clampOk = 0;
+		if (probe.m_Data.AnnouncementIntervalSeconds != 30) clampOk = 0;
+		if (probe.m_Data.AnnouncementColor != "colorImportant") clampOk = 0;
 		Print("[DM] fixture DmConfig clamp floors: expected=1 got=" + clampOk.ToString() + " " + DmFixture.Verdict(clampOk == 1));
+
+		// Announcement sanitizing: blank lines drop, newlines flatten, 0 stays off.
+		DmConfig annProbe = new DmConfig();
+		annProbe.m_Data = new DmConfigData();
+		annProbe.m_Data.AnnouncementIntervalSeconds = 0;
+		annProbe.m_Data.Announcements.Insert("  ");
+		annProbe.m_Data.Announcements.Insert("Join our\nDiscord");
+		annProbe.m_Data.Announcements.Insert("");
+		annProbe.m_Data.Announcements.Insert("Second line");
+		annProbe.m_Data.WelcomeMessage = "  hi\n ";
+		annProbe.ClampLoadedValues();
+		int annOk = 1;
+		if (annProbe.m_Data.AnnouncementIntervalSeconds != 0) annOk = 0;
+		if (annProbe.GetAnnouncementCount() != 2) annOk = 0;
+		if (annProbe.GetAnnouncement(0) != "Join our Discord") annOk = 0;
+		if (annProbe.GetAnnouncement(1) != "Second line") annOk = 0;
+		if (annProbe.GetAnnouncement(2) != "") annOk = 0;
+		if (annProbe.GetWelcomeMessage() != "hi") annOk = 0;
+		Print("[DM] fixture DmConfig announcement sanitize: expected=1 got=" + annOk.ToString() + " " + DmFixture.Verdict(annOk == 1));
 	}
 }
