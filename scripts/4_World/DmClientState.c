@@ -40,6 +40,20 @@ class DmClientState
 	ref array<float> m_KillfeedTimes = new array<float>;
 	int m_KillfeedSeq = 0;
 
+	// CLIENT_OPTS (server-decided switches; 0 until the join RPC lands, so
+	// every switch reads as off before the server has spoken)
+	int m_ClientOpts = 0;
+
+	void ApplyClientOptions(int mask)
+	{
+		m_ClientOpts = mask;
+	}
+
+	bool IsChatHistoryOnOpen()
+	{
+		return DmClientOpts.Has(m_ClientOpts, DmClientOpts.CHAT_HISTORY_ON_OPEN);
+	}
+
 	static DmClientState GetInstance()
 	{
 		if (!s_Instance)

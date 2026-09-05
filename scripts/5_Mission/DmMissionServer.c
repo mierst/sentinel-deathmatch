@@ -88,8 +88,18 @@ modded class MissionServer
 void DmRunSelfTests()
 {
 	Print("[DM] running boot fixtures");
+#ifndef EXPANSIONMODCHAT
+#ifndef LBmaster_Groups
+	Print("[DM] chat history override: compiled in (no chat-replacing mod detected)");
+#else
+	Print("[DM] chat history override: compiled out (LBmaster Groups present)");
+#endif
+#else
+	Print("[DM] chat history override: compiled out (Expansion Chat present)");
+#endif
 	DmPhase.SelfTest();
 	DmRpc.SelfTest();
+	DmClientOpts.SelfTest();
 	DmConfig.SelfTest();
 	DmZonesConfig.SelfTest();
 	DmPresetsConfig.SelfTest();

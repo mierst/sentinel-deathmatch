@@ -27,4 +27,24 @@ modded class ChatInputMenu
 		}
 		return super.OnChange(w, x, y, finished);
 	}
+
+	// Chat history hold (config ChatHistoryOnOpen): open box = the last
+	// lines stay visible; close = they resume fading. Additive only - super
+	// runs in both, no widget or layout is touched here. Compiled out where
+	// a chat-replacing mod owns these widgets (see DmChatHistory.c).
+#ifndef EXPANSIONMODCHAT
+#ifndef LBmaster_Groups
+	override void OnShow()
+	{
+		super.OnShow();
+		DmChatHistory.Hold(true);
+	}
+
+	override void OnHide()
+	{
+		DmChatHistory.Hold(false);
+		super.OnHide();
+	}
+#endif
+#endif
 }

@@ -7,6 +7,18 @@ passes, not before.
 
 ## [Unreleased]
 
+### Added
+- `ChatHistoryOnOpen` (config.json, default off): while the chat box is
+  open, the last 12 vanilla chat lines stay visible instead of having
+  faded; they resume fading on close. Server-decided, sent to clients on
+  join (new `CLIENT_OPTS` RPC). Additive overrides only (super in every
+  path, no layout or widget replaced, `m_Dm`-prefixed members), and the
+  whole thing is compiled out under DayZ Expansion Chat and LBmaster
+  Groups, which ship their own chat history. Boot log states which.
+- Server example README: mod-compatibility notes (chat mods; load the
+  mod after Community Online Tools so `/mapvote` is not consumed by COT's
+  command handler).
+
 ## [0.1.20] - 2026-09-05
 
 ### Added

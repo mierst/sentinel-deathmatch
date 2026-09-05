@@ -81,6 +81,14 @@ class DmConfigData
 	// One-shot line sent to each player a few seconds after their FIRST
 	// connect of the session (respawns do not repeat it). Empty = off.
 	string WelcomeMessage = "";
+
+	// Client chat history: while a player has the chat box open, the last
+	// 12 vanilla chat lines stay visible instead of having faded out (they
+	// resume fading when the box closes). Off by default so a fresh install
+	// is byte-for-byte vanilla chat; the flag travels to clients on join.
+	// Compiled out entirely under DayZ Expansion Chat and LBmaster Groups,
+	// which ship their own (richer) chat history.
+	bool ChatHistoryOnOpen = false;
 }
 
 class DmConfig
@@ -223,6 +231,7 @@ class DmConfig
 	int GetAnnouncementCount() { return m_Data.Announcements.Count(); }
 	string GetAnnouncementColor() { return m_Data.AnnouncementColor; }
 	string GetWelcomeMessage() { return m_Data.WelcomeMessage; }
+	bool IsChatHistoryOnOpenEnabled() { return m_Data.ChatHistoryOnOpen; }
 
 	string GetAnnouncement(int annIdx)
 	{
@@ -249,6 +258,7 @@ class DmConfig
 		if (defaults.Announcements.Count() != 0) defOk = 0;
 		if (defaults.AnnouncementColor != "colorImportant") defOk = 0;
 		if (defaults.WelcomeMessage != "") defOk = 0;
+		if (defaults.ChatHistoryOnOpen) defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
 		DmConfig probe = new DmConfig();

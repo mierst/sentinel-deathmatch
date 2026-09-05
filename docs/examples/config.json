@@ -19,5 +19,6 @@
         "Type /mapvote to call an early map vote."
     ],
     "AnnouncementColor": "colorImportant",
-    "WelcomeMessage": "Welcome! Discord: discord.gg/your-invite"
+    "WelcomeMessage": "Welcome! Discord: discord.gg/your-invite",
+    "ChatHistoryOnOpen": 0
 }
