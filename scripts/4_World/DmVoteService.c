@@ -14,6 +14,13 @@
 //    at index == option count. If it wins, that column is rolled.
 class DmVoteService
 {
+	// The vote menu lists this many options per column (dm_vote.layout has
+	// exactly this many button slots). Options beyond it are still valid:
+	// the RANDOM pick and "random" mode roll over the FULL list, so they
+	// stay reachable - just not directly votable. Boot warns (see
+	// VoteListCapNotice) so an operator finds out from the log, not in-game.
+	static const int MAX_LISTED_OPTIONS = 8;
+
 	private static ref DmVoteService s_Instance;
 
 	private bool m_Open = false;
@@ -224,6 +231,36 @@ class DmVoteService
 		return winner;
 	}
 
+	// Boot notice when a column has more valid options than the menu lists.
+	// Empty string = nothing to say: the list fits, or the column is rolled
+	// ("random" mode draws from the full list, so nothing is hidden). With
+	// the RANDOM pick on, the cut options are still reachable through it;
+	// without it they can never be selected, and the notice says so.
+	// Pure; fixtures.
+	static string VoteListCapNotice(string what, array<string> names, int listed, bool columnVoted, bool allowRandom)
+	{
+		if (!columnVoted) return "";
+		if (names.Count() <= listed) return "";
+
+		string cut = "";
+		for (int cutIdx = listed; cutIdx < names.Count(); cutIdx++)
+		{
+			if (cut != "") cut = cut + ", ";
+			cut = cut + "'" + names[cutIdx] + "'";
+		}
+
+		string notice = "[DM] vote menu lists the first " + listed.ToString() + " of " + names.Count().ToString() + " " + what + "; not directly votable: " + cut;
+		if (allowRandom)
+		{
+			notice = notice + " - still reachable through the RANDOM pick";
+		}
+		else
+		{
+			notice = notice + " - NEVER selectable: enable AllowRandomChoice, set that column to random, or trim the list";
+		}
+		return notice;
+	}
+
 	static void SelfTest()
 	{
 		map<string, int> votes = new map<string, int>;
@@ -311,6 +348,25 @@ class DmVoteService
 		if (!modeProbe.IsZoneVoteOpen()) singleOk = 0;
 		if (!modeProbe.IsPresetVoteOpen()) singleOk = 0;
 		Print("[DM] fixture DmVoteService single-column bloc: expected=1 got=" + singleOk.ToString() + " " + DmFixture.Verdict(singleOk == 1));
+
+		// List cap notice: silent when the list fits or the column is rolled;
+		// names every cut option; wording depends on the RANDOM pick.
+		array<string> capNames = new array<string>;
+		capNames.Insert("A");
+		capNames.Insert("B");
+		capNames.Insert("C");
+		int capOk = 1;
+		if (DmVoteService.VoteListCapNotice("presets", capNames, 3, true, true) != "") capOk = 0;
+		if (DmVoteService.VoteListCapNotice("presets", capNames, 2, false, true) != "") capOk = 0;
+		string capWith = DmVoteService.VoteListCapNotice("presets", capNames, 2, true, true);
+		if (capWith.IndexOf("first 2 of 3 presets") < 0) capOk = 0;
+		if (capWith.IndexOf("'C'") < 0) capOk = 0;
+		if (capWith.IndexOf("'B'") >= 0) capOk = 0;
+		if (capWith.IndexOf("RANDOM pick") < 0) capOk = 0;
+		string capWithout = DmVoteService.VoteListCapNotice("arenas", capNames, 1, true, false);
+		if (capWithout.IndexOf("'B', 'C'") < 0) capOk = 0;
+		if (capWithout.IndexOf("NEVER selectable") < 0) capOk = 0;
+		Print("[DM] fixture DmVoteService list cap notice: expected=1 got=" + capOk.ToString() + " " + DmFixture.Verdict(capOk == 1));
 
 		// /mapvote: two-thirds rounded up, dedup per player, cleared on open.
 		int mapVoteOk = 1;

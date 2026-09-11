@@ -34,7 +34,7 @@ class DmVoteMenu extends UIScriptedMenu
 		m_PresetRandomBtn = ButtonWidget.Cast(layoutRoot.FindAnyWidget("pbtn_rand"));
 		m_BtnClose = ButtonWidget.Cast(layoutRoot.FindAnyWidget("BtnClose"));
 
-		for (int slotIdx = 0; slotIdx < 8; slotIdx++)
+		for (int slotIdx = 0; slotIdx < DmVoteService.MAX_LISTED_OPTIONS; slotIdx++)
 		{
 			m_ZoneButtons.Insert(ButtonWidget.Cast(layoutRoot.FindAnyWidget("zbtn_" + slotIdx.ToString())));
 			m_PresetButtons.Insert(ButtonWidget.Cast(layoutRoot.FindAnyWidget("pbtn_" + slotIdx.ToString())));
@@ -70,7 +70,7 @@ class DmVoteMenu extends UIScriptedMenu
 		m_SelZone = -1;
 		m_SelPreset = -1;
 
-		for (int slotIdx = 0; slotIdx < 8; slotIdx++)
+		for (int slotIdx = 0; slotIdx < DmVoteService.MAX_LISTED_OPTIONS; slotIdx++)
 		{
 			ButtonWidget zoneBtn = m_ZoneButtons[slotIdx];
 			if (zoneBtn)
@@ -223,7 +223,7 @@ class DmVoteMenu extends UIScriptedMenu
 			return true;
 		}
 
-		for (int slotIdx = 0; slotIdx < 8; slotIdx++)
+		for (int slotIdx = 0; slotIdx < DmVoteService.MAX_LISTED_OPTIONS; slotIdx++)
 		{
 			if (w == m_ZoneButtons[slotIdx])
 			{
