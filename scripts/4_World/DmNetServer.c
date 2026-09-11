@@ -70,7 +70,8 @@ class DmNetServer
 		if (!pb) return;
 		PlayerIdentity optIdent = pb.GetIdentity();
 		if (!optIdent) return;
-		int mask = DmClientOpts.Pack(DmConfig.GetInstance().IsChatHistoryOnOpenEnabled());
+		DmConfig optCfg = DmConfig.GetInstance();
+		int mask = DmClientOpts.Pack(optCfg.IsChatHistoryOnOpenEnabled(), optCfg.IsRandomChoiceAllowed());
 		GetGame().RPCSingleParam(pb, DmRpc.CLIENT_OPTS, new Param1<int>(mask), true, optIdent);
 	}
 
@@ -84,20 +85,23 @@ class DmNetServer
 	}
 
 	// Option lists ride as newline-joined blobs (names are sanitized of
-	// newlines at config load by their loaders' validation).
+	// newlines at config load by their loaders' validation). An EMPTY blob
+	// means that column is rolled by the server (ArenaSelection /
+	// PresetSelection "random") and the client shows no buttons for it; the
+	// wire shape is unchanged, so older clients just see a one-column menu.
 	void SendVoteOpenAll(float voteSeconds)
 	{
 		string zoneBlob = "";
-		DmZonesConfig zones = DmZonesConfig.GetInstance();
-		for (int zoneIdx = 0; zoneIdx < zones.GetEnabledCount(); zoneIdx++)
+		if (DmVoteService.GetInstance().IsZoneVoteOpen())
 		{
-			if (zoneIdx > 0) zoneBlob = zoneBlob + "\n";
-			zoneBlob = zoneBlob + zones.GetEnabledZone(zoneIdx).Name;
+			DmZonesConfig zones = DmZonesConfig.GetInstance();
+			for (int zoneIdx = 0; zoneIdx < zones.GetEnabledCount(); zoneIdx++)
+			{
+				if (zoneIdx > 0) zoneBlob = zoneBlob + "\n";
+				zoneBlob = zoneBlob + zones.GetEnabledZone(zoneIdx).Name;
+			}
 		}
 
-		// Empty preset blob = no weapon column on the client (PresetSelection
-		// "random"); the wire shape is unchanged so older clients just see an
-		// arena-only menu.
 		string presetBlob = "";
 		if (DmVoteService.GetInstance().IsPresetVoteOpen())
 		{

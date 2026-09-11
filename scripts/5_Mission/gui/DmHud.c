@@ -230,13 +230,23 @@ class DmHudController
 			bool voteMenuOpen = m_VoteMenu && GetGame().GetUIManager().GetMenu() == m_VoteMenu;
 			if (state.m_Phase == DmPhase.VOTING && !voteMenuOpen)
 			{
-				if (state.m_PresetOptions.Count() > 0)
+				int hintZoneCount = state.m_ZoneOptions.Count();
+				int hintPresetCount = state.m_PresetOptions.Count();
+				if (hintZoneCount > 0 && hintPresetCount > 0)
 				{
 					m_InfoText.SetText("Voting open - press B to choose arena + weapons");
 				}
-				else
+				else if (hintZoneCount > 0)
 				{
 					m_InfoText.SetText("Voting open - press B to choose the arena");
+				}
+				else if (hintPresetCount > 0)
+				{
+					m_InfoText.SetText("Voting open - press B to choose the weapons");
+				}
+				else
+				{
+					m_InfoText.SetText("Next round soon - random arena and weapons");
 				}
 				m_InfoText.Show(true);
 			}
@@ -255,7 +265,9 @@ class DmHudController
 		{
 			m_SeenVoteSeq = state.m_VoteSeq;
 			CloseScoreboard();
-			m_VoteMenuWanted = true;
+			// Both columns rolled by the server = nothing to click; leave the
+			// menu closed (B still opens it for the status line).
+			m_VoteMenuWanted = state.m_ZoneOptions.Count() + state.m_PresetOptions.Count() > 0;
 		}
 		if (m_VoteMenuWanted)
 		{

@@ -8,12 +8,18 @@ passes, not before.
 ## [Unreleased]
 
 ### Added
-- `PresetSelection` (config.json, default `"vote"`): set to `"random"` to
-  drop the weapon column from the vote menu and let the server roll one of
-  the valid presets when each vote closes. Players vote on the arena only;
-  the menu header reads "WEAPONS - RANDOM" and the consensus fast-forward
-  counts arena agreement alone. Boot log prints the active mode. Unknown
-  values fall back to `"vote"`.
+- `PresetSelection` and `ArenaSelection` (config.json, default `"vote"`):
+  set either to `"random"` to drop that column from the vote menu and let
+  the server roll it when each vote closes (a valid preset, or an enabled
+  arena). The header reads "... - RANDOM", the consensus fast-forward counts
+  the remaining column alone, and with both random the vote window
+  shortens to `VoteConsensusSeconds` with the menu left closed. Unknown
+  values fall back to `"vote"`. Boot log prints the active modes.
+- `AllowRandomChoice` (config.json, default on): every voted column with two
+  or more options grows a "RANDOM" button below the real ones; if it wins
+  the server rolls that column. Sent to clients on join (`CLIENT_OPTS`
+  bit), so the vote wire shape is unchanged and older clients simply never
+  see the button.
 
 ## [0.1.21] - 2026-09-05
 

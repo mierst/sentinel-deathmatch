@@ -1,12 +1,21 @@
 // Vote screen. Opened by the HUD controller when a vote window arrives; one
 // click per column casts (re-click to change); every cast sends the current
 // selection pair - the server rate-limits and bounds-checks.
+//
+// A column with no options is rolled by the server (ArenaSelection /
+// PresetSelection "random"): its header says so and it has no buttons. When
+// the server allows the Random pick (CLIENT_OPTS), each voted column with at
+// least two options grows a RANDOM button below the real ones; its vote
+// index is the option count, which the server treats as "roll this column".
 class DmVoteMenu extends UIScriptedMenu
 {
 	private ref array<ButtonWidget> m_ZoneButtons = new array<ButtonWidget>;
 	private ref array<ButtonWidget> m_PresetButtons = new array<ButtonWidget>;
+	private ButtonWidget m_ZoneRandomBtn;
+	private ButtonWidget m_PresetRandomBtn;
 	private TextWidget m_VoteTimer;
 	private TextWidget m_SelectionText;
+	private TextWidget m_ZoneHeader;
 	private TextWidget m_PresetHeader;
 	private ButtonWidget m_BtnClose;
 
@@ -19,7 +28,10 @@ class DmVoteMenu extends UIScriptedMenu
 
 		m_VoteTimer = TextWidget.Cast(layoutRoot.FindAnyWidget("VoteTimer"));
 		m_SelectionText = TextWidget.Cast(layoutRoot.FindAnyWidget("SelectionText"));
+		m_ZoneHeader = TextWidget.Cast(layoutRoot.FindAnyWidget("ZoneHeader"));
 		m_PresetHeader = TextWidget.Cast(layoutRoot.FindAnyWidget("PresetHeader"));
+		m_ZoneRandomBtn = ButtonWidget.Cast(layoutRoot.FindAnyWidget("zbtn_rand"));
+		m_PresetRandomBtn = ButtonWidget.Cast(layoutRoot.FindAnyWidget("pbtn_rand"));
 		m_BtnClose = ButtonWidget.Cast(layoutRoot.FindAnyWidget("BtnClose"));
 
 		for (int slotIdx = 0; slotIdx < 8; slotIdx++)
@@ -89,20 +101,30 @@ class DmVoteMenu extends UIScriptedMenu
 			}
 		}
 
-		// No preset options = the server rolls the weapons (PresetSelection
-		// "random"); say so where the column would have been.
-		if (m_PresetHeader)
-		{
-			if (state.m_PresetOptions.Count() == 0)
-			{
-				m_PresetHeader.SetText("WEAPONS - RANDOM");
-			}
-			else
-			{
-				m_PresetHeader.SetText("WEAPONS");
-			}
-		}
+		// The Random pick is pointless with fewer than two real options.
+		bool randomAllowed = state.IsRandomChoiceAllowed();
+		int zoneCount = state.m_ZoneOptions.Count();
+		int presetCount = state.m_PresetOptions.Count();
+		if (m_ZoneRandomBtn) m_ZoneRandomBtn.Show(randomAllowed && zoneCount >= 2);
+		if (m_PresetRandomBtn) m_PresetRandomBtn.Show(randomAllowed && presetCount >= 2);
+		SetHeader(m_ZoneHeader, "ARENA", zoneCount);
+		SetHeader(m_PresetHeader, "WEAPONS", presetCount);
 		UpdateSelectionText();
+	}
+
+	// No options = the server rolls this column; say so where the buttons
+	// would have been.
+	private static void SetHeader(TextWidget header, string label, int optionCount)
+	{
+		if (!header) return;
+		if (optionCount == 0)
+		{
+			header.SetText(label + " - RANDOM");
+		}
+		else
+		{
+			header.SetText(label);
+		}
 	}
 
 	// Called from the HUD controller's tick while open. Uses the SAME synced
@@ -116,35 +138,56 @@ class DmVoteMenu extends UIScriptedMenu
 		m_VoteTimer.SetText("Voting closes in " + remainInt.ToString() + "s");
 	}
 
+	// Selection label: a real option's name, "Random" for the extra slot at
+	// index == count, "-" for nothing yet.
+	private static string PickLabel(array<string> options, int sel)
+	{
+		if (sel < 0) return "-";
+		if (sel < options.Count()) return options[sel];
+		if (sel == options.Count()) return "Random";
+		return "-";
+	}
+
 	private void UpdateSelectionText()
 	{
 		if (!m_SelectionText) return;
 		DmClientState state = DmClientState.GetInstance();
 
-		string zonePick = "-";
-		if (m_SelZone >= 0 && m_SelZone < state.m_ZoneOptions.Count()) zonePick = state.m_ZoneOptions[m_SelZone];
-		string presetPick = "-";
-		if (m_SelPreset >= 0 && m_SelPreset < state.m_PresetOptions.Count()) presetPick = state.m_PresetOptions[m_SelPreset];
-
+		bool zoneVote = state.m_ZoneOptions.Count() > 0;
 		bool presetVote = state.m_PresetOptions.Count() > 0;
+		string zonePick = PickLabel(state.m_ZoneOptions, m_SelZone);
+		string presetPick = PickLabel(state.m_PresetOptions, m_SelPreset);
+
 		if (m_SelZone < 0 && m_SelPreset < 0)
 		{
-			if (presetVote)
+			if (zoneVote && presetVote)
 			{
 				m_SelectionText.SetText("Click an arena and a weapon set to vote");
 			}
-			else
+			else if (zoneVote)
 			{
 				m_SelectionText.SetText("Click an arena to vote - weapons are random this round");
 			}
+			else if (presetVote)
+			{
+				m_SelectionText.SetText("Click a weapon set to vote - the arena is random this round");
+			}
+			else
+			{
+				m_SelectionText.SetText("Arena and weapons are random this round");
+			}
 		}
-		else if (presetVote)
+		else if (zoneVote && presetVote)
 		{
 			m_SelectionText.SetText("Your vote: " + zonePick + " / " + presetPick);
 		}
-		else
+		else if (zoneVote)
 		{
 			m_SelectionText.SetText("Your vote: " + zonePick);
+		}
+		else
+		{
+			m_SelectionText.SetText("Your vote: " + presetPick);
 		}
 	}
 
@@ -161,6 +204,22 @@ class DmVoteMenu extends UIScriptedMenu
 		if (w == m_BtnClose)
 		{
 			Close();
+			return true;
+		}
+
+		DmClientState state = DmClientState.GetInstance();
+		if (m_ZoneRandomBtn && w == m_ZoneRandomBtn)
+		{
+			m_SelZone = state.m_ZoneOptions.Count();
+			UpdateSelectionText();
+			SendVote();
+			return true;
+		}
+		if (m_PresetRandomBtn && w == m_PresetRandomBtn)
+		{
+			m_SelPreset = state.m_PresetOptions.Count();
+			UpdateSelectionText();
+			SendVote();
 			return true;
 		}
 

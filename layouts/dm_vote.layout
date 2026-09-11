@@ -1,8 +1,8 @@
 FrameWidgetClass DmVoteRoot {
  visible 1
  clipchildren 0
- position 560 190
- size 800 700
+ position 560 170
+ size 800 740
  hexactpos 1
  vexactpos 1
  hexactsize 1
@@ -13,7 +13,7 @@ FrameWidgetClass DmVoteRoot {
    visible 1
    clipchildren 0
    position 0 0
-   size 800 700
+   size 800 740
    hexactpos 1
    vexactpos 1
    hexactsize 1
@@ -261,11 +261,33 @@ FrameWidgetClass DmVoteRoot {
      text ""
      style editor_quad_dark
     }
+    ButtonWidgetClass zbtn_rand {
+     visible 0
+     position 40 592
+     size 340 40
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "RANDOM"
+     style editor_quad_dark
+    }
+    ButtonWidgetClass pbtn_rand {
+     visible 0
+     position 420 592
+     size 340 40
+     hexactpos 1
+     vexactpos 1
+     hexactsize 1
+     vexactsize 1
+     text "RANDOM"
+     style editor_quad_dark
+    }
     TextWidgetClass SelectionText {
      visible 1
      ignorepointer 1
      color 0.8 1 0.8 0.9
-     position 0 596
+     position 0 642
      size 800 24
      hexactpos 1
      vexactpos 1
@@ -279,7 +301,7 @@ FrameWidgetClass DmVoteRoot {
     }
     ButtonWidgetClass BtnClose {
      visible 1
-     position 330 640
+     position 330 680
      size 140 40
      hexactpos 1
      vexactpos 1
@@ -292,7 +314,7 @@ FrameWidgetClass DmVoteRoot {
      visible 1
      ignorepointer 1
      color 1 1 1 0.35
-     position 0 682
+     position 0 722
      size 800 16
      hexactpos 1
      vexactpos 1

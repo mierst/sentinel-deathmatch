@@ -12,7 +12,9 @@
     "CorpseLifetimeSeconds": 45,
     "MaxDeletesPerTick": 3,
     "DropPolicy": "allow",
+    "ArenaSelection": "vote",
     "PresetSelection": "vote",
+    "AllowRandomChoice": 1,
     "DisableSurvivalPressure": 1,
     "AnnouncementIntervalSeconds": 300,
     "Announcements": [
