@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.23] - 2026-09-10
+
 ### Fixed
 - Client options (`CLIENT_OPTS`: RANDOM vote buttons, chat history) could
   be lost on a slow first join: the only send fired 3 s after the join
