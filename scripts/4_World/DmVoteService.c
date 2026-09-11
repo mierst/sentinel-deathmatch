@@ -9,6 +9,10 @@ class DmVoteService
 	private static ref DmVoteService s_Instance;
 
 	private bool m_Open = false;
+	// False when PresetSelection is "random": preset casts are ignored, the
+	// consensus bloc is zone-only, and Resolve rolls the preset uniformly
+	// (an empty tally is exactly WinnerFromVotes' random-among-leaders case).
+	private bool m_PresetVoteOpen = true;
 	private ref map<string, int> m_ZoneVoteByPlayer = new map<string, int>;
 	private ref map<string, int> m_PresetVoteByPlayer = new map<string, int>;
 	private ref map<string, float> m_LastCastAt = new map<string, float>;
@@ -28,10 +32,13 @@ class DmVoteService
 
 	int GetActivePresetIndex() { return m_ActivePresetValidIdx; }
 	int GetActiveZoneIndex() { return m_ActiveZoneEnabledIdx; }
+	bool IsPresetVoteOpen() { return m_PresetVoteOpen; }
 
-	void OpenVote()
+	// presetVote false = arena-only vote (config PresetSelection "random").
+	void OpenVote(bool presetVote)
 	{
 		m_Open = true;
+		m_PresetVoteOpen = presetVote;
 		m_ZoneVoteByPlayer.Clear();
 		m_PresetVoteByPlayer.Clear();
 		m_LastCastAt.Clear();
@@ -76,6 +83,7 @@ class DmVoteService
 		{
 			m_ZoneVoteByPlayer.Set(playerId, zoneIdx);
 		}
+		if (!m_PresetVoteOpen) return; // random mode: a client cannot steer the preset
 		if (presetIdx >= 0 && presetIdx < DmLoadoutFactory.GetInstance().GetValidPresetCount())
 		{
 			m_PresetVoteByPlayer.Set(playerId, presetIdx);
@@ -102,25 +110,32 @@ class DmVoteService
 	}
 
 	// True once a strict majority of the connected players has voted for the
-	// SAME zone+preset combo. Drives the round engine's vote fast-forward.
+	// SAME zone+preset combo (zone alone in random-preset mode). Drives the
+	// round engine's vote fast-forward.
 	bool HasComboMajority(int playerCount)
 	{
 		if (!m_Open || playerCount <= 0) return false;
-		return ComboMajorityCount(m_ZoneVoteByPlayer, m_PresetVoteByPlayer) * 2 > playerCount;
+		return ComboMajorityCount(m_ZoneVoteByPlayer, m_PresetVoteByPlayer, m_PresetVoteOpen) * 2 > playerCount;
 	}
 
 	// Largest bloc of players whose (zone, preset) votes agree. Players who
-	// have voted only one of the two don't join any bloc. Pure; fixtures.
-	static int ComboMajorityCount(map<string, int> zoneVotesByPlayer, map<string, int> presetVotesByPlayer)
+	// have voted only one of the two don't join any bloc. With presetRequired
+	// false the bloc is by zone alone and preset votes are ignored. Pure;
+	// fixtures.
+	static int ComboMajorityCount(map<string, int> zoneVotesByPlayer, map<string, int> presetVotesByPlayer, bool presetRequired)
 	{
 		map<string, int> comboTally = new map<string, int>;
 		int best = 0;
 		for (int voteIdx = 0; voteIdx < zoneVotesByPlayer.Count(); voteIdx++)
 		{
 			string playerId = zoneVotesByPlayer.GetKey(voteIdx);
-			int presetVote;
-			if (!presetVotesByPlayer.Find(playerId, presetVote)) continue;
-			string comboKey = zoneVotesByPlayer.GetElement(voteIdx).ToString() + "|" + presetVote.ToString();
+			string comboKey = zoneVotesByPlayer.GetElement(voteIdx).ToString();
+			if (presetRequired)
+			{
+				int presetVote;
+				if (!presetVotesByPlayer.Find(playerId, presetVote)) continue;
+				comboKey = comboKey + "|" + presetVote.ToString();
+			}
 			int comboCount;
 			if (!comboTally.Find(comboKey, comboCount)) comboCount = 0;
 			comboCount = comboCount + 1;
@@ -207,10 +222,24 @@ class DmVoteService
 		comboPresets.Set("b", 0);
 		comboPresets.Set("c", 2);
 		int comboOk = 1;
-		if (DmVoteService.ComboMajorityCount(comboZones, comboPresets) != 2) comboOk = 0;
+		if (DmVoteService.ComboMajorityCount(comboZones, comboPresets, true) != 2) comboOk = 0;
 		map<string, int> comboEmpty = new map<string, int>;
-		if (DmVoteService.ComboMajorityCount(comboEmpty, comboPresets) != 0) comboOk = 0;
+		if (DmVoteService.ComboMajorityCount(comboEmpty, comboPresets, true) != 0) comboOk = 0;
 		Print("[DM] fixture DmVoteService combo bloc count: expected=1 got=" + comboOk.ToString() + " " + DmFixture.Verdict(comboOk == 1));
+
+		// Random-preset mode: the bloc is by zone alone, so a+b+c (all zone 1)
+		// agree regardless of preset votes, and d's zone-only vote counts.
+		int zoneOnlyOk = 1;
+		if (DmVoteService.ComboMajorityCount(comboZones, comboPresets, false) != 3) zoneOnlyOk = 0;
+		if (DmVoteService.ComboMajorityCount(comboZones, comboEmpty, false) != 3) zoneOnlyOk = 0;
+		if (DmVoteService.ComboMajorityCount(comboEmpty, comboEmpty, false) != 0) zoneOnlyOk = 0;
+		DmVoteService modeProbe = new DmVoteService();
+		modeProbe.OpenVote(false);
+		if (modeProbe.IsPresetVoteOpen()) zoneOnlyOk = 0;
+		if (modeProbe.HasComboMajority(1)) zoneOnlyOk = 0; // nobody voted yet
+		modeProbe.OpenVote(true);
+		if (!modeProbe.IsPresetVoteOpen()) zoneOnlyOk = 0;
+		Print("[DM] fixture DmVoteService zone-only bloc: expected=1 got=" + zoneOnlyOk.ToString() + " " + DmFixture.Verdict(zoneOnlyOk == 1));
 
 		// /mapvote: two-thirds rounded up, dedup per player, cleared on open.
 		int mapVoteOk = 1;
@@ -225,7 +254,7 @@ class DmVoteService
 		if (mvProbe.RegisterMapVoteCall("a")) mapVoteOk = 0;
 		if (mvProbe.RegisterMapVoteCall("")) mapVoteOk = 0;
 		if (mvProbe.GetMapVoteCallCount() != 1) mapVoteOk = 0;
-		mvProbe.OpenVote();
+		mvProbe.OpenVote(true);
 		if (mvProbe.GetMapVoteCallCount() != 0) mapVoteOk = 0;
 		Print("[DM] fixture DmVoteService mapvote threshold: expected=1 got=" + mapVoteOk.ToString() + " " + DmFixture.Verdict(mapVoteOk == 1));
 	}

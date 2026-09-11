@@ -41,6 +41,7 @@ class DmRoundEngine
 		m_TickTimer = new Timer(CALL_CATEGORY_SYSTEM);
 		m_TickTimer.Run(0.5, this, "OnTick", null, true);
 		DmAnnounceService.GetInstance().LogBootSummary();
+		Print("[DM] preset selection: " + DmConfig.GetInstance().GetPresetSelection());
 		Print("[DM] round engine started v" + DmVersion.VERSION);
 	}
 
@@ -108,7 +109,8 @@ class DmRoundEngine
 		if (m_Phase == DmPhase.VOTING)
 		{
 			// Consensus fast-forward: a strict majority on one zone+preset
-			// combo clamps the remaining window (once; never extends).
+			// combo (zone alone under PresetSelection "random") clamps the
+			// remaining window (once; never extends).
 			if (!m_VoteFastForwarded && DmVoteService.GetInstance().HasComboMajority(playerCount))
 			{
 				m_VoteFastForwarded = true;
@@ -227,7 +229,7 @@ class DmRoundEngine
 	private void EnterVoting(float nowSeconds)
 	{
 		m_VoteFastForwarded = false;
-		DmVoteService.GetInstance().OpenVote();
+		DmVoteService.GetInstance().OpenVote(DmConfig.GetInstance().IsPresetVoteEnabled());
 		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetVoteSeconds();
 		TransitionTo(DmPhase.VOTING);
 		DmNetServer.GetInstance().SendStateSyncAll();

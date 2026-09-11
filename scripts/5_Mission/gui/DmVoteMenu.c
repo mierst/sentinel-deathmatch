@@ -7,6 +7,7 @@ class DmVoteMenu extends UIScriptedMenu
 	private ref array<ButtonWidget> m_PresetButtons = new array<ButtonWidget>;
 	private TextWidget m_VoteTimer;
 	private TextWidget m_SelectionText;
+	private TextWidget m_PresetHeader;
 	private ButtonWidget m_BtnClose;
 
 	private int m_SelZone = -1;
@@ -18,6 +19,7 @@ class DmVoteMenu extends UIScriptedMenu
 
 		m_VoteTimer = TextWidget.Cast(layoutRoot.FindAnyWidget("VoteTimer"));
 		m_SelectionText = TextWidget.Cast(layoutRoot.FindAnyWidget("SelectionText"));
+		m_PresetHeader = TextWidget.Cast(layoutRoot.FindAnyWidget("PresetHeader"));
 		m_BtnClose = ButtonWidget.Cast(layoutRoot.FindAnyWidget("BtnClose"));
 
 		for (int slotIdx = 0; slotIdx < 8; slotIdx++)
@@ -86,6 +88,20 @@ class DmVoteMenu extends UIScriptedMenu
 				}
 			}
 		}
+
+		// No preset options = the server rolls the weapons (PresetSelection
+		// "random"); say so where the column would have been.
+		if (m_PresetHeader)
+		{
+			if (state.m_PresetOptions.Count() == 0)
+			{
+				m_PresetHeader.SetText("WEAPONS - RANDOM");
+			}
+			else
+			{
+				m_PresetHeader.SetText("WEAPONS");
+			}
+		}
 		UpdateSelectionText();
 	}
 
@@ -110,13 +126,25 @@ class DmVoteMenu extends UIScriptedMenu
 		string presetPick = "-";
 		if (m_SelPreset >= 0 && m_SelPreset < state.m_PresetOptions.Count()) presetPick = state.m_PresetOptions[m_SelPreset];
 
+		bool presetVote = state.m_PresetOptions.Count() > 0;
 		if (m_SelZone < 0 && m_SelPreset < 0)
 		{
-			m_SelectionText.SetText("Click an arena and a weapon set to vote");
+			if (presetVote)
+			{
+				m_SelectionText.SetText("Click an arena and a weapon set to vote");
+			}
+			else
+			{
+				m_SelectionText.SetText("Click an arena to vote - weapons are random this round");
+			}
+		}
+		else if (presetVote)
+		{
+			m_SelectionText.SetText("Your vote: " + zonePick + " / " + presetPick);
 		}
 		else
 		{
-			m_SelectionText.SetText("Your vote: " + zonePick + " / " + presetPick);
+			m_SelectionText.SetText("Your vote: " + zonePick);
 		}
 	}
 

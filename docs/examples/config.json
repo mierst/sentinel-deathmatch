@@ -12,6 +12,7 @@
     "CorpseLifetimeSeconds": 45,
     "MaxDeletesPerTick": 3,
     "DropPolicy": "allow",
+    "PresetSelection": "vote",
     "DisableSurvivalPressure": 1,
     "AnnouncementIntervalSeconds": 300,
     "Announcements": [

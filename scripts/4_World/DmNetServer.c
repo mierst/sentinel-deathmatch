@@ -95,12 +95,18 @@ class DmNetServer
 			zoneBlob = zoneBlob + zones.GetEnabledZone(zoneIdx).Name;
 		}
 
+		// Empty preset blob = no weapon column on the client (PresetSelection
+		// "random"); the wire shape is unchanged so older clients just see an
+		// arena-only menu.
 		string presetBlob = "";
-		DmLoadoutFactory loadouts = DmLoadoutFactory.GetInstance();
-		for (int presetIdx = 0; presetIdx < loadouts.GetValidPresetCount(); presetIdx++)
+		if (DmVoteService.GetInstance().IsPresetVoteOpen())
 		{
-			if (presetIdx > 0) presetBlob = presetBlob + "\n";
-			presetBlob = presetBlob + loadouts.GetValidPreset(presetIdx).Name;
+			DmLoadoutFactory loadouts = DmLoadoutFactory.GetInstance();
+			for (int presetIdx = 0; presetIdx < loadouts.GetValidPresetCount(); presetIdx++)
+			{
+				if (presetIdx > 0) presetBlob = presetBlob + "\n";
+				presetBlob = presetBlob + loadouts.GetValidPreset(presetIdx).Name;
+			}
 		}
 
 		SendParamToAll(DmRpc.VOTE_OPEN, new Param3<float, string, string>(voteSeconds, zoneBlob, presetBlob));
