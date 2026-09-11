@@ -7,6 +7,14 @@ passes, not before.
 
 ## [Unreleased]
 
+### Added
+- `PresetSelection` (config.json, default `"vote"`): set to `"random"` to
+  drop the weapon column from the vote menu and let the server roll one of
+  the valid presets when each vote closes. Players vote on the arena only;
+  the menu header reads "WEAPONS - RANDOM" and the consensus fast-forward
+  counts arena agreement alone. Boot log prints the active mode. Unknown
+  values fall back to `"vote"`.
+
 ## [0.1.21] - 2026-09-05
 
 ### Added

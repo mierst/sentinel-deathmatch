@@ -230,7 +230,14 @@ class DmHudController
 			bool voteMenuOpen = m_VoteMenu && GetGame().GetUIManager().GetMenu() == m_VoteMenu;
 			if (state.m_Phase == DmPhase.VOTING && !voteMenuOpen)
 			{
-				m_InfoText.SetText("Voting open - press B to choose arena + weapons");
+				if (state.m_PresetOptions.Count() > 0)
+				{
+					m_InfoText.SetText("Voting open - press B to choose arena + weapons");
+				}
+				else
+				{
+					m_InfoText.SetText("Voting open - press B to choose the arena");
+				}
 				m_InfoText.Show(true);
 			}
 			else

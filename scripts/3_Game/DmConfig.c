@@ -89,6 +89,13 @@ class DmConfigData
 	// Compiled out entirely under DayZ Expansion Chat and LBmaster Groups,
 	// which ship their own (richer) chat history.
 	bool ChatHistoryOnOpen = false;
+
+	// How the next round's weapon preset is chosen. "vote" (default): players
+	// pick it in the vote menu next to the arena. "random": the vote menu
+	// shows the arena column only and the server rolls one of the valid
+	// presets when the vote closes (a meta-preset counts as one roll and then
+	// rolls its own member as usual). Unknown values fall back to "vote".
+	string PresetSelection = "vote";
 }
 
 class DmConfig
@@ -172,6 +179,14 @@ class DmConfig
 		SanitizeAnnouncements();
 		if (!IsKnownChatColor(m_Data.AnnouncementColor)) m_Data.AnnouncementColor = "colorImportant";
 		m_Data.WelcomeMessage = FlattenLine(m_Data.WelcomeMessage);
+		if (!IsKnownPresetSelection(m_Data.PresetSelection)) m_Data.PresetSelection = "vote";
+	}
+
+	static bool IsKnownPresetSelection(string mode)
+	{
+		if (mode == "vote") return true;
+		if (mode == "random") return true;
+		return false;
 	}
 
 	static bool IsKnownChatColor(string colorClass)
@@ -232,6 +247,9 @@ class DmConfig
 	string GetAnnouncementColor() { return m_Data.AnnouncementColor; }
 	string GetWelcomeMessage() { return m_Data.WelcomeMessage; }
 	bool IsChatHistoryOnOpenEnabled() { return m_Data.ChatHistoryOnOpen; }
+	string GetPresetSelection() { return m_Data.PresetSelection; }
+	// Read once per vote window (DmRoundEngine.EnterVoting), never per tick.
+	bool IsPresetVoteEnabled() { return m_Data.PresetSelection == "vote"; }
 
 	string GetAnnouncement(int annIdx)
 	{
@@ -259,6 +277,7 @@ class DmConfig
 		if (defaults.AnnouncementColor != "colorImportant") defOk = 0;
 		if (defaults.WelcomeMessage != "") defOk = 0;
 		if (defaults.ChatHistoryOnOpen) defOk = 0;
+		if (defaults.PresetSelection != "vote") defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
 		DmConfig probe = new DmConfig();
@@ -267,13 +286,28 @@ class DmConfig
 		probe.m_Data.MaxDeletesPerTick = -5;
 		probe.m_Data.AnnouncementIntervalSeconds = 5;
 		probe.m_Data.AnnouncementColor = "hotpink";
+		probe.m_Data.PresetSelection = "sometimes";
 		probe.ClampLoadedValues();
 		int clampOk = 1;
 		if (probe.m_Data.VoteSeconds != 5) clampOk = 0;
 		if (probe.m_Data.MaxDeletesPerTick != 1) clampOk = 0;
 		if (probe.m_Data.AnnouncementIntervalSeconds != 30) clampOk = 0;
 		if (probe.m_Data.AnnouncementColor != "colorImportant") clampOk = 0;
+		if (probe.m_Data.PresetSelection != "vote") clampOk = 0;
+		if (!probe.IsPresetVoteEnabled()) clampOk = 0;
 		Print("[DM] fixture DmConfig clamp floors: expected=1 got=" + clampOk.ToString() + " " + DmFixture.Verdict(clampOk == 1));
+
+		// PresetSelection: the two known modes survive the clamp untouched.
+		DmConfig modeProbe = new DmConfig();
+		modeProbe.m_Data = new DmConfigData();
+		modeProbe.m_Data.PresetSelection = "random";
+		modeProbe.ClampLoadedValues();
+		int modeOk = 1;
+		if (modeProbe.m_Data.PresetSelection != "random") modeOk = 0;
+		if (modeProbe.IsPresetVoteEnabled()) modeOk = 0;
+		if (!DmConfig.IsKnownPresetSelection("vote")) modeOk = 0;
+		if (DmConfig.IsKnownPresetSelection("")) modeOk = 0;
+		Print("[DM] fixture DmConfig preset selection: expected=1 got=" + modeOk.ToString() + " " + DmFixture.Verdict(modeOk == 1));
 
 		// Announcement sanitizing: blank lines drop, newlines flatten, 0 stays off.
 		DmConfig annProbe = new DmConfig();
