@@ -54,6 +54,11 @@ class DmClientState
 		return DmClientOpts.Has(m_ClientOpts, DmClientOpts.CHAT_HISTORY_ON_OPEN);
 	}
 
+	bool IsRandomChoiceAllowed()
+	{
+		return DmClientOpts.Has(m_ClientOpts, DmClientOpts.ALLOW_RANDOM_CHOICE);
+	}
+
 	static DmClientState GetInstance()
 	{
 		if (!s_Instance)

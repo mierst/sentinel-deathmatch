@@ -96,6 +96,16 @@ class DmConfigData
 	// presets when the vote closes (a meta-preset counts as one roll and then
 	// rolls its own member as usual). Unknown values fall back to "vote".
 	string PresetSelection = "vote";
+
+	// Same switch for the arena: "vote" (default) or "random" (the vote menu
+	// shows the weapons column only and the server rolls an enabled arena).
+	// With BOTH set to "random" there is nothing to vote on: the vote window
+	// shortens to VoteConsensusSeconds and the menu stays closed.
+	string ArenaSelection = "vote";
+
+	// Every voted column also offers a "Random" pick below the real options;
+	// if it wins, the server rolls that column. Off = real options only.
+	bool AllowRandomChoice = true;
 }
 
 class DmConfig
@@ -180,6 +190,7 @@ class DmConfig
 		if (!IsKnownChatColor(m_Data.AnnouncementColor)) m_Data.AnnouncementColor = "colorImportant";
 		m_Data.WelcomeMessage = FlattenLine(m_Data.WelcomeMessage);
 		if (!IsKnownPresetSelection(m_Data.PresetSelection)) m_Data.PresetSelection = "vote";
+		if (!IsKnownPresetSelection(m_Data.ArenaSelection)) m_Data.ArenaSelection = "vote";
 	}
 
 	static bool IsKnownPresetSelection(string mode)
@@ -248,8 +259,11 @@ class DmConfig
 	string GetWelcomeMessage() { return m_Data.WelcomeMessage; }
 	bool IsChatHistoryOnOpenEnabled() { return m_Data.ChatHistoryOnOpen; }
 	string GetPresetSelection() { return m_Data.PresetSelection; }
+	string GetArenaSelection() { return m_Data.ArenaSelection; }
 	// Read once per vote window (DmRoundEngine.EnterVoting), never per tick.
 	bool IsPresetVoteEnabled() { return m_Data.PresetSelection == "vote"; }
+	bool IsArenaVoteEnabled() { return m_Data.ArenaSelection == "vote"; }
+	bool IsRandomChoiceAllowed() { return m_Data.AllowRandomChoice; }
 
 	string GetAnnouncement(int annIdx)
 	{
@@ -278,6 +292,8 @@ class DmConfig
 		if (defaults.WelcomeMessage != "") defOk = 0;
 		if (defaults.ChatHistoryOnOpen) defOk = 0;
 		if (defaults.PresetSelection != "vote") defOk = 0;
+		if (defaults.ArenaSelection != "vote") defOk = 0;
+		if (!defaults.AllowRandomChoice) defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
 		DmConfig probe = new DmConfig();
@@ -287,8 +303,11 @@ class DmConfig
 		probe.m_Data.AnnouncementIntervalSeconds = 5;
 		probe.m_Data.AnnouncementColor = "hotpink";
 		probe.m_Data.PresetSelection = "sometimes";
+		probe.m_Data.ArenaSelection = "everywhere";
 		probe.ClampLoadedValues();
 		int clampOk = 1;
+		if (probe.m_Data.ArenaSelection != "vote") clampOk = 0;
+		if (!probe.IsArenaVoteEnabled()) clampOk = 0;
 		if (probe.m_Data.VoteSeconds != 5) clampOk = 0;
 		if (probe.m_Data.MaxDeletesPerTick != 1) clampOk = 0;
 		if (probe.m_Data.AnnouncementIntervalSeconds != 30) clampOk = 0;
@@ -301,10 +320,15 @@ class DmConfig
 		DmConfig modeProbe = new DmConfig();
 		modeProbe.m_Data = new DmConfigData();
 		modeProbe.m_Data.PresetSelection = "random";
+		modeProbe.m_Data.ArenaSelection = "random";
+		modeProbe.m_Data.AllowRandomChoice = false;
 		modeProbe.ClampLoadedValues();
 		int modeOk = 1;
 		if (modeProbe.m_Data.PresetSelection != "random") modeOk = 0;
 		if (modeProbe.IsPresetVoteEnabled()) modeOk = 0;
+		if (modeProbe.m_Data.ArenaSelection != "random") modeOk = 0;
+		if (modeProbe.IsArenaVoteEnabled()) modeOk = 0;
+		if (modeProbe.IsRandomChoiceAllowed()) modeOk = 0;
 		if (!DmConfig.IsKnownPresetSelection("vote")) modeOk = 0;
 		if (DmConfig.IsKnownPresetSelection("")) modeOk = 0;
 		Print("[DM] fixture DmConfig preset selection: expected=1 got=" + modeOk.ToString() + " " + DmFixture.Verdict(modeOk == 1));

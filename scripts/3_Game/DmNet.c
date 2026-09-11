@@ -34,11 +34,13 @@ class DmRpc
 class DmClientOpts
 {
 	static const int CHAT_HISTORY_ON_OPEN = 1;
+	static const int ALLOW_RANDOM_CHOICE = 2; // vote menu grows a Random pick per column
 
-	static int Pack(bool chatHistoryOnOpen)
+	static int Pack(bool chatHistoryOnOpen, bool allowRandomChoice)
 	{
 		int mask = 0;
 		if (chatHistoryOnOpen) mask = mask | CHAT_HISTORY_ON_OPEN;
+		if (allowRandomChoice) mask = mask | ALLOW_RANDOM_CHOICE;
 		return mask;
 	}
 
@@ -50,9 +52,12 @@ class DmClientOpts
 	static void SelfTest()
 	{
 		int packOk = 1;
-		if (DmClientOpts.Pack(false) != 0) packOk = 0;
-		if (!DmClientOpts.Has(DmClientOpts.Pack(true), DmClientOpts.CHAT_HISTORY_ON_OPEN)) packOk = 0;
-		if (DmClientOpts.Has(DmClientOpts.Pack(false), DmClientOpts.CHAT_HISTORY_ON_OPEN)) packOk = 0;
+		if (DmClientOpts.Pack(false, false) != 0) packOk = 0;
+		if (!DmClientOpts.Has(DmClientOpts.Pack(true, false), DmClientOpts.CHAT_HISTORY_ON_OPEN)) packOk = 0;
+		if (DmClientOpts.Has(DmClientOpts.Pack(false, true), DmClientOpts.CHAT_HISTORY_ON_OPEN)) packOk = 0;
+		if (!DmClientOpts.Has(DmClientOpts.Pack(false, true), DmClientOpts.ALLOW_RANDOM_CHOICE)) packOk = 0;
+		if (DmClientOpts.Has(DmClientOpts.Pack(true, false), DmClientOpts.ALLOW_RANDOM_CHOICE)) packOk = 0;
+		if (DmClientOpts.Pack(true, true) != 3) packOk = 0;
 		Print("[DM] fixture DmClientOpts pack: expected=1 got=" + packOk.ToString() + " " + DmFixture.Verdict(packOk == 1));
 	}
 }

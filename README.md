@@ -11,9 +11,10 @@ is playable yet.
 - **Round-based deathmatch** with a real lifecycle: vote, countdown, live
   round, scoreboard - not a static free-for-all.
 - **In-game voting UI**: players vote each round on the weapon preset and the
-  arena. Prefer random weapons? Set `"PresetSelection": "random"` in
-  `config.json` and the vote is arena-only; the server rolls a preset each
-  round.
+  arena, and each column offers a "Random" pick (`AllowRandomChoice`). Want
+  one side always random? Set `"PresetSelection": "random"` (or
+  `"ArenaSelection": "random"`) in `config.json` and that column disappears
+  from the vote; the server rolls it each round.
 - **Operator-authored arenas**: an arena is a boundary + spawn points + an
   object set. Build yours in DayZ Editor, save, drop the `.dze` file in your
   profile folder, list it in `zones.json`. Players vote between your arenas

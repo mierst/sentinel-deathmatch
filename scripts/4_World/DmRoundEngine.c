@@ -41,7 +41,9 @@ class DmRoundEngine
 		m_TickTimer = new Timer(CALL_CATEGORY_SYSTEM);
 		m_TickTimer.Run(0.5, this, "OnTick", null, true);
 		DmAnnounceService.GetInstance().LogBootSummary();
-		Print("[DM] preset selection: " + DmConfig.GetInstance().GetPresetSelection());
+		string randomChoiceState = "off";
+		if (DmConfig.GetInstance().IsRandomChoiceAllowed()) randomChoiceState = "on";
+		Print("[DM] vote: arena=" + DmConfig.GetInstance().GetArenaSelection() + " weapons=" + DmConfig.GetInstance().GetPresetSelection() + " random-choice=" + randomChoiceState);
 		Print("[DM] round engine started v" + DmVersion.VERSION);
 	}
 
@@ -229,7 +231,8 @@ class DmRoundEngine
 	private void EnterVoting(float nowSeconds)
 	{
 		m_VoteFastForwarded = false;
-		DmVoteService.GetInstance().OpenVote(DmConfig.GetInstance().IsPresetVoteEnabled());
+		DmConfig voteCfg = DmConfig.GetInstance();
+		DmVoteService.GetInstance().OpenVote(voteCfg.IsArenaVoteEnabled(), voteCfg.IsPresetVoteEnabled(), voteCfg.IsRandomChoiceAllowed());
 		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetVoteSeconds();
 		TransitionTo(DmPhase.VOTING);
 		DmNetServer.GetInstance().SendStateSyncAll();
