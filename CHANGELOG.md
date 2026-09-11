@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.22] - 2026-09-10
+
 ### Added
 - `PresetSelection` and `ArenaSelection` (config.json, default `"vote"`):
   set either to `"random"` to drop that column from the vote menu and let
