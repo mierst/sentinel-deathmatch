@@ -7,6 +7,13 @@ passes, not before.
 
 ## [Unreleased]
 
+### Fixed
+- Client options (`CLIENT_OPTS`: RANDOM vote buttons, chat history) could
+  be lost on a slow first join: the only send fired 3 s after the join
+  event, often while the client was still loading, and nothing resent it
+  until the player's first respawn. The state sync now also goes out when
+  the engine reports the client ready.
+
 ## [0.1.22] - 2026-09-10
 
 ### Added

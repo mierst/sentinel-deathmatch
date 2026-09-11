@@ -38,6 +38,12 @@ modded class MissionServer
 		if (DmConfig.GetInstance().IsEnabled())
 		{
 			DmRoundEngine.GetInstance().OnPlayerJoined(identity);
+			// The client is ready to receive RPCs here (vanilla itself sends
+			// from the ready event). The OnClientNewEvent +3 s sync can fire
+			// while a slow client is still loading and be dropped - which
+			// silently lost CLIENT_OPTS (no RANDOM buttons, no chat history)
+			// until the player's first respawn re-sent it. This one lands.
+			DmNetServer.GetInstance().SendStateSyncTo(player);
 		}
 	}
 
