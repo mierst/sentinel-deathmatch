@@ -7,6 +7,14 @@ passes, not before.
 
 ## [Unreleased]
 
+### Added
+- Boot warning when a column has more valid options than the vote menu
+  lists (8 per column): names the cut presets/arenas and says whether they
+  are still reachable. With `AllowRandomChoice` on they are - the RANDOM
+  pick and "random" mode roll over the full list - so the cap only limits
+  direct votes; with it off the line says they can never be selected
+  (issue #9).
+
 ## [0.1.23] - 2026-09-10
 
 ### Fixed

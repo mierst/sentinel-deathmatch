@@ -44,7 +44,33 @@ class DmRoundEngine
 		string randomChoiceState = "off";
 		if (DmConfig.GetInstance().IsRandomChoiceAllowed()) randomChoiceState = "on";
 		Print("[DM] vote: arena=" + DmConfig.GetInstance().GetArenaSelection() + " weapons=" + DmConfig.GetInstance().GetPresetSelection() + " random-choice=" + randomChoiceState);
+		LogVoteListCaps();
 		Print("[DM] round engine started v" + DmVersion.VERSION);
+	}
+
+	// Boot-only: one line per column whose valid options exceed what the
+	// vote menu can list (see DmVoteService.VoteListCapNotice).
+	private void LogVoteListCaps()
+	{
+		DmConfig capCfg = DmConfig.GetInstance();
+
+		array<string> presetNames = new array<string>;
+		DmLoadoutFactory loadouts = DmLoadoutFactory.GetInstance();
+		for (int presetIdx = 0; presetIdx < loadouts.GetValidPresetCount(); presetIdx++)
+		{
+			presetNames.Insert(loadouts.GetValidPreset(presetIdx).Name);
+		}
+		string presetNotice = DmVoteService.VoteListCapNotice("presets", presetNames, DmVoteService.MAX_LISTED_OPTIONS, capCfg.IsPresetVoteEnabled(), capCfg.IsRandomChoiceAllowed());
+		if (presetNotice != "") Print("" + presetNotice); // expression form: Print(var) would prefix "string var = "
+
+		array<string> zoneNames = new array<string>;
+		DmZonesConfig zones = DmZonesConfig.GetInstance();
+		for (int zoneIdx = 0; zoneIdx < zones.GetEnabledCount(); zoneIdx++)
+		{
+			zoneNames.Insert(zones.GetEnabledZone(zoneIdx).Name);
+		}
+		string zoneNotice = DmVoteService.VoteListCapNotice("arenas", zoneNames, DmVoteService.MAX_LISTED_OPTIONS, capCfg.IsArenaVoteEnabled(), capCfg.IsRandomChoiceAllowed());
+		if (zoneNotice != "") Print("" + zoneNotice);
 	}
 
 	int GetPhase() { return m_Phase; }
