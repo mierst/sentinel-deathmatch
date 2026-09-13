@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.26] - 2026-09-13
+
 ### Fixed
 - Powered attachments now arrive with a 9V battery: every fitted piece
   that has a battery slot (NV/thermal optics, weapon lights, lasers) gets
