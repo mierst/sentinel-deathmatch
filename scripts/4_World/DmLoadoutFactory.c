@@ -263,9 +263,11 @@ class DmLoadoutFactory
 			EntityAI primary = SpawnWeaponInHands(pb, preset.PrimaryClass);
 			if (primary)
 			{
+				array<EntityAI> primaryFitted = new array<EntityAI>;
 				for (int attIdx = 0; attIdx < preset.PrimaryAttachments.Count(); attIdx++)
 				{
-					AttachToWeapon(primary, preset.PrimaryAttachments[attIdx]);
+					EntityAI primaryPart = AttachToWeapon(primary, primaryFitted, preset.PrimaryAttachments[attIdx]);
+					if (primaryPart) primaryFitted.Insert(primaryPart);
 				}
 				LoadWeapon(primary, preset.PrimaryMagClass);
 				if (preset.PrimaryMagClass != "")
@@ -293,9 +295,11 @@ class DmLoadoutFactory
 			}
 			if (secondary)
 			{
+				array<EntityAI> secondaryFitted = new array<EntityAI>;
 				for (int satIdx = 0; satIdx < preset.SecondaryAttachments.Count(); satIdx++)
 				{
-					AttachToWeapon(secondary, preset.SecondaryAttachments[satIdx]);
+					EntityAI secondaryPart = AttachToWeapon(secondary, secondaryFitted, preset.SecondaryAttachments[satIdx]);
+					if (secondaryPart) secondaryFitted.Insert(secondaryPart);
 				}
 				LoadWeapon(secondary, preset.SecondaryMagClass);
 				if (preset.SecondaryMagClass != "")
@@ -353,14 +357,29 @@ class DmLoadoutFactory
 		pb.SetQuickBarEntityShortcut(melee, 3, true);
 	}
 
-	// Direct slot first; when the piece mounts onto another attachment (a
-	// scope onto a rail base - modded packs love this), fall through to a
-	// nested-inventory placement, which searches the weapon's attachment
-	// tree. List order matters: base before scope.
-	private void AttachToWeapon(EntityAI weapon, string attachmentClass)
+	// Placement order: (1) a piece already fitted this spawn, newest first
+	// (a scope onto its riser or rail base), (2) the weapon's own slots,
+	// (3) a free spot anywhere in the weapon's tree. Nested goes FIRST
+	// because the native CreateAttachment never consults a pack's
+	// script-side CanReceiveAttachment rules: with the weapon tried first,
+	// a scope listed after a riser landed on the receiver with the riser
+	// still fitted beneath it - a build hand assembly can never produce -
+	// and the optics camera then sat inside mount geometry (black lens
+	// under full-auto recoil; MWP HK416, 09-13). List order still matters:
+	// base before scope. Returns the created entity, null when nothing fit.
+	private EntityAI AttachToWeapon(EntityAI weapon, array<EntityAI> fitted, string attachmentClass)
 	{
-		if (weapon.GetInventory().CreateAttachment(attachmentClass)) return;
-		weapon.GetInventory().CreateInInventory(attachmentClass);
+		EntityAI placed;
+		for (int fitIdx = fitted.Count() - 1; fitIdx >= 0; fitIdx--)
+		{
+			EntityAI host = fitted[fitIdx];
+			if (!host) continue;
+			placed = host.GetInventory().CreateAttachment(attachmentClass);
+			if (placed) return placed;
+		}
+		placed = weapon.GetInventory().CreateAttachment(attachmentClass);
+		if (placed) return placed;
+		return weapon.GetInventory().CreateInInventory(attachmentClass);
 	}
 
 	// Weapons spawn ready to fire: full magazine attached (or internal mag

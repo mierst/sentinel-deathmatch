@@ -7,6 +7,15 @@ passes, not before.
 
 ## [Unreleased]
 
+### Fixed
+- Preset attachments now try the pieces already fitted this spawn (newest
+  first) BEFORE the weapon's own slots. The native attach call ignores a
+  weapon pack's script-side slot exclusions, so a scope listed after a
+  riser/mount could land directly on the receiver with the riser still
+  fitted beneath it; with the optics camera inside the mount geometry the
+  lens rendered black under full-auto recoil (reported on an MWP HK416
+  with a scope mount). Presets without stacked pieces are unaffected.
+
 ## [0.1.23] - 2026-09-10
 
 ### Fixed
