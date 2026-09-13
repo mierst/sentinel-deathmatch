@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.24] - 2026-09-13
+
 ### Fixed
 - Preset attachments now try the pieces already fitted this spawn (newest
   first) BEFORE the weapon's own slots. The native attach call ignores a
