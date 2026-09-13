@@ -7,6 +7,17 @@ passes, not before.
 
 ## [Unreleased]
 
+### Fixed
+- Weapons are now assembled off-hand (shoulder / holster slot) with their
+  attachments and ammunition, and only the finished main weapon is moved
+  to hands in a separate stage through the engine's server-side hand
+  juncture. Creating the gun in hands first and dressing it afterwards gave
+  the client a weapon whose parts and chamber state arrived after the
+  weapon itself; a player reported scopes going black under full-auto fire
+  on guns injected that way (with or without a mount) while the same parts
+  picked up by hand behaved. If hands are busy at hand-over the weapon
+  stays on the shoulder and hotbar slot 1 raises it.
+
 ## [0.1.24] - 2026-09-13
 
 ### Fixed
