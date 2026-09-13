@@ -19,5 +19,10 @@ are formats/tools it interoperates with - credited with thanks.
 - **Community reference material** - the open repositories of
   DayZ-Expansion, VPP Admin Tools, and the community modding wikis, as
   publicly readable references for engine behavior. No code used.
+- **The Crimson Zamboni** - CrimsonZamboniDeathmatch. Its loadout handling
+  fits a 9V battery into every attachment that takes one, so powered optics
+  arrive working; this mod adopted the idea after a black-optic report.
+  Design idea only; no code used.
+  https://steamcommunity.com/sharedfiles/filedetails/?id=2332725145
 
 If you believe your work should be credited here, please open an issue.

@@ -2,8 +2,7 @@
 //
 // Injection is deliberately staged across frames via the CallQueue: clearing
 // and refilling an inventory in the same frame is unreliable. Stage 1 clears,
-// stage 2 dresses, stage 3 arms (off-hand), stage 4 moves the main weapon
-// to hands.
+// stage 2 dresses, stage 3 arms.
 class DmLoadoutFactory
 {
 	private static ref DmLoadoutFactory s_Instance;
@@ -259,30 +258,22 @@ class DmLoadoutFactory
 		// no primary (e.g. pistols-only), the secondary takes that role.
 		bool secondaryIsMain = (preset.PrimaryClass == "" && preset.SecondaryClass != "");
 
-		// Every weapon is assembled OFF-hand (a rifle lands on the shoulder
-		// slot, a pistol in its holster slot or cargo) and only the finished
-		// piece is moved to hands in the next stage. Creating the gun in
-		// hands and bolting on optics + ammo afterwards hands the client a
-		// weapon whose attachments and chamber state arrive later than the
-		// weapon itself; vanilla papers over that with a delayed validate,
-		// and a player reported a scope going black under full-auto fire on
-		// a gun injected that way (MWP HK416, 09-13) while a hand-picked-up
-		// gun with the same parts behaved. Shoulder-then-hands is exactly the
-		// path a player takes with a looted rifle.
-		EntityAI mainWeapon;
-
 		if (preset.PrimaryClass != "")
 		{
-			EntityAI primary = EntityAI.Cast(pb.GetInventory().CreateInInventory(preset.PrimaryClass));
+			EntityAI primary = SpawnWeaponInHands(pb, preset.PrimaryClass);
 			if (primary)
 			{
-				mainWeapon = primary;
 				array<EntityAI> primaryFitted = new array<EntityAI>;
 				for (int attIdx = 0; attIdx < preset.PrimaryAttachments.Count(); attIdx++)
 				{
 					EntityAI primaryPart = AttachToWeapon(primary, primaryFitted, preset.PrimaryAttachments[attIdx]);
-					if (primaryPart) primaryFitted.Insert(primaryPart);
+					if (primaryPart)
+					{
+						primaryFitted.Insert(primaryPart);
+						PowerAttachment(primaryPart);
+					}
 				}
+				ReportFitted(primary, primaryFitted);
 				LoadWeapon(primary, preset.PrimaryMagClass);
 				if (preset.PrimaryMagClass != "")
 				{
@@ -298,16 +289,28 @@ class DmLoadoutFactory
 
 		if (preset.SecondaryClass != "")
 		{
-			EntityAI secondary = EntityAI.Cast(pb.GetInventory().CreateInInventory(preset.SecondaryClass));
+			EntityAI secondary;
+			if (secondaryIsMain)
+			{
+				secondary = SpawnWeaponInHands(pb, preset.SecondaryClass);
+			}
+			else
+			{
+				secondary = EntityAI.Cast(pb.GetInventory().CreateInInventory(preset.SecondaryClass));
+			}
 			if (secondary)
 			{
-				if (secondaryIsMain) mainWeapon = secondary;
 				array<EntityAI> secondaryFitted = new array<EntityAI>;
 				for (int satIdx = 0; satIdx < preset.SecondaryAttachments.Count(); satIdx++)
 				{
 					EntityAI secondaryPart = AttachToWeapon(secondary, secondaryFitted, preset.SecondaryAttachments[satIdx]);
-					if (secondaryPart) secondaryFitted.Insert(secondaryPart);
+					if (secondaryPart)
+					{
+						secondaryFitted.Insert(secondaryPart);
+						PowerAttachment(secondaryPart);
+					}
 				}
+				ReportFitted(secondary, secondaryFitted);
 				LoadWeapon(secondary, preset.SecondaryMagClass);
 				if (preset.SecondaryMagClass != "")
 				{
@@ -329,23 +332,6 @@ class DmLoadoutFactory
 
 		BindBandages(pb);
 		SpawnMelee(pb);
-
-		if (mainWeapon)
-		{
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(StageHands, 50, false, pb, mainWeapon);
-		}
-	}
-
-	// Stage 4: the assembled main weapon goes to hands through the engine's
-	// own server-side hand juncture (the same call vanilla actions use), so
-	// the client sees a complete weapon change hands rather than a bare one
-	// being dressed in its grip. Refused hands (mid-transition, something
-	// already held) leave it on the shoulder: hotbar slot 1 still raises it.
-	void StageHands(PlayerBase pb, EntityAI mainWeapon)
-	{
-		if (!pb || !pb.IsAlive() || !mainWeapon) return;
-		if (pb.GetHumanInventory().GetEntityInHands()) return;
-		pb.ServerTakeEntityToHands(mainWeapon);
 	}
 
 	// First two bandage-type items from the gear land on hotbar slots 2-3.
@@ -406,6 +392,42 @@ class DmLoadoutFactory
 		return weapon.GetInventory().CreateInInventory(attachmentClass);
 	}
 
+	// A 9V cell into every piece that takes one (NV/thermal optics, lights,
+	// lasers) so a powered attachment arrives working instead of dead - the
+	// engine only renders an NV optic's view when IsWorking(). Pieces with no
+	// battery slot simply refuse the create; nothing to check first. Idea
+	// from CrimsonZamboniDeathmatch's loadout handling (docs/CREDITS.md).
+	private void PowerAttachment(EntityAI part)
+	{
+		if (!part) return;
+		part.GetInventory().CreateAttachment("Battery9V");
+	}
+
+	// Debug-only placement report: one line per fitted piece naming its
+	// parent and slot. This is the first thing to ask an operator for when
+	// a preset "looks wrong" on a modded pack, so it costs nothing to keep.
+	private void ReportFitted(EntityAI weapon, array<EntityAI> fitted)
+	{
+		if (!DmConfig.GetInstance().IsDebug()) return;
+		for (int repIdx = 0; repIdx < fitted.Count(); repIdx++)
+		{
+			EntityAI part = fitted[repIdx];
+			if (!part) continue;
+			string parentName = "?";
+			string slotName = "?";
+			InventoryLocation loc = new InventoryLocation();
+			if (part.GetInventory().GetCurrentInventoryLocation(loc))
+			{
+				if (loc.GetParent()) parentName = loc.GetParent().GetType();
+				if (loc.GetType() == InventoryLocationType.ATTACHMENT) slotName = InventorySlots.GetSlotName(loc.GetSlot());
+				if (loc.GetType() == InventoryLocationType.CARGO) slotName = "cargo";
+			}
+			string powered = "";
+			if (part.FindAttachmentBySlotName("BatteryD")) powered = " +9V";
+			Print("[DM] loadout: " + weapon.GetType() + " <- " + part.GetType() + " on " + parentName + " [" + slotName + "]" + powered);
+		}
+	}
+
 	// Weapons spawn ready to fire: full magazine attached (or internal mag
 	// filled) AND a round chambered, via the vanilla SpawnAmmo cascade, which
 	// also fixes the weapon FSM and synchronizes to clients. magOrAmmoClass
@@ -416,7 +438,22 @@ class DmLoadoutFactory
 	{
 		Weapon_Base weapon = Weapon_Base.Cast(weaponEntity);
 		if (!weapon) return;
-		weapon.SpawnAmmo(magOrAmmoClass, WeaponWithAmmoFlags.CHAMBER);
+		// MAX_CAPACITY_MAG: the loaded magazine is explicitly filled rather
+		// than left at whatever count the magazine spawned with (vanilla's
+		// own SAMF_DEFAULT does the same).
+		weapon.SpawnAmmo(magOrAmmoClass, WeaponWithAmmoFlags.CHAMBER | WeaponWithAmmoFlags.MAX_CAPACITY_MAG);
+	}
+
+	// Hands first; if the engine refuses (hands blocked mid-transition),
+	// fall back to inventory so the weapon is never silently lost.
+	private EntityAI SpawnWeaponInHands(PlayerBase pb, string weaponClass)
+	{
+		EntityAI weapon = pb.GetHumanInventory().CreateInHands(weaponClass);
+		if (!weapon)
+		{
+			weapon = EntityAI.Cast(pb.GetInventory().CreateInInventory(weaponClass));
+		}
+		return weapon;
 	}
 
 	static void SelfTest()

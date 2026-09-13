@@ -7,18 +7,22 @@ passes, not before.
 
 ## [Unreleased]
 
-## [0.1.25] - 2026-09-13
-
 ### Fixed
-- Weapons are now assembled off-hand (shoulder / holster slot) with their
-  attachments and ammunition, and only the finished main weapon is moved
-  to hands in a separate stage through the engine's server-side hand
-  juncture. Creating the gun in hands first and dressing it afterwards gave
-  the client a weapon whose parts and chamber state arrived after the
-  weapon itself; a player reported scopes going black under full-auto fire
-  on guns injected that way (with or without a mount) while the same parts
-  picked up by hand behaved. If hands are busy at hand-over the weapon
-  stays on the shoulder and hotbar slot 1 raises it.
+- Powered attachments now arrive with a 9V battery: every fitted piece
+  that has a battery slot (NV/thermal optics, weapon lights, lasers) gets
+  one, so an optic the engine only renders while working is not handed
+  out dead. Pieces without a slot are unaffected.
+- The loaded magazine is explicitly filled to capacity at spawn (the
+  vanilla default flags), instead of whatever count the magazine spawned
+  with.
+- Debug mode logs one line per fitted attachment naming its parent and
+  slot (`[DM] loadout: ...`), the first thing to ask for when a preset
+  looks wrong on a modded weapon pack.
+
+### Notes
+- v0.1.25 was tagged but never published; its off-hand assembly change is
+  reverted here after comparison with a mod that hands weapons out the
+  same way as v0.1.24 without the reported black-lens issue.
 
 ## [0.1.24] - 2026-09-13
 
