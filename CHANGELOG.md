@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.25] - 2026-09-13
+
 ### Fixed
 - Weapons are now assembled off-hand (shoulder / holster slot) with their
   attachments and ammunition, and only the finished main weapon is moved
