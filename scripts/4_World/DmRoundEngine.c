@@ -403,22 +403,33 @@ class DmRoundEngine
 
 		int newStreak = DmScoreService.GetInstance().RegisterKill(killerId, killerName, victimIdent.GetPlainId(), victimIdent.GetName());
 
+		// config.json Killfeed: gated before the line is built, so a disabled
+		// feed costs no string work per kill. Scoring and DmApi.OnKill never
+		// depend on it.
+		bool killfeedOn = DmConfig.GetInstance().IsKillfeedEnabled();
+
 		if (killerId != "" && killerId != victimIdent.GetPlainId())
 		{
 			DmApi.OnKill().Invoke(killerId, victimIdent.GetPlainId(), weaponName, killDistance, false, newStreak);
-			DmNetServer.GetInstance().SendKillfeedAll(DmNetServer.FormatKillfeedLine(killerName, victimIdent.GetName(), weaponName, killDistance));
+			if (killfeedOn)
+			{
+				DmNetServer.GetInstance().SendKillfeedAll(DmNetServer.FormatKillfeedLine(killerName, victimIdent.GetName(), weaponName, killDistance));
+			}
 		}
 		else
 		{
 			// No killer to credit: the death itself costs a kill point.
 			DmScoreService.GetInstance().RegisterPenalty(victimIdent.GetPlainId(), victimIdent.GetName());
-			if (zoneKill)
+			if (killfeedOn)
 			{
-				DmNetServer.GetInstance().SendKillfeedAll(victimIdent.GetName() + " left the zone");
-			}
-			else
-			{
-				DmNetServer.GetInstance().SendKillfeedAll(victimIdent.GetName() + " died");
+				if (zoneKill)
+				{
+					DmNetServer.GetInstance().SendKillfeedAll(victimIdent.GetName() + " left the zone");
+				}
+				else
+				{
+					DmNetServer.GetInstance().SendKillfeedAll(victimIdent.GetName() + " died");
+				}
 			}
 		}
 

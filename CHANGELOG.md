@@ -7,6 +7,12 @@ passes, not before.
 
 ## [Unreleased]
 
+### Added
+- `Killfeed` (config.json, default on): set to `0` to stop announcing kills
+  and deaths ("A [MP5K 42m] > B", "B died", "B left the zone") on the HUD
+  feed and in chat. Scoring and the scoreboard are unchanged, and join/leave
+  and map-vote notices still show.
+
 ## [0.1.26] - 2026-09-13
 
 ### Fixed
