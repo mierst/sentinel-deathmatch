@@ -55,6 +55,12 @@ class DmConfigData
 	// do not.
 	bool KillfeedToChat = true;
 
+	// Kill and death lines ("A [MP5K 42m] > B", "B died", "B left the zone")
+	// on the HUD feed and its chat copy. Off = nobody is told who killed
+	// whom; scoring, the scoreboard and DmApi.OnKill are untouched. Server
+	// notices that share the feed (join/leave, map-vote progress) still show.
+	bool Killfeed = true;
+
 	// Arena rule: going unconscious kills you outright (credited to whoever
 	// put you down via the last-attacker memory). Turn off to keep vanilla
 	// unconsciousness.
@@ -249,6 +255,7 @@ class DmConfig
 	bool IsSurvivalPressureDisabled() { return m_Data.DisableSurvivalPressure; }
 	bool IsMeleeSpawnEnabled() { return m_Data.MeleeSpawn; }
 	bool IsKillfeedToChatEnabled() { return m_Data.KillfeedToChat; }
+	bool IsKillfeedEnabled() { return m_Data.Killfeed; }
 	bool IsUnconsciousnessDisabled() { return m_Data.DisableUnconsciousness; }
 	int GetMaxArenaObjects() { return m_Data.MaxArenaObjects; }
 	int GetMaxArenaSpawnsPerTick() { return m_Data.MaxArenaSpawnsPerTick; }
@@ -282,6 +289,7 @@ class DmConfig
 		if (!defaults.MeleeSpawn) defOk = 0;
 		if (defaults.VoteConsensusSeconds != 10) defOk = 0;
 		if (!defaults.KillfeedToChat) defOk = 0;
+		if (!defaults.Killfeed) defOk = 0;
 		if (!defaults.DisableUnconsciousness) defOk = 0;
 		if (defaults.MaxArenaObjects != 1000) defOk = 0;
 		if (defaults.MaxArenaSpawnsPerTick != 50) defOk = 0;

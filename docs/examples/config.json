@@ -16,6 +16,8 @@
     "PresetSelection": "vote",
     "AllowRandomChoice": 1,
     "DisableSurvivalPressure": 1,
+    "Killfeed": 1,
+    "KillfeedToChat": 1,
     "AnnouncementIntervalSeconds": 300,
     "Announcements": [
         "Join our Discord: discord.gg/your-invite",
