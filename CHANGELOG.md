@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.27] - 2026-09-17
+
 ### Added
 - `Killfeed` (config.json, default on): set to `0` to stop announcing kills
   and deaths ("A [MP5K 42m] > B", "B died", "B left the zone") on the HUD
