@@ -341,6 +341,20 @@ class DmConfig
 		if (DmConfig.IsKnownPresetSelection("")) modeOk = 0;
 		Print("[DM] fixture DmConfig preset selection: expected=1 got=" + modeOk.ToString() + " " + DmFixture.Verdict(modeOk == 1));
 
+		// Killfeed and KillfeedToChat both default on, so the defaults fixture
+		// cannot tell their accessors apart: flip each one alone.
+		DmConfig feedProbe = new DmConfig();
+		feedProbe.m_Data = new DmConfigData();
+		int feedOk = 1;
+		feedProbe.m_Data.Killfeed = false;
+		if (feedProbe.IsKillfeedEnabled()) feedOk = 0;
+		if (!feedProbe.IsKillfeedToChatEnabled()) feedOk = 0;
+		feedProbe.m_Data.Killfeed = true;
+		feedProbe.m_Data.KillfeedToChat = false;
+		if (!feedProbe.IsKillfeedEnabled()) feedOk = 0;
+		if (feedProbe.IsKillfeedToChatEnabled()) feedOk = 0;
+		Print("[DM] fixture DmConfig killfeed switches: expected=1 got=" + feedOk.ToString() + " " + DmFixture.Verdict(feedOk == 1));
+
 		// Announcement sanitizing: blank lines drop, newlines flatten, 0 stays off.
 		DmConfig annProbe = new DmConfig();
 		annProbe.m_Data = new DmConfigData();
