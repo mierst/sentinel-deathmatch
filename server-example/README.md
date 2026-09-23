@@ -70,9 +70,13 @@ Add `"-serverMod=@SentinelEnforcer"` if you run the Enforcer. Linux binary:
 - `config.json` - round timings, score limit, respawn, min players, the
   chat announcements (`Announcements` list rotated every
   `AnnouncementIntervalSeconds`, plus a one-shot `WelcomeMessage` on first
-  connect - the natural place for a Discord invite), and `ChatHistoryOnOpen`
+  connect - the natural place for a Discord invite), `ChatHistoryOnOpen`
   (off by default: keeps the last chat lines visible while the chat box is
-  open instead of letting them fade)
+  open instead of letting them fade), and the killfeed switches (`Killfeed`,
+  on by default - set to `0` and kills and deaths stop being announced
+  anywhere, while scoring, the scoreboard and join/leave notices carry on;
+  `KillfeedToChat`, on by default - set to `0` to keep the HUD feed but drop
+  its chat copy, the copy that outlives the victim's respawn blackout)
 - `zones.json` - arenas: boundary circle + spawn points (a demo arena on
   Chernarus is written so the loop works out of the box)
 - `presets.json` - two vanilla-weapon loadouts to start from
