@@ -123,5 +123,6 @@ void DmRunSelfTests()
 	DmZoneMarkers.SelfTest();
 	DmArenaService.SelfTest();
 	DmAnnounceService.SelfTest();
+	DmOpticsGuard.SelfTest();
 	Print("[DM] boot fixtures complete");
 }

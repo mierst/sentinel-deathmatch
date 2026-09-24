@@ -7,6 +7,17 @@ passes, not before.
 
 ## [Unreleased]
 
+### Fixed
+- Scope lens going solid black mid-ADS (reported after firing on a
+  server-issued rifle with a modded 3D scope, MWP Elcan Specter): the lens
+  is the optic's rear glass, a `hide` animation source that vanilla hides
+  client-side only on optics entry and that can reappear while still aiming.
+  A client-side guard in the optics camera now re-hides it whenever it shows
+  while the player is in the scope. Each optic is calibrated once on first
+  use (does its model answer the hide animation at all?); optics without
+  one, all vanilla scopes included, are left alone. Boot fixture
+  `DmOpticsGuard state machine` covers the decision logic.
+
 ## [0.1.27] - 2026-09-17
 
 ### Added
