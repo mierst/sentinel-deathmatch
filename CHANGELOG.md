@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.29] - 2026-09-24
+
 ### Fixed
 - Red-dot / holographic sights (modded, battery powered) losing their lit
   reticle mid-ADS after firing: the reticle is a texture vanilla applies
