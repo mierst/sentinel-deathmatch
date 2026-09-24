@@ -423,7 +423,22 @@ class DmLoadoutFactory
 				if (loc.GetType() == InventoryLocationType.CARGO) slotName = "cargo";
 			}
 			string powered = "";
-			if (part.FindAttachmentBySlotName("BatteryD")) powered = " +9V";
+			EntityAI cell = part.FindAttachmentBySlotName("BatteryD");
+			if (cell)
+			{
+				// Server-side truth for powered sights: the cell's charge and whether
+				// the piece's energy manager can draw from it (the client only sees
+				// synced copies of these, and a sight that cannot work drops its
+				// reticle the moment its update loop runs).
+				powered = " +9V";
+				if (cell.HasEnergyManager()) powered = powered + " cell_energy=" + cell.GetCompEM().GetEnergy().ToString();
+				if (part.HasEnergyManager())
+				{
+					string sourceName = "none";
+					if (part.GetCompEM().GetEnergySource()) sourceName = part.GetCompEM().GetEnergySource().GetType();
+					powered = powered + " can_work=" + part.GetCompEM().CanWork().ToString() + " source=" + sourceName;
+				}
+			}
 			Print("[DM] loadout: " + weapon.GetType() + " <- " + part.GetType() + " on " + parentName + " [" + slotName + "]" + powered);
 		}
 	}

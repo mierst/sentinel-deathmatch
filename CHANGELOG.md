@@ -7,6 +7,17 @@ passes, not before.
 
 ## [Unreleased]
 
+### Fixed
+- Red-dot / holographic sights (modded, battery powered) losing their lit
+  reticle mid-ADS after firing: the reticle is a texture vanilla applies
+  client-side when the sight starts working, and it can be reset underneath
+  while still aiming. The optics-camera guard now re-applies it every 0.5 s
+  while the sight is switched on and vanilla still considers it lit. A
+  pulled or flat battery, or any switch-off action, still turns the
+  reticle off. Boot fixture `DmOpticsGuard reddot refresh` covers the gate.
+- Debug mode's loadout placement line now also reports a powered piece's
+  cell charge, energy source and `can_work` (server-side truth for sights).
+
 ## [0.1.28] - 2026-09-24
 
 ### Fixed

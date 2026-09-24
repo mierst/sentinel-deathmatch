@@ -16,6 +16,8 @@
 // client, for one entity: one native GetAnimationPhase per frame while the
 // scope is a guarded one; optics without the animation (all vanilla ones) are
 // detected within 0.25 s of first use and cost one int compare after that.
+// Powered sights (red dots / holos) additionally get their reticle texture
+// re-applied every 0.5 s while switched on (one SetObjectTexture per 0.5 s).
 // Nothing runs on the dedicated server, where this camera is never created.
 class DmOpticsGuard
 {
@@ -51,6 +53,22 @@ class DmOpticsGuard
 		return hidePhase < 0.5;
 	}
 
+	// Powered sights (red dots / holos): the lit reticle is a texture vanilla
+	// puts on the optic's "reddot" selection in ShowReddot(true) when the
+	// sight starts working, client-side. Re-apply it on an interval, but ONLY
+	// while the sight is legitimately on: the synced switch state says so and
+	// vanilla itself still considers the reticle shown. A pulled or flat
+	// battery, or any switch-off action, leaves the reticle off as intended;
+	// what this defeats is the texture being reset underneath vanilla.
+	static const float REDDOT_REFRESH_SECONDS = 0.5;
+
+	// Pure: refresh due? (hasReddot = the optic has a reddot selection at all)
+	static bool NeedsReddotRefresh(bool hasReddot, bool switchedOn, bool shown, float sinceRefresh)
+	{
+		if (!hasReddot || !switchedOn || !shown) return false;
+		return sinceRefresh >= REDDOT_REFRESH_SECONDS;
+	}
+
 	static void SelfTest()
 	{
 		int guardOk = 1;
@@ -69,6 +87,19 @@ class DmOpticsGuard
 		if (!DmOpticsGuard.NeedsRehide(STATE_ACTIVE, 0.0)) guardOk = 0;
 		if (!DmOpticsGuard.NeedsRehide(STATE_ACTIVE, 0.3)) guardOk = 0;
 		Print("[DM] fixture DmOpticsGuard state machine: expected=1 got=" + guardOk.ToString() + " " + DmFixture.Verdict(guardOk == 1));
+
+		int dotOk = 1;
+		// Due: powered sight, switched on, vanilla thinks shown, interval elapsed.
+		if (!DmOpticsGuard.NeedsReddotRefresh(true, true, true, 0.6)) dotOk = 0;
+		// Not yet: interval not elapsed.
+		if (DmOpticsGuard.NeedsReddotRefresh(true, true, true, 0.1)) dotOk = 0;
+		// Never while switched off (player / mod action, pulled or flat battery).
+		if (DmOpticsGuard.NeedsReddotRefresh(true, false, true, 5.0)) dotOk = 0;
+		// Never when vanilla itself has the reticle off (OnWorkStop ran).
+		if (DmOpticsGuard.NeedsReddotRefresh(true, true, false, 5.0)) dotOk = 0;
+		// Never for an optic without a reddot selection (magnified scopes).
+		if (DmOpticsGuard.NeedsReddotRefresh(false, true, true, 5.0)) dotOk = 0;
+		Print("[DM] fixture DmOpticsGuard reddot refresh: expected=1 got=" + dotOk.ToString() + " " + DmFixture.Verdict(dotOk == 1));
 	}
 }
 
@@ -78,8 +109,11 @@ modded class DayZPlayerCameraOptics
 	ItemOptics m_DmGuardOptic;
 	int m_DmGuardState;
 	float m_DmGuardProbeAge;
+	float m_DmGuardReddotAge;
+	bool m_DmGuardReddotOptic;
 	static int s_DmGuardRehides;
 	static int s_DmGuardStateLogs;
+	static int s_DmGuardReddotLogs;
 
 	override void OnUpdate(float pDt, out DayZPlayerCameraResult pOutResult)
 	{
@@ -92,12 +126,32 @@ modded class DayZPlayerCameraOptics
 			m_DmGuardOptic = guardOptic;
 			m_DmGuardState = DmOpticsGuard.STATE_PROBE;
 			m_DmGuardProbeAge = 0.0;
+			m_DmGuardReddotAge = 0.0;
+			// Powered sight with a reddot selection: the reticle-texture refresh applies.
+			m_DmGuardReddotOptic = guardOptic.HasEnergyManager() && guardOptic.m_reddot_index != -1;
 		}
-		if (m_DmGuardState == DmOpticsGuard.STATE_OFF) return;
 
 		// Not while leaving the scope: OnOpticExit shows the glass on purpose.
 		DayZPlayerImplement guardPlayer = DayZPlayerImplement.Cast(m_pPlayer);
 		if (!guardPlayer || !guardPlayer.IsInOptics()) return;
+
+		if (m_DmGuardReddotOptic)
+		{
+			m_DmGuardReddotAge = m_DmGuardReddotAge + pDt;
+			if (DmOpticsGuard.NeedsReddotRefresh(true, guardOptic.GetCompEM().IsSwitchedOn(), guardOptic.m_reddot_displayed, m_DmGuardReddotAge))
+			{
+				m_DmGuardReddotAge = 0.0;
+				// Idempotent: same texture/material vanilla applied on OnWorkStart.
+				guardOptic.ShowReddot(true);
+				if (s_DmGuardReddotLogs < 3)
+				{
+					s_DmGuardReddotLogs = s_DmGuardReddotLogs + 1;
+					Print("[DM] optics guard: reticle texture refresh active on " + guardOptic.GetType());
+				}
+			}
+		}
+
+		if (m_DmGuardState == DmOpticsGuard.STATE_OFF) return;
 
 		float guardPhase = guardOptic.GetAnimationPhase("hide");
 		if (m_DmGuardState == DmOpticsGuard.STATE_PROBE)
