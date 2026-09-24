@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.28] - 2026-09-24
+
 ### Fixed
 - Scope lens going solid black mid-ADS (reported after firing on a
   server-issued rifle with a modded 3D scope, MWP Elcan Specter): the lens
