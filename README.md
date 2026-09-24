@@ -26,6 +26,13 @@ is playable yet.
   smart spawn selection away from enemies.
 - **Zone confinement**: soft-wall damage or hard teleport, with on-screen
   boundary warnings. Optional shrinking-zone mode.
+- **Killfeed control**: kill and death lines ("A [MP5K 42m] > B", "B died")
+  land on the HUD feed and, by default, in each player's chat, where they
+  survive the death/respawn blackout that the 8 s HUD rows do not. Set
+  `"Killfeed": 0` in `config.json` to stop announcing kills and deaths
+  altogether - scoring, the scoreboard and the kill event feed are untouched,
+  and server notices sharing the feed (join/leave, map-vote progress) still
+  show. Set `"KillfeedToChat": 0` to keep the HUD feed but drop the chat copy.
 - **Server-owner branding**: MOTD, colors, logo slots, per-preset icons.
 - **Built for density**: engineered for lots of players shooting in one small
   area - no per-frame script work, event-driven networking, rate-limited
