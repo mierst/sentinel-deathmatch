@@ -112,6 +112,9 @@ class DmConfigData
 	// Every voted column also offers a "Random" pick below the real options;
 	// if it wins, the server rolls that column. Off = real options only.
 	bool AllowRandomChoice = true;
+
+	// Profile-local JSON selected once on boot; artwork lives in client mods.
+	string LeaderboardThemeFile = "leaderboard-theme.json";
 }
 
 class DmConfig
@@ -171,6 +174,7 @@ class DmConfig
 	// (e.g. VoteSeconds 0 would skip voting entirely and spin phases).
 	void ClampLoadedValues()
 	{
+		m_Data.LeaderboardThemeFile = DmLeaderboardTheme.SafeFileName(m_Data.LeaderboardThemeFile);
 		if (m_Data.MinPlayers < 1) m_Data.MinPlayers = 1;
 		if (m_Data.VoteSeconds < 5) m_Data.VoteSeconds = 5;
 		if (m_Data.VoteConsensusSeconds < 3) m_Data.VoteConsensusSeconds = 3;
@@ -237,6 +241,7 @@ class DmConfig
 	}
 
 	bool IsEnabled() { return m_CachedEnabled; }
+	string GetLeaderboardThemeFile() { return m_Data.LeaderboardThemeFile; }
 	bool IsDebug() { return m_Data.DebugLog; }
 
 	int GetMinPlayers() { return m_Data.MinPlayers; }

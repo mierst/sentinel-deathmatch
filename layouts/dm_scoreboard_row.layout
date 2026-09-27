@@ -1,0 +1,136 @@
+FrameWidgetClass DmScoreboardRow {
+ visible 1
+ position 0 0
+ size 936 38
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ clipchildren 1
+ {
+ImageWidgetClass RowBackground {
+ visible 1
+ position 0 0
+ size 936 38
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.06 0.07 0.09 1
+}
+ImageWidgetClass RowAccent {
+ visible 1
+ position 0 0
+ size 3 38
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.23 0.51 0.96 1
+}
+TextWidgetClass Rank {
+ visible 1
+ position 26 0
+ size 64 38
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.67 0.72 0.79 1
+ text "1"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 19
+ "text halign" left
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass Name {
+ visible 1
+ position 100 0
+ size 432 38
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "Survivor"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 22
+ "text halign" left
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass Kills {
+ visible 1
+ position 558 0
+ size 88 38
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "0"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 22
+ "text halign" right
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass Deaths {
+ visible 1
+ position 658 0
+ size 88 38
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "0"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 22
+ "text halign" right
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass Streak {
+ visible 1
+ position 758 0
+ size 130 38
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "0"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 22
+ "text halign" right
+ "text valign" center
+ wrap 0
+}
+ImageWidgetClass RowLine {
+ visible 1
+ position 26 37
+ size 884 1
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.13 0.15 0.18 1
+}
+ }
+}

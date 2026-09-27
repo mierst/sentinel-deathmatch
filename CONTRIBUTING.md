@@ -78,8 +78,7 @@ Requirements: Windows, [Mikero DePboTools](https://mikero.bytex.digital/)
 ```
 
 Output: `build/@SentinelDeathmatch/addons/sentinel_dm.pbo`. Load on a local
-DayZ dedicated server via `-serverMod=@SentinelDeathmatch` (Phase 0 is
-server-side only; client UI phases will move the mod to `-mod=`).
+DayZ dedicated server and client via `-mod=@SentinelDeathmatch`; both sides need the mod for its in-game UI.
 
 ## Style
 

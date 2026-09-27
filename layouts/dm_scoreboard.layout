@@ -1,236 +1,613 @@
 FrameWidgetClass DmScoreboardRoot {
  visible 1
- clipchildren 0
- position 560 190
- size 800 700
+ position 0 0
+ size 960 830
  hexactpos 1
  vexactpos 1
  hexactsize 1
  vexactsize 1
- scriptclass ""
+ clipchildren 1
  {
-  PanelWidgetClass Backdrop {
-   visible 1
-   clipchildren 0
-   position 0 0
-   size 800 700
-   hexactpos 1
-   vexactpos 1
-   hexactsize 1
-   vexactsize 1
-   color 0.05 0.05 0.07 0.92
-   style editor_quad_dark
-   {
-    TextWidgetClass Title {
-     visible 1
-     ignorepointer 1
-     color 1 1 1 0.95
-     position 0 18
-     size 800 34
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text "SCOREBOARD"
-     font "gui/fonts/sdf_MetronLight24"
-     "exact text" 1
-     "exact text size" 28
-     "text halign" center
-    }
-    TextWidgetClass WinnerText {
-     visible 1
-     ignorepointer 1
-     color 1 0.85 0.4 0.95
-     position 0 58
-     size 800 28
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text ""
-     font "gui/fonts/sdf_MetronLight24"
-     "exact text" 1
-     "exact text size" 22
-     "text halign" center
-    }
-    ButtonWidgetClass BtnRound {
-     visible 1
-     position 200 92
-     size 180 30
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text "THIS ROUND"
-     style editor_quad_dark
-    }
-    ButtonWidgetClass BtnSession {
-     visible 1
-     position 420 92
-     size 180 30
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text "SESSION"
-     style editor_quad_dark
-    }
-    TextWidgetClass HeaderName {
-     visible 1
-     ignorepointer 1
-     color 1 1 1 0.6
-     position 60 134
-     size 320 22
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text "PLAYER"
-     font "gui/fonts/MetronLight14"
-     "exact text" 1
-     "exact text size" 15
-     "text halign" left
-    }
-    TextWidgetClass HeaderK {
-     visible 1
-     ignorepointer 1
-     color 1 1 1 0.6
-     position 420 134
-     size 80 22
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text "K"
-     font "gui/fonts/MetronLight14"
-     "exact text" 1
-     "exact text size" 15
-     "text halign" right
-    }
-    TextWidgetClass HeaderD {
-     visible 1
-     ignorepointer 1
-     color 1 1 1 0.6
-     position 500 134
-     size 80 22
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text "D"
-     font "gui/fonts/MetronLight14"
-     "exact text" 1
-     "exact text size" 15
-     "text halign" right
-    }
-    TextWidgetClass HeaderStreak {
-     visible 1
-     ignorepointer 1
-     color 1 1 1 0.6
-     position 600 134
-     size 140 22
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text "STREAK"
-     font "gui/fonts/MetronLight14"
-     "exact text" 1
-     "exact text size" 15
-     "text halign" right
-    }
-    MultilineTextWidgetClass ColName {
-     visible 1
-     ignorepointer 1
-     color 1 1 1 0.9
-     position 60 162
-     size 320 460
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text ""
-     font "gui/fonts/MetronLight14"
-     "exact text" 1
-     "exact text size" 16
-     "text halign" left
-    }
-    MultilineTextWidgetClass ColK {
-     visible 1
-     ignorepointer 1
-     color 1 1 1 0.9
-     position 420 162
-     size 80 460
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text ""
-     font "gui/fonts/MetronLight14"
-     "exact text" 1
-     "exact text size" 16
-     "text halign" right
-    }
-    MultilineTextWidgetClass ColD {
-     visible 1
-     ignorepointer 1
-     color 1 1 1 0.9
-     position 500 162
-     size 80 460
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text ""
-     font "gui/fonts/MetronLight14"
-     "exact text" 1
-     "exact text size" 16
-     "text halign" right
-    }
-    MultilineTextWidgetClass ColStreak {
-     visible 1
-     ignorepointer 1
-     color 1 1 1 0.9
-     position 600 162
-     size 140 460
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text ""
-     font "gui/fonts/MetronLight14"
-     "exact text" 1
-     "exact text size" 16
-     "text halign" right
-    }
-    ButtonWidgetClass BtnClose {
-     visible 1
-     position 330 640
-     size 140 40
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text "CLOSE"
-     style editor_quad_dark
-    }
-    TextWidgetClass Footer {
-     visible 1
-     ignorepointer 1
-     color 1 1 1 0.35
-     position 0 682
-     size 800 16
-     hexactpos 1
-     vexactpos 1
-     hexactsize 1
-     vexactsize 1
-     text "Global stats - dayz.fyi/dm"
-     font "gui/fonts/MetronLight14"
-     "exact text" 1
-     "exact text size" 12
-     "text halign" center
-    }
-   }
-  }
+ImageWidgetClass Backdrop {
+ visible 1
+ position 0 0
+ size 960 830
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.027 0.031 0.039 0.97
+}
+ImageWidgetClass Accent {
+ visible 1
+ position 0 0
+ size 960 3
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.23 0.51 0.96 1
+}
+ImageWidgetClass Logo {
+ visible 1
+ position 26 24
+ size 38 38
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 1 1 1 1
+ imageTexture ""
+ mode blend
+ blend 1
+ sourcealpha 1
+}
+TextWidgetClass Brand {
+ visible 1
+ position 78 22
+ size 300 38
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "COMMUNITY"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 25
+ "text halign" left
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass Subtitle {
+ visible 1
+ position 26 65
+ size 700 25
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.63 0.67 0.73 1
+ text "DEATHMATCH"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 16
+ "text halign" left
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass Title {
+ visible 1
+ position 26 98
+ size 650 46
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "ROUND STANDINGS"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 32
+ "text halign" left
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass Status {
+ visible 1
+ position 650 104
+ size 282 35
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.70 0.75 0.82 1
+ text "ROUND 1 / LIVE"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 18
+ "text halign" right
+ "text valign" center
+ wrap 0
+}
+ButtonWidgetClass Round {
+ visible 1
+ position 26 158
+ size 160 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ text ""
+ style Default
+ color 1 1 1 1
+ {
+TextWidgetClass RoundLabel {
+ visible 1
+ position 0 0
+ size 160 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "THIS ROUND"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 18
+ "text halign" center
+ "text valign" center
+ wrap 0
+}
+ }
+}
+ButtonWidgetClass Session {
+ visible 1
+ position 194 158
+ size 150 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ text ""
+ style Default
+ color 1 1 1 1
+ {
+TextWidgetClass SessionLabel {
+ visible 1
+ position 0 0
+ size 150 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "SESSION"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 18
+ "text halign" center
+ "text valign" center
+ wrap 0
+}
+ }
+}
+ImageWidgetClass TabAccent {
+ visible 1
+ position 26 194
+ size 160 3
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.23 0.51 0.96 1
+}
+TextWidgetClass Count {
+ visible 1
+ position 700 158
+ size 234 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.65 0.70 0.76 1
+ text "0 PLAYERS"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 16
+ "text halign" right
+ "text valign" center
+ wrap 0
+}
+ImageWidgetClass HeaderBackground {
+ visible 1
+ position 0 214
+ size 960 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.09 0.10 0.13 1
+}
+FrameWidgetClass Header {
+ visible 1
+ position 0 214
+ size 936 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ clipchildren 1
+ {
+TextWidgetClass H_Rank {
+ visible 1
+ position 26 0
+ size 64 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "RANK"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 16
+ "text halign" left
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass H_Name {
+ visible 1
+ position 100 0
+ size 432 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "PLAYER"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 16
+ "text halign" left
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass H_Kills {
+ visible 1
+ position 558 0
+ size 88 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "KILLS"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 16
+ "text halign" right
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass H_Deaths {
+ visible 1
+ position 658 0
+ size 88 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "DEATHS"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 16
+ "text halign" right
+ "text valign" center
+ wrap 0
+}
+TextWidgetClass H_Streak {
+ visible 1
+ position 758 0
+ size 130 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "BEST STREAK"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 16
+ "text halign" right
+ "text valign" center
+ wrap 0
+}
+ }
+}
+FrameWidgetClass Rows {
+ visible 1
+ position 0 250
+ size 936 420
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ clipchildren 1
+}
+TextWidgetClass Empty {
+ visible 1
+ position 26 350
+ size 884 48
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "LOADING STANDINGS..."
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 22
+ "text halign" center
+ "text valign" center
+ wrap 0
+}
+ButtonWidgetClass ScrollUp {
+ visible 1
+ position 936 250
+ size 24 26
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ text ""
+ style Default
+ color 1 1 1 1
+ {
+TextWidgetClass ScrollUpLabel {
+ visible 1
+ position 0 0
+ size 24 26
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "^"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 18
+ "text halign" center
+ "text valign" center
+ wrap 0
+}
+ }
+}
+ButtonWidgetClass ScrollTrack {
+ visible 1
+ position 936 278
+ size 24 364
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ text ""
+ style Default
+ color 1 1 1 1
+ {
+TextWidgetClass ScrollTrackLabel {
+ visible 1
+ position 0 0
+ size 24 364
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text ""
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 18
+ "text halign" center
+ "text valign" center
+ wrap 0
+}
+ }
+}
+ImageWidgetClass ScrollThumb {
+ visible 1
+ position 940 280
+ size 16 50
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.32 0.39 0.49 1
+}
+ButtonWidgetClass ScrollDown {
+ visible 1
+ position 936 644
+ size 24 26
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ text ""
+ style Default
+ color 1 1 1 1
+ {
+TextWidgetClass ScrollDownLabel {
+ visible 1
+ position 0 0
+ size 24 26
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "v"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 18
+ "text halign" center
+ "text valign" center
+ wrap 0
+}
+ }
+}
+FrameWidgetClass Own {
+ visible 1
+ position 0 678
+ size 936 42
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ clipchildren 1
+}
+TextWidgetClass Range {
+ visible 1
+ position 26 730
+ size 450 34
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.67 0.72 0.79 1
+ text "0 - 0 OF 0"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 16
+ "text halign" left
+ "text valign" center
+ wrap 0
+}
+ButtonWidgetClass Find {
+ visible 1
+ position 590 730
+ size 140 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ text ""
+ style Default
+ color 1 1 1 1
+ {
+TextWidgetClass FindLabel {
+ visible 1
+ position 0 0
+ size 140 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "FIND ME"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 18
+ "text halign" center
+ "text valign" center
+ wrap 0
+}
+ }
+}
+ButtonWidgetClass Close {
+ visible 1
+ position 746 730
+ size 184 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ text ""
+ style Default
+ color 1 1 1 1
+ {
+TextWidgetClass CloseLabel {
+ visible 1
+ position 0 0
+ size 184 36
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.96 0.97 0.98 1
+ text "CLOSE"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 18
+ "text halign" center
+ "text valign" center
+ wrap 0
+}
+ }
+}
+ImageWidgetClass FooterLine {
+ visible 1
+ position 26 780
+ size 908 1
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.16 0.19 0.23 1
+}
+TextWidgetClass Footer {
+ visible 1
+ position 26 792
+ size 610 24
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.65 0.70 0.77 1
+ text ""
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 15
+ "text halign" left
+ "text valign" center
+ wrap 0
+}
+ImageWidgetClass AttributionBackground {
+ visible 1
+ position 638 791
+ size 296 26
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.025 0.03 0.04 0.94
+}
+TextWidgetClass Attribution {
+ visible 1
+ position 646 792
+ size 288 24
+ hexactpos 1
+ vexactpos 1
+ hexactsize 1
+ vexactsize 1
+ ignorepointer 1
+ color 0.65 0.70 0.77 1
+ text "Powered by Sentinel Deathmatch"
+ font "gui/fonts/sdf_MetronLight24"
+ "exact text" 1
+ "exact text size" 14
+ "text halign" right
+ "text valign" center
+ wrap 0
+}
  }
 }
