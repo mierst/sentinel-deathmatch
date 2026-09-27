@@ -9,6 +9,6 @@ original companion branding add-on, preserving their attribution. See
 [LICENSE.md](../../../LICENSE.md) for the exception's limits.
 
 Keep `$PBOPREFIX$` at the PBO root. After packaging, reference the texture as
-`CommunityBrand\\data\\community_logo.paa` in `leaderboard-theme.json`.
+`CommunityBrand\\data\\community_logo.paa` in `themes.json` for both screens, or in a screen-specific override.
 See [the branding guide](../../branding.md) for conversion, signing,
 installation, and distribution requirements.

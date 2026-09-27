@@ -29,8 +29,8 @@ UI and configuration before a stable release.
   boundary warnings. Optional shrinking-zone mode.
 - **In-game leaderboard**: live round standings and session totals, with a
   compact scrollable player list and a pinned local-player row.
-- **Community branding**: operators can replace the leaderboard community
-  name, subtitle, colors, promotional footer, and logo. The required
+- **Community branding**: operators can replace the community name, subtitle,
+  colors, promotional footer, and logo on the leaderboard and voting screen. The required
   `Powered by Sentinel Deathmatch` credit remains readable in the UI.
 - **Built for density**: engineered for lots of players shooting in one small
   area - no per-frame script work, event-driven networking, rate-limited
@@ -113,18 +113,26 @@ Windows + [Mikero DePboTools](https://mikero.bytex.digital/):
 Output: `build/@SentinelDeathmatch/`. See [CONTRIBUTING.md](CONTRIBUTING.md)
 for the full local loop and testing standards.
 
-## Leaderboard and community branding
+## Leaderboard, voting, and community branding
 
 Press **P** to toggle the leaderboard. It also opens automatically at round end. It offers round and server-session views, keeps the local
 player visible, and includes a **Find Me** control for long player lists.
 
-Server operators can theme the leaderboard without changing the Sentinel
-Deathmatch PBO. Set `LeaderboardThemeFile` in `config.json`; the default is
-`leaderboard-theme.json`. The server reads that file from
-`$profile:SentinelDeathmatch\` at boot and shares the validated result with
-connected clients. See [the leaderboard guide](docs/leaderboard.md) and the
-[branding guide](docs/branding.md), including a neutral starting theme and a
-small companion-addon example for a custom `.paa` logo.
+The voting screen uses the same dark panel, accent colors, and community
+branding as the leaderboard, with clear arena and weapon choices, selected
+votes, and a countdown. Each column scrolls independently through its full
+option list while Random and the selection summary remain pinned. See the
+[voting guide](docs/voting.md) for controls and option delivery.
+
+Server operators can theme both screens without changing the Sentinel
+Deathmatch PBO. `themes.json` supplies shared defaults; optional
+`leaderboard-theme.json` and `vote-ui-theme.json` files override individual
+fields per screen. The server reads these files from
+`$profile:SentinelDeathmatch\` at boot and sends the validated themes to
+clients. Existing leaderboard configurations keep working. See
+[UI themes](docs/themes.md), [the leaderboard guide](docs/leaderboard.md), and
+[the branding guide](docs/branding.md), including a companion-addon example
+for a custom `.paa` logo.
 
 ## License
 

@@ -41,14 +41,14 @@ class DmLeaderboardTheme
 		if (LogoPath.IndexOf(":") >= 0 || LogoPath.IndexOf("..") >= 0) LogoPath = "";
 	}
 
-	static string SafeFileName(string value)
+	static string SafeFileName(string value, string fallback = "leaderboard-theme.json")
 	{
-		if (value.Length() < 6 || value.Length() > 80) return "leaderboard-theme.json";
-		if (value.Substring(value.Length() - 5, 5) != ".json") return "leaderboard-theme.json";
+		if (value.Length() < 6 || value.Length() > 80) return fallback;
+		if (value.Substring(value.Length() - 5, 5) != ".json") return fallback;
 		string allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
 		for (int fileChar = 0; fileChar < value.Length() - 5; fileChar++)
 		{
-			if (allowed.IndexOf(value.Substring(fileChar, 1)) < 0) return "leaderboard-theme.json";
+			if (allowed.IndexOf(value.Substring(fileChar, 1)) < 0) return fallback;
 		}
 		return value;
 	}

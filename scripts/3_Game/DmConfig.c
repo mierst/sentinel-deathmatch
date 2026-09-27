@@ -115,6 +115,8 @@ class DmConfigData
 
 	// Profile-local JSON selected once on boot; artwork lives in client mods.
 	string LeaderboardThemeFile = "leaderboard-theme.json";
+	string ThemesFile = "themes.json";
+	string VoteUIThemeFile = "vote-ui-theme.json";
 }
 
 class DmConfig
@@ -175,6 +177,8 @@ class DmConfig
 	void ClampLoadedValues()
 	{
 		m_Data.LeaderboardThemeFile = DmLeaderboardTheme.SafeFileName(m_Data.LeaderboardThemeFile);
+		m_Data.ThemesFile = DmLeaderboardTheme.SafeFileName(m_Data.ThemesFile, "themes.json");
+		m_Data.VoteUIThemeFile = DmLeaderboardTheme.SafeFileName(m_Data.VoteUIThemeFile, "vote-ui-theme.json");
 		if (m_Data.MinPlayers < 1) m_Data.MinPlayers = 1;
 		if (m_Data.VoteSeconds < 5) m_Data.VoteSeconds = 5;
 		if (m_Data.VoteConsensusSeconds < 3) m_Data.VoteConsensusSeconds = 3;
@@ -242,6 +246,8 @@ class DmConfig
 
 	bool IsEnabled() { return m_CachedEnabled; }
 	string GetLeaderboardThemeFile() { return m_Data.LeaderboardThemeFile; }
+	string GetThemesFile() { return m_Data.ThemesFile; }
+	string GetVoteUIThemeFile() { return m_Data.VoteUIThemeFile; }
 	bool IsDebug() { return m_Data.DebugLog; }
 
 	int GetMinPlayers() { return m_Data.MinPlayers; }

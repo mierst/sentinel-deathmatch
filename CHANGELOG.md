@@ -7,6 +7,31 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.31] - 2026-09-27
+
+### Added
+- Shared UI theme defaults in `themes.json`, with optional sparse
+  `leaderboard-theme.json` and `vote-ui-theme.json` overrides. Omitted fields
+  inherit; explicit false, zero, and empty strings override. Existing
+  leaderboard configurations remain compatible and are not rewritten.
+- Append-only `ThemesFile` and `VoteUIThemeFile` filename settings, community
+  setup documentation, and examples for shared and per-screen branding.
+- Independent Arena and Weapons scrolling with eight visible pooled options
+  per column, mouse wheel navigation, page arrows, clickable scroll tracks,
+  and visible ranges. Random choices and the selection summary remain fixed.
+
+### Changed
+- The native voting screen matches the leaderboard's dark panels, accent
+  colors, community branding, and separate required Sentinel Deathmatch
+  credit, with clear selections and a countdown.
+- Voting now exposes options beyond the previous eight-choice display limit.
+  Each column's labels arrive in bounded 100-entry array chunks, with
+  128-character sanitized labels and original voting indices preserved.
+  Clients publish complete lists atomically; late joiners receive cached lists.
+- The companion-branding license exception now explicitly covers voting
+  themes as well as leaderboard themes; core mod redistribution remains
+  outside that exception.
+
 ## [0.1.30] - 2026-09-27
 
 ### Added

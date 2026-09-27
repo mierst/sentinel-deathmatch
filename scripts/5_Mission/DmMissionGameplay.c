@@ -10,6 +10,7 @@ modded class MissionGameplay
 
 		if (!GetGame() || GetGame().IsDedicatedServer()) return;
 
+		DmClientState.GetInstance().ResetVoteOptions();
 		m_DmHud = new DmHudController();
 		m_DmHud.Init();
 	}

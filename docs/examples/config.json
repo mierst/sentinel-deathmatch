@@ -26,5 +26,7 @@
     "AnnouncementColor": "colorImportant",
     "WelcomeMessage": "Welcome! Discord: discord.gg/your-invite",
     "ChatHistoryOnOpen": 0,
-    "LeaderboardThemeFile": "leaderboard-theme.json"
+    "LeaderboardThemeFile": "leaderboard-theme.json",
+    "ThemesFile": "themes.json",
+    "VoteUIThemeFile": "vote-ui-theme.json"
 }

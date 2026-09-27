@@ -1,10 +1,12 @@
-# Community leaderboard branding
+# Community UI branding
 
-Sentinel Deathmatch lets a community fully control its leaderboard identity:
-the logo, community name, colors, subtitle, and promotional footer. Start by
-copying [leaderboard-theme.json](examples/leaderboard-theme.json) to
-`$profile:SentinelDeathmatch\leaderboard-theme.json`, then edit the values
-and restart the server.
+Sentinel Deathmatch lets a community control its leaderboard and voting
+identity: the logo, community name, colors, subtitle, and promotional footer.
+Copy [themes.json](examples/themes.json) to
+`$profile:SentinelDeathmatch\themes.json` for a shared appearance. Optional
+`leaderboard-theme.json` and `vote-ui-theme.json` files override individual
+fields for their respective screens. Edit the files and restart the server.
+See [UI themes](themes.md) for precedence and existing-file compatibility.
 
 The independent `Powered by Sentinel Deathmatch` credit is required by
 [LICENSE.md](../LICENSE.md). It is displayed separately from the footer and

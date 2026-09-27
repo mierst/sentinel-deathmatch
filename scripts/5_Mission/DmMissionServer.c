@@ -108,6 +108,8 @@ void DmRunSelfTests()
 	DmRpc.SelfTest();
 	DmClientOpts.SelfTest();
 	DmLeaderboardTheme.SelfTest();
+	DmLeaderboardThemeStore.SelfTest();
+	DmVoteOptions.SelfTest();
 	DmLeaderboard.SelfTest();
 	DmConfig.SelfTest();
 	DmZonesConfig.SelfTest();
