@@ -11,6 +11,7 @@ class DmNetServer
 	private static ref DmNetServer s_Instance;
 
 	private ref array<Man> m_SendScratch = new array<Man>;
+	private ref map<string, float> m_LastLeaderboardRequestAt = new map<string, float>;
 
 	static DmNetServer GetInstance()
 	{
@@ -73,6 +74,8 @@ class DmNetServer
 		DmConfig optCfg = DmConfig.GetInstance();
 		int mask = DmClientOpts.Pack(optCfg.IsChatHistoryOnOpenEnabled(), optCfg.IsRandomChoiceAllowed());
 		GetGame().RPCSingleParam(pb, DmRpc.CLIENT_OPTS, new Param1<int>(mask), true, optIdent);
+		DmLeaderboardTheme joinTheme = DmLeaderboardThemeStore.Get();
+		GetGame().RPCSingleParam(pb, DmRpc.LEADERBOARD_THEME, new Param1<ref DmLeaderboardTheme>(joinTheme), true, optIdent);
 	}
 
 	void SendStateSyncTo(PlayerBase pb)
@@ -82,6 +85,10 @@ class DmNetServer
 		PlayerIdentity ident = pb.GetIdentity();
 		if (!ident) return;
 		GetGame().RPCSingleParam(pb, DmRpc.STATE_SYNC, BuildStateSyncParam(), true, ident);
+		if (DmRoundEngine.GetInstance().GetPhase() == DmPhase.ROUNDEND)
+		{
+			GetGame().RPCSingleParam(pb, DmRpc.ROUND_END_NOTICE, new Param1<string>(DmLeaderboard.CleanField(DmScoreService.GetInstance().LeaderName())), true, ident);
+		}
 	}
 
 	// Option lists ride as newline-joined blobs (names are sanitized of
@@ -124,6 +131,104 @@ class DmNetServer
 	void SendScoreboardAll(string rowsBlob, string sessionRowsBlob, string winnerName)
 	{
 		SendParamToAll(DmRpc.SCOREBOARD, new Param3<string, string, string>(rowsBlob, sessionRowsBlob, winnerName));
+	}
+
+	void SendRoundEndNoticeAll(string winnerName)
+	{
+		SendParamToAll(DmRpc.ROUND_END_NOTICE, new Param1<string>(DmLeaderboard.CleanField(winnerName)));
+	}
+
+	static bool CanServeLeaderboardRequest(float lastRequestAt, float nowSeconds)
+	{
+		if (lastRequestAt < 0) return true;
+		return nowSeconds - lastRequestAt >= DmLeaderboard.SERVER_RATE_SECONDS;
+	}
+
+	private PlayerBase FindPlayerForIdentity(PlayerIdentity ident)
+	{
+		if (!ident) return null;
+		string identityId = ident.GetPlainId();
+		if (identityId == "") return null;
+		m_SendScratch.Clear();
+		GetGame().GetPlayers(m_SendScratch);
+		for (int identityFindIdx = 0; identityFindIdx < m_SendScratch.Count(); identityFindIdx++)
+		{
+			PlayerBase identityTarget = PlayerBase.Cast(m_SendScratch[identityFindIdx]);
+			if (!identityTarget) continue;
+			PlayerIdentity candidateIdentity = identityTarget.GetIdentity();
+			if (candidateIdentity && candidateIdentity.GetPlainId() == identityId) return identityTarget;
+		}
+		return null;
+	}
+
+	private void SendLeaderboardProtocolError(PlayerIdentity sender, int requestId, int sessionInt)
+	{
+		if (!sender || requestId <= 0) return;
+		PlayerBase errorTarget = FindPlayerForIdentity(sender);
+		if (!errorTarget) return;
+		int errorSession = 0;
+		if (sessionInt == 1) errorSession = 1;
+		ref array<string> errorRows = new array<string>;
+		Param9<int, int, int, int, int, int, array<string>, string, string> errorPayload = new Param9<int, int, int, int, int, int, array<string>, string, string>(DmLeaderboard.PROTOCOL_VERSION, requestId, 0, errorSession, 0, 0, errorRows, "", "Leaderboard protocol mismatch");
+		GetGame().RPCSingleParam(errorTarget, DmRpc.LEADERBOARD_PAGE, errorPayload, true, sender);
+	}
+
+	void HandleLeaderboardRequest(PlayerIdentity sender, int protocolVersion, int requestId, int sessionInt, int requestedOffset, int findSelfInt)
+	{
+		bool requestDebug = DmConfig.GetInstance().IsDebug();
+		if (requestDebug) Print("[DM] leaderboard request handler entered");
+		if (!sender || requestId <= 0)
+		{
+			if (requestDebug) Print("[DM] leaderboard request rejected: sender/request");
+			return;
+		}
+		if (protocolVersion != DmLeaderboard.PROTOCOL_VERSION)
+		{
+			if (requestDebug) Print("[DM] leaderboard request rejected: protocol");
+			SendLeaderboardProtocolError(sender, requestId, sessionInt);
+			return;
+		}
+		if (sessionInt != 0 && sessionInt != 1)
+		{
+			if (requestDebug) Print("[DM] leaderboard request rejected: session flag");
+			return;
+		}
+		if (findSelfInt != 0 && findSelfInt != 1)
+		{
+			if (requestDebug) Print("[DM] leaderboard request rejected: self flag");
+			return;
+		}
+		string senderId = sender.GetPlainId();
+		if (senderId == "")
+		{
+			if (requestDebug) Print("[DM] leaderboard request rejected: empty sender");
+			return;
+		}
+		float requestNow = GetGame().GetTickTime();
+		float previousRequestAt = -1;
+		m_LastLeaderboardRequestAt.Find(senderId, previousRequestAt);
+		if (!DmNetServer.CanServeLeaderboardRequest(previousRequestAt, requestNow))
+		{
+			if (requestDebug) Print("[DM] leaderboard request rate limited");
+			return;
+		}
+		m_LastLeaderboardRequestAt.Set(senderId, requestNow);
+
+		PlayerBase requestTarget = FindPlayerForIdentity(sender);
+		if (!requestTarget)
+		{
+			if (requestDebug) Print("[DM] leaderboard request rejected: target lookup");
+			return;
+		}
+		bool session = sessionInt == 1;
+		bool findSelf = findSelfInt == 1;
+		DmLeaderboardPage responsePage = DmScoreService.GetInstance().BuildLeaderboardPage(session, senderId, requestedOffset, findSelf);
+		ref array<string> responseRows = new array<string>;
+		DmLeaderboard.EncodeRowList(responsePage.Rows, responseRows);
+		string responseSelf = DmLeaderboard.EncodeRow(responsePage.SelfRow);
+		Param9<int, int, int, int, int, int, array<string>, string, string> responsePayload = new Param9<int, int, int, int, int, int, array<string>, string, string>(DmLeaderboard.PROTOCOL_VERSION, requestId, responsePage.Revision, sessionInt, responsePage.Offset, responsePage.Total, responseRows, responseSelf, "");
+		GetGame().RPCSingleParam(requestTarget, DmRpc.LEADERBOARD_PAGE, responsePayload, true, sender);
+		if (requestDebug) Print("[DM] leaderboard page response sent");
 	}
 
 	// Direct chat line to one player (command feedback etc.).
@@ -199,5 +304,11 @@ class DmNetServer
 		string bareHands = DmNetServer.FormatKillfeedLine("Alice", "Bob", "", 3.0);
 		if (bareHands != "Alice > Bob") fmtOk = 0;
 		Print("[DM] fixture DmNetServer killfeed format: expected=1 got=" + fmtOk.ToString() + " " + DmFixture.Verdict(fmtOk == 1));
+
+		int rateOk = 1;
+		if (!DmNetServer.CanServeLeaderboardRequest(-1, 10.0)) rateOk = 0;
+		if (DmNetServer.CanServeLeaderboardRequest(10.0, 10.24)) rateOk = 0;
+		if (!DmNetServer.CanServeLeaderboardRequest(10.0, 10.25)) rateOk = 0;
+		Print("[DM] fixture DmNetServer leaderboard rate: expected=1 got=" + rateOk.ToString() + " " + DmFixture.Verdict(rateOk == 1));
 	}
 }

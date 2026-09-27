@@ -105,6 +105,19 @@ void DmHandleServerRpc(PlayerIdentity sender, int rpcType, ParamsReadContext ctx
 	if (rpcType == DmRpc.MAP_VOTE)
 	{
 		DmRoundEngine.GetInstance().OnMapVoteCall(sender);
+		return;
+	}
+	if (rpcType == DmRpc.LEADERBOARD_REQUEST)
+	{
+		if (DmConfig.GetInstance().IsDebug()) Print("[DM] leaderboard rpc request received");
+		Param5<int, int, int, int, int> leaderboardRequestData;
+		if (!ctx.Read(leaderboardRequestData))
+		{
+			if (DmConfig.GetInstance().IsDebug()) Print("[DM] leaderboard rpc request decode rejected");
+			return;
+		}
+		DmNetServer.GetInstance().HandleLeaderboardRequest(sender, leaderboardRequestData.param1, leaderboardRequestData.param2, leaderboardRequestData.param3, leaderboardRequestData.param4, leaderboardRequestData.param5);
+		return;
 	}
 }
 
@@ -161,6 +174,27 @@ void DmHandleClientRpc(int rpcType, ParamsReadContext ctx)
 		Param1<int> optsData;
 		if (!ctx.Read(optsData)) return;
 		state.ApplyClientOptions(optsData.param1);
+		return;
+	}
+	if (rpcType == DmRpc.LEADERBOARD_PAGE)
+	{
+		Param9<int, int, int, int, int, int, array<string>, string, string> leaderboardPageData;
+		if (!ctx.Read(leaderboardPageData)) return;
+		state.ApplyLeaderboardPage(leaderboardPageData.param1, leaderboardPageData.param2, leaderboardPageData.param3, leaderboardPageData.param4, leaderboardPageData.param5, leaderboardPageData.param6, leaderboardPageData.param7, leaderboardPageData.param8, leaderboardPageData.param9);
+		return;
+	}
+	if (rpcType == DmRpc.ROUND_END_NOTICE)
+	{
+		Param1<string> roundEndData;
+		if (!ctx.Read(roundEndData)) return;
+		state.ApplyRoundEndNotice(roundEndData.param1);
+		return;
+	}
+	if (rpcType == DmRpc.LEADERBOARD_THEME)
+	{
+		Param1<ref DmLeaderboardTheme> leaderboardThemeData;
+		if (!ctx.Read(leaderboardThemeData)) return;
+		state.ApplyLeaderboardTheme(leaderboardThemeData.param1);
 		return;
 	}
 }

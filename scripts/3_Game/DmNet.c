@@ -17,6 +17,10 @@ class DmRpc
 	static const int HUD_EVENT   = 0x44D00006; // server->client: killfeed line, zone warning
 	static const int MAP_VOTE    = 0x44D00007; // client->server: /mapvote chat command
 	static const int CLIENT_OPTS = 0x44D00008; // server->client: DmClientOpts bitmask, once on join
+	static const int LEADERBOARD_REQUEST = 0x44D00009; // client->server: bounded page request
+	static const int LEADERBOARD_PAGE = 0x44D0000A; // server->client: bounded row-array page
+	static const int ROUND_END_NOTICE = 0x44D0000B; // server->client: winner + auto-open sequence
+	static const int LEADERBOARD_THEME = 0x44D0000C; // server->client: validated join-time theme
 	static const int RANGE_END   = 0x44D0000F;
 
 	static void SelfTest()
@@ -25,6 +29,8 @@ class DmRpc
 		if (DmRpc.STATE_SYNC <= DmRpc.BASE) rangeOk = 0;
 		if (DmRpc.HUD_EVENT >= DmRpc.RANGE_END) rangeOk = 0;
 		if (DmRpc.CLIENT_OPTS >= DmRpc.RANGE_END) rangeOk = 0;
+		if (DmRpc.LEADERBOARD_REQUEST != DmRpc.CLIENT_OPTS + 1) rangeOk = 0;
+		if (DmRpc.LEADERBOARD_THEME >= DmRpc.RANGE_END) rangeOk = 0;
 		Print("[DM] fixture DmRpc range: expected=1 got=" + rangeOk.ToString() + " " + DmFixture.Verdict(rangeOk == 1));
 	}
 }

@@ -2,9 +2,10 @@
 
 A high-performance, fully configurable deathmatch mod for DayZ Standalone.
 
-**Status: early development (pre-release).** The architecture is settled and
-the scaffold boots; gameplay systems are landing phase by phase. Nothing here
-is playable yet.
+**Status: playable alpha (pre-release).** The round loop, voting, respawn,
+arena loading, HUD, and in-game scoreboards are usable for local playtesting.
+Expect unfinished presentation, compatibility gaps, and changes to both the
+UI and configuration before a stable release.
 
 ## What it will do
 
@@ -26,7 +27,11 @@ is playable yet.
   smart spawn selection away from enemies.
 - **Zone confinement**: soft-wall damage or hard teleport, with on-screen
   boundary warnings. Optional shrinking-zone mode.
-- **Server-owner branding**: MOTD, colors, logo slots, per-preset icons.
+- **In-game leaderboard**: live round standings and session totals, with a
+  compact scrollable player list and a pinned local-player row.
+- **Community branding**: operators can replace the leaderboard community
+  name, subtitle, colors, promotional footer, and logo. The required
+  `Powered by Sentinel Deathmatch` credit remains readable in the UI.
 - **Built for density**: engineered for lots of players shooting in one small
   area - no per-frame script work, event-driven networking, rate-limited
   cleanup, and a mission package that strips the map to the minimum.
@@ -108,12 +113,26 @@ Windows + [Mikero DePboTools](https://mikero.bytex.digital/):
 Output: `build/@SentinelDeathmatch/`. See [CONTRIBUTING.md](CONTRIBUTING.md)
 for the full local loop and testing standards.
 
+## Leaderboard and community branding
+
+Press **P** to toggle the leaderboard. It also opens automatically at round end. It offers round and server-session views, keeps the local
+player visible, and includes a **Find Me** control for long player lists.
+
+Server operators can theme the leaderboard without changing the Sentinel
+Deathmatch PBO. Set `LeaderboardThemeFile` in `config.json`; the default is
+`leaderboard-theme.json`. The server reads that file from
+`$profile:SentinelDeathmatch\` at boot and shares the validated result with
+connected clients. See [the leaderboard guide](docs/leaderboard.md) and the
+[branding guide](docs/branding.md), including a neutral starting theme and a
+small companion-addon example for a custom `.paa` logo.
+
 ## License
 
-Source-available under a custom license: free to run on any server,
-**including monetized servers**, with attribution retained. Final license
-text is being prepared; until it is published in this repository, all rights
-are reserved. See [LICENSE.md](LICENSE.md).
+Source-available under a custom, non-OSI license: free to run on any server,
+**including monetized servers**, with attribution retained. The branding
+exception permits original companion branding add-ons without repacking or
+redistributing Sentinel Deathmatch. All other rights remain reserved; see
+[LICENSE.md](LICENSE.md).
 
 ## Credits
 

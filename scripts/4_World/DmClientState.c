@@ -35,6 +35,29 @@ class DmClientState
 	string m_WinnerName = "";
 	int m_ScoreboardSeq = 0;
 
+	// Request-driven bounded leaderboard. Internal request/revision state keeps
+	// late packets from replacing a newer tab or page.
+	ref array<ref DmLeaderboardRow> m_LeaderboardRows = new array<ref DmLeaderboardRow>;
+	ref DmLeaderboardRow m_LeaderboardSelf;
+	int m_LeaderboardTotal = 0;
+	int m_LeaderboardOffset = 0;
+	int m_LeaderboardSeq = 0;
+	bool m_LeaderboardSession = false;
+	string m_LeaderboardError = "";
+	ref DmLeaderboardTheme m_LeaderboardTheme = new DmLeaderboardTheme();
+	int m_LeaderboardThemeSeq = 0;
+	private int m_LeaderboardNextRequestId = 0;
+	private int m_LeaderboardPendingRequestId = 0;
+	private int m_LeaderboardRoundRevision = -1;
+	private int m_LeaderboardSessionRevision = -1;
+	private bool m_LeaderboardPending = false;
+	private bool m_LeaderboardQueued = false;
+	private bool m_LeaderboardWantedSession = false;
+	private int m_LeaderboardWantedOffset = 0;
+	private bool m_LeaderboardWantedFindSelf = false;
+	private float m_LeaderboardRequestAt = -1000;
+	private float m_LeaderboardLastPollAt = -1000;
+
 	// Killfeed ring (newest first)
 	ref array<string> m_KillfeedLines = new array<string>;
 	ref array<float> m_KillfeedTimes = new array<float>;
@@ -104,6 +127,165 @@ class DmClientState
 		m_ScoreboardSeq = m_ScoreboardSeq + 1;
 	}
 
+	void ApplyRoundEndNotice(string winnerName)
+	{
+		m_WinnerName = DmLeaderboard.CleanField(winnerName);
+		m_ScoreboardSeq = m_ScoreboardSeq + 1;
+	}
+
+	void ApplyLeaderboardTheme(DmLeaderboardTheme theme)
+	{
+		if (!theme)
+		{
+			m_LeaderboardTheme = new DmLeaderboardTheme();
+			m_LeaderboardThemeSeq = m_LeaderboardThemeSeq + 1;
+			return;
+		}
+		theme.Validate();
+		m_LeaderboardTheme = theme;
+		m_LeaderboardThemeSeq = m_LeaderboardThemeSeq + 1;
+	}
+
+	static bool CanApplyLeaderboardResponse(int pendingRequestId, int acceptedRevision, int responseRequestId, int responseRevision)
+	{
+		if (pendingRequestId <= 0) return false;
+		if (responseRequestId != pendingRequestId) return false;
+		if (responseRevision < acceptedRevision) return false;
+		return true;
+	}
+
+	private void FailLeaderboardResponse(string errorText)
+	{
+		m_LeaderboardPending = false;
+		m_LeaderboardError = errorText;
+		m_LeaderboardSeq = m_LeaderboardSeq + 1;
+	}
+
+	void ApplyLeaderboardPage(int protocolVersion, int requestId, int revision, int sessionInt, int offset, int total, array<string> encodedRows, string selfBlob, string errorText)
+	{
+		if (!m_LeaderboardPending) return;
+		if (requestId != m_LeaderboardPendingRequestId) return;
+		if (m_LeaderboardQueued)
+		{
+			m_LeaderboardPending = false;
+			return;
+		}
+		if (protocolVersion != DmLeaderboard.PROTOCOL_VERSION)
+		{
+			FailLeaderboardResponse("Leaderboard protocol mismatch");
+			return;
+		}
+		int acceptedRevision = m_LeaderboardRoundRevision;
+		if (sessionInt == 1) acceptedRevision = m_LeaderboardSessionRevision;
+		if (!DmClientState.CanApplyLeaderboardResponse(m_LeaderboardPendingRequestId, acceptedRevision, requestId, revision))
+		{
+			FailLeaderboardResponse("Stale leaderboard response");
+			return;
+		}
+		m_LeaderboardPending = false;
+		if (sessionInt != 0 && sessionInt != 1)
+		{
+			FailLeaderboardResponse("Invalid leaderboard response");
+			return;
+		}
+		if (offset < 0 || total < 0)
+		{
+			FailLeaderboardResponse("Invalid leaderboard bounds");
+			return;
+		}
+
+		array<ref DmLeaderboardRow> decodedRows = new array<ref DmLeaderboardRow>;
+		bool rowsValid = DmLeaderboard.DecodeRowList(encodedRows, decodedRows);
+		if (!rowsValid || decodedRows.Count() > DmLeaderboard.MAX_ROWS)
+		{
+			FailLeaderboardResponse("Leaderboard page too large");
+			return;
+		}
+		DmLeaderboardRow decodedSelf = DmLeaderboard.DecodeRow(selfBlob);
+		m_LeaderboardRows = decodedRows;
+		m_LeaderboardSelf = decodedSelf;
+		m_LeaderboardTotal = total;
+		m_LeaderboardOffset = DmLeaderboard.ClampOffset(offset, total);
+		m_LeaderboardSession = sessionInt == 1;
+		m_LeaderboardError = DmLeaderboard.CleanField(errorText);
+		if (!m_LeaderboardQueued)
+		{
+			m_LeaderboardWantedSession = m_LeaderboardSession;
+			m_LeaderboardWantedOffset = m_LeaderboardOffset;
+			m_LeaderboardWantedFindSelf = false;
+		}
+		if (m_LeaderboardSession) m_LeaderboardSessionRevision = revision;
+		else m_LeaderboardRoundRevision = revision;
+		m_LeaderboardSeq = m_LeaderboardSeq + 1;
+	}
+
+	private void SendLeaderboardRequestNow(bool session, int boundedOffset, bool findSelf, float requestNow)
+	{
+		bool requestTimedOut = m_LeaderboardPending && requestNow - m_LeaderboardRequestAt >= DmLeaderboard.CLIENT_TIMEOUT_SECONDS;
+		if (requestTimedOut)
+		{
+			m_LeaderboardError = "Leaderboard request timed out; retrying";
+			m_LeaderboardSeq = m_LeaderboardSeq + 1;
+		}
+		else
+		{
+			m_LeaderboardError = "";
+		}
+		PlayerBase requestPlayer = PlayerBase.Cast(GetGame().GetPlayer());
+		if (!requestPlayer) return;
+		m_LeaderboardQueued = false;
+		m_LeaderboardNextRequestId = m_LeaderboardNextRequestId + 1;
+		if (m_LeaderboardNextRequestId <= 0) m_LeaderboardNextRequestId = 1;
+		int sessionInt = 0;
+		if (session) sessionInt = 1;
+		int findSelfInt = 0;
+		if (findSelf) findSelfInt = 1;
+		m_LeaderboardPendingRequestId = m_LeaderboardNextRequestId;
+		m_LeaderboardPending = true;
+		m_LeaderboardWantedSession = session;
+		m_LeaderboardWantedOffset = boundedOffset;
+		m_LeaderboardWantedFindSelf = findSelf;
+		m_LeaderboardRequestAt = requestNow;
+		m_LeaderboardLastPollAt = requestNow;
+		GetGame().RPCSingleParam(requestPlayer, DmRpc.LEADERBOARD_REQUEST, new Param5<int, int, int, int, int>(DmLeaderboard.PROTOCOL_VERSION, m_LeaderboardPendingRequestId, sessionInt, boundedOffset, findSelfInt), true);
+	}
+
+	void RequestLeaderboard(bool session, int offset, bool findSelf = false)
+	{
+		if (!GetGame()) return;
+		float requestNow = GetGame().GetTickTime();
+		int boundedOffset = offset;
+		if (boundedOffset < 0) boundedOffset = 0;
+		if (boundedOffset > DmLeaderboard.MAX_OFFSET) boundedOffset = DmLeaderboard.MAX_OFFSET;
+		if (m_LeaderboardPending && requestNow - m_LeaderboardRequestAt < DmLeaderboard.CLIENT_TIMEOUT_SECONDS && m_LeaderboardWantedSession == session && m_LeaderboardWantedOffset == boundedOffset && m_LeaderboardWantedFindSelf == findSelf) return;
+		m_LeaderboardWantedSession = session;
+		m_LeaderboardWantedOffset = boundedOffset;
+		m_LeaderboardWantedFindSelf = findSelf;
+		if (requestNow - m_LeaderboardRequestAt < DmLeaderboard.CLIENT_SEND_SECONDS)
+		{
+			m_LeaderboardQueued = true;
+			m_LeaderboardError = "";
+			return;
+		}
+		SendLeaderboardRequestNow(session, boundedOffset, findSelf, requestNow);
+	}
+
+	void PollLeaderboard()
+	{
+		if (!GetGame()) return;
+		float pollNow = GetGame().GetTickTime();
+		if (m_LeaderboardQueued)
+		{
+			if (pollNow - m_LeaderboardRequestAt < DmLeaderboard.CLIENT_SEND_SECONDS) return;
+			SendLeaderboardRequestNow(m_LeaderboardWantedSession, m_LeaderboardWantedOffset, m_LeaderboardWantedFindSelf, pollNow);
+			return;
+		}
+		if (pollNow - m_LeaderboardLastPollAt < DmLeaderboard.CLIENT_POLL_SECONDS) return;
+		m_LeaderboardLastPollAt = pollNow;
+		if (m_LeaderboardPending && pollNow - m_LeaderboardRequestAt < DmLeaderboard.CLIENT_TIMEOUT_SECONDS) return;
+		RequestLeaderboard(m_LeaderboardWantedSession, m_LeaderboardWantedOffset, m_LeaderboardWantedFindSelf);
+	}
+
 	// Zone grace countdown (HUD_EVENT type 1). Freshness-gated on read: the
 	// server only sends while the player is outside, so a stale value just
 	// ages out rather than needing an explicit clear.
@@ -159,5 +341,12 @@ class DmClientState
 		DmClientState.SplitBlob("", parts);
 		if (parts.Count() != 0) splitOk = 0;
 		Print("[DM] fixture DmClientState blob split: expected=1 got=" + splitOk.ToString() + " " + DmFixture.Verdict(splitOk == 1));
+
+		int staleOk = 1;
+		if (!DmClientState.CanApplyLeaderboardResponse(8, 4, 8, 4)) staleOk = 0;
+		if (DmClientState.CanApplyLeaderboardResponse(8, 4, 7, 5)) staleOk = 0;
+		if (DmClientState.CanApplyLeaderboardResponse(8, 4, 8, 3)) staleOk = 0;
+		if (DmClientState.CanApplyLeaderboardResponse(0, 0, 0, 0)) staleOk = 0;
+		Print("[DM] fixture DmClientState stale leaderboard response: expected=1 got=" + staleOk.ToString() + " " + DmFixture.Verdict(staleOk == 1));
 	}
 }

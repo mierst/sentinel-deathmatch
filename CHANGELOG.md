@@ -7,6 +7,32 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.30] - 2026-09-27
+
+### Added
+- Alpha leaderboard refresh: an 18-row widget pool with a scrolling list,
+  pinned local player, round/session views, Find Me control, and an
+  empty-state message.
+- Server-owned leaderboard branding from a profile JSON theme. Operators can
+  replace the community name, subtitle, colors, promotional footer, and logo;
+  text is measured and ellipsized, themes are validated at boot, and clients
+  receive the accepted theme through the game RPC path.
+- `LeaderboardThemeFile` in `config.json` (default
+  `leaderboard-theme.json`), an append-only filename setting for the theme in
+  `$profile:SentinelDeathmatch\`.
+- Documentation and a neutral example for community leaderboard branding,
+  including an original companion branding-addon layout.
+
+### Changed
+- Leaderboard data is requested in bounded pages while the menu is open,
+  replacing full round/session broadcasts after every kill. Sorted snapshots
+  are cached per score revision and preserve the existing tie order.
+- The source-available, all-rights-reserved license now explicitly permits
+  original companion branding asset/config add-ons without permitting
+  Sentinel Deathmatch repacking or redistribution. A separate readable
+  `Powered by Sentinel Deathmatch` in-game credit and Workshop attribution
+  for distributed branding add-ons are required.
+
 ## [0.1.29] - 2026-09-24
 
 ### Fixed

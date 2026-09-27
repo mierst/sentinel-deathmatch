@@ -76,12 +76,9 @@ class DmRoundEngine
 		// see the invite.
 		DmAnnounceService.GetInstance().Tick(playerCount, nowSeconds);
 
-		// Everyone connected appears on the leaderboard immediately; new rows
-		// (fresh joins, post-reset reseeds) push a silent standings update.
-		if (DmScoreService.GetInstance().EnsurePlayers(m_PlayerScratch))
-		{
-			DmNetServer.GetInstance().SendScoreboardAll(DmScoreService.GetInstance().BuildRowsBlob(), DmScoreService.GetInstance().BuildSessionRowsBlob(), "");
-		}
+		// Everyone connected appears immediately. This only dirties cached
+		// snapshots; an open client polls its bounded page on its 1 s cadence.
+		DmScoreService.GetInstance().EnsurePlayers(m_PlayerScratch);
 
 		// Population gate applies in every phase except IDLE itself: losing
 		// the room mid-anything drops the loop back to IDLE cleanly.
@@ -308,7 +305,7 @@ class DmRoundEngine
 		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetScoreboardSeconds();
 		TransitionTo(DmPhase.ROUNDEND);
 		DmNetServer.GetInstance().SendStateSyncAll();
-		DmNetServer.GetInstance().SendScoreboardAll(DmScoreService.GetInstance().BuildRowsBlob(), DmScoreService.GetInstance().BuildSessionRowsBlob(), DmScoreService.GetInstance().LeaderName());
+		DmNetServer.GetInstance().SendRoundEndNoticeAll(DmScoreService.GetInstance().LeaderName());
 
 		DmApi.OnRoundEnd().Invoke(m_RoundId, DmZoneService.GetInstance().GetActiveZoneName(), DmVoteService.GetInstance().GetActivePresetName(), durationSeconds, winnerId);
 	}
@@ -433,10 +430,8 @@ class DmRoundEngine
 			}
 		}
 
-		// Live standings: every scoring change pushes fresh rows so an open
-		// scoreboard doubles as the in-round leaderboard (kills are the only
-		// mutation, so this is strictly event-driven).
-		DmNetServer.GetInstance().SendScoreboardAll(DmScoreService.GetInstance().BuildRowsBlob(), DmScoreService.GetInstance().BuildSessionRowsBlob(), "");
+		// Scoring dirties both cached snapshots. Open leaderboards fetch their
+		// current bounded page on the client poll cadence.
 	}
 
 	// The killer source of EEKilled can be the weapon entity, a projectile,

@@ -148,7 +148,7 @@ function Build-Target {
 
     # Data dirs that ship inside the PBO alongside scripts (layouts now;
     # imagesets later). Referenced in-engine as "<PboPrefix>/layouts/...".
-    foreach ($dataDir in @("layouts", "imagesets")) {
+    foreach ($dataDir in @("layouts", "imagesets", "graphics")) {
         $dsrc = Join-Path $sourceDir $dataDir
         if (Test-Path $dsrc) {
             Copy-Item $dsrc -Destination $stageDir -Recurse

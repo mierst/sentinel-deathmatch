@@ -26,12 +26,27 @@ class DmHudController
 	// vetoes ShowScriptedMenu, and a one-shot open left players voteless in
 	// a running vote window (live 08-14). Retry every tick while wanted.
 	private bool m_VoteMenuWanted = false;
-	private int m_SeenScoreboardSeq = 0;
+	private int m_AutoOpenedScoreboardRound = -1;
+	private bool m_ScoreboardMenuWanted = false;
 	private int m_SeenVoteResultSeq = 0;
 	private float m_InfoClearAt = 0;
 
 	private ref DmVoteMenu m_VoteMenu;
 	private ref DmScoreboardMenu m_ScoreboardMenu;
+
+	void ~DmHudController()
+	{
+		if (m_UpdateTimer) m_UpdateTimer.Stop();
+		if (GetGame() && GetGame().GetUIManager())
+		{
+			CloseVoteMenu();
+			CloseScoreboard();
+		}
+		m_VoteMenu = null;
+		m_ScoreboardMenu = null;
+		if (m_Root) m_Root.Unlink();
+		m_Root = null;
+	}
 
 	void Init()
 	{
@@ -70,6 +85,10 @@ class DmHudController
 		UpdateZoneWarning(state);
 		UpdateInfo(state, nowSeconds);
 		HandleSequences(state);
+		if (m_ScoreboardMenu && GetGame().GetUIManager().GetMenu() == m_ScoreboardMenu)
+		{
+			m_ScoreboardMenu.Tick();
+		}
 		WatchRespawnFocus();
 	}
 
@@ -285,16 +304,26 @@ class DmHudController
 			}
 		}
 
-		// New scoreboard data: auto-open ONLY at round end. During LIVE the
-		// server pushes standings after every kill (the in-round leaderboard);
-		// an open scoreboard refreshes from state each tick, so mid-round
-		// updates land silently.
-		if (state.m_ScoreboardSeq != m_SeenScoreboardSeq)
+		// Entering ROUNDEND wants one successful open for this round. If another
+		// menu owns the UI, retry; after it opens, a player's manual close sticks.
+		if (state.m_Phase == DmPhase.ROUNDEND && state.m_RoundId != m_AutoOpenedScoreboardRound)
 		{
-			m_SeenScoreboardSeq = state.m_ScoreboardSeq;
-			if (state.m_Phase == DmPhase.ROUNDEND)
+			m_AutoOpenedScoreboardRound = state.m_RoundId;
+			m_ScoreboardMenuWanted = true;
+			CloseVoteMenu();
+		}
+		if (m_ScoreboardMenuWanted)
+		{
+			if (state.m_Phase != DmPhase.ROUNDEND)
 			{
-				CloseVoteMenu();
+				m_ScoreboardMenuWanted = false;
+			}
+			else if (m_ScoreboardMenu && GetGame().GetUIManager().GetMenu() == m_ScoreboardMenu)
+			{
+				m_ScoreboardMenuWanted = false;
+			}
+			else
+			{
 				OpenScoreboard();
 			}
 		}
@@ -342,7 +371,6 @@ class DmHudController
 		if (ui.GetMenu()) return;
 		if (!m_ScoreboardMenu) m_ScoreboardMenu = new DmScoreboardMenu();
 		ui.ShowScriptedMenu(m_ScoreboardMenu, null);
-		m_ScoreboardMenu.Refresh();
 	}
 
 	void CloseScoreboard()

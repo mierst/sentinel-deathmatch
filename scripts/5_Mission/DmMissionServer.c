@@ -22,6 +22,7 @@ modded class MissionServer
 			return;
 		}
 
+		DmLeaderboardThemeStore.Get();
 		DmRoundEngine.GetInstance().Start();
 
 #ifdef SentinelEnforcer
@@ -106,6 +107,8 @@ void DmRunSelfTests()
 	DmPhase.SelfTest();
 	DmRpc.SelfTest();
 	DmClientOpts.SelfTest();
+	DmLeaderboardTheme.SelfTest();
+	DmLeaderboard.SelfTest();
 	DmConfig.SelfTest();
 	DmZonesConfig.SelfTest();
 	DmPresetsConfig.SelfTest();
