@@ -18,6 +18,14 @@ DayZ client on a local dedicated server, on 2026-09-27 with DayZ 1.29.
   these checks. Each response contains at most 100 separately encoded rows;
   the client rejects overlong rows and oversized row lists.
 - Static repository gates, example JSON parsing, and whitespace checks pass.
+- Manual inspection of the production UI at 1080p with 999 entries confirmed
+  that standings load, scrolling works, and Find Me works. The inspector
+  reported a brief initial loading state.
+- After closing the menu, a local test round ending at the score limit
+  caused leaderboard polling to resume; polling stopped as the next voting
+  phase began. The server then entered the next live round.
+- After the round population reset to one, requesting offset 900 returned
+  the single player at offset 0 without an error.
 
 ## Measured cost
 
@@ -39,12 +47,10 @@ view's one-second polling. There is no new per-frame callback.
 
 ## Remaining release checks
 
-- Final production-layout visual and mouse-control review at 720p, 1080p,
-  and 1440p, including the configurable logo and independent attribution.
-- Round-end auto-open and visual behavior across a population reset.
-- Public CI, release approval, Workshop distribution, and live-server
-  validation.
+- Additional production-layout visual checks at 720p and 1440p, and explicit
+  custom-logo/attribution appearance checks, remain unverified.
+- Release approval, Workshop distribution, and live-server validation.
 
-The native prototype was visually tested separately. That does not replace
-the final production-layout check: screenshot capture was unavailable during
-the integration run, so this document does not claim visual approval.
+The native prototype was visually tested separately. Production inspection
+at 1080p was performed manually because automated screenshot capture was
+unavailable; it does not establish appearance at the other resolutions.
