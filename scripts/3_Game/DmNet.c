@@ -21,6 +21,8 @@ class DmRpc
 	static const int LEADERBOARD_PAGE = 0x44D0000A; // server->client: bounded row-array page
 	static const int ROUND_END_NOTICE = 0x44D0000B; // server->client: winner + auto-open sequence
 	static const int LEADERBOARD_THEME = 0x44D0000C; // server->client: validated join-time theme
+	static const int VOTE_THEME = 0x44D0000D; // server->client: resolved vote theme
+	static const int VOTE_OPTIONS = 0x44D0000E; // server->client: bounded option chunks
 	static const int RANGE_END   = 0x44D0000F;
 
 	static void SelfTest()
@@ -31,6 +33,8 @@ class DmRpc
 		if (DmRpc.CLIENT_OPTS >= DmRpc.RANGE_END) rangeOk = 0;
 		if (DmRpc.LEADERBOARD_REQUEST != DmRpc.CLIENT_OPTS + 1) rangeOk = 0;
 		if (DmRpc.LEADERBOARD_THEME >= DmRpc.RANGE_END) rangeOk = 0;
+		if (DmRpc.VOTE_THEME != DmRpc.LEADERBOARD_THEME + 1 || DmRpc.VOTE_THEME >= DmRpc.RANGE_END) rangeOk = 0;
+		if (DmRpc.VOTE_OPTIONS != DmRpc.VOTE_THEME + 1 || DmRpc.VOTE_OPTIONS >= DmRpc.RANGE_END) rangeOk = 0;
 		Print("[DM] fixture DmRpc range: expected=1 got=" + rangeOk.ToString() + " " + DmFixture.Verdict(rangeOk == 1));
 	}
 }

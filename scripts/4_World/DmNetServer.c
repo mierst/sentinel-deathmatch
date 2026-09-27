@@ -12,6 +12,9 @@ class DmNetServer
 
 	private ref array<Man> m_SendScratch = new array<Man>;
 	private ref map<string, float> m_LastLeaderboardRequestAt = new map<string, float>;
+	private int m_VoteWindowId = 0;
+	private ref array<string> m_VoteZones = new array<string>;
+	private ref array<string> m_VotePresets = new array<string>;
 
 	static DmNetServer GetInstance()
 	{
@@ -76,6 +79,7 @@ class DmNetServer
 		GetGame().RPCSingleParam(pb, DmRpc.CLIENT_OPTS, new Param1<int>(mask), true, optIdent);
 		DmLeaderboardTheme joinTheme = DmLeaderboardThemeStore.Get();
 		GetGame().RPCSingleParam(pb, DmRpc.LEADERBOARD_THEME, new Param1<ref DmLeaderboardTheme>(joinTheme), true, optIdent);
+		GetGame().RPCSingleParam(pb, DmRpc.VOTE_THEME, new Param1<ref DmLeaderboardTheme>(DmLeaderboardThemeStore.GetVote()), true, optIdent);
 	}
 
 	void SendStateSyncTo(PlayerBase pb)
@@ -85,44 +89,64 @@ class DmNetServer
 		PlayerIdentity ident = pb.GetIdentity();
 		if (!ident) return;
 		GetGame().RPCSingleParam(pb, DmRpc.STATE_SYNC, BuildStateSyncParam(), true, ident);
+		if (DmRoundEngine.GetInstance().GetPhase() == DmPhase.VOTING) SendVoteOptionsTo(pb);
 		if (DmRoundEngine.GetInstance().GetPhase() == DmPhase.ROUNDEND)
 		{
 			GetGame().RPCSingleParam(pb, DmRpc.ROUND_END_NOTICE, new Param1<string>(DmLeaderboard.CleanField(DmScoreService.GetInstance().LeaderName())), true, ident);
 		}
 	}
 
-	// Option lists ride as newline-joined blobs (names are sanitized of
-	// newlines at config load by their loaders' validation). An EMPTY blob
-	// means that column is rolled by the server (ArenaSelection /
-	// PresetSelection "random") and the client shows no buttons for it; the
-	// wire shape is unchanged, so older clients just see a one-column menu.
+	// A window snapshot is immutable until the next vote. Array positions are
+	// the original vote indices, including for labels flattened for display.
 	void SendVoteOpenAll(float voteSeconds)
 	{
-		string zoneBlob = "";
+		m_VoteWindowId = m_VoteWindowId + 1;
+		m_VoteZones.Clear();
+		m_VotePresets.Clear();
 		if (DmVoteService.GetInstance().IsZoneVoteOpen())
 		{
 			DmZonesConfig zones = DmZonesConfig.GetInstance();
 			for (int zoneIdx = 0; zoneIdx < zones.GetEnabledCount(); zoneIdx++)
 			{
-				if (zoneIdx > 0) zoneBlob = zoneBlob + "\n";
-				zoneBlob = zoneBlob + zones.GetEnabledZone(zoneIdx).Name;
+				m_VoteZones.Insert(DmVoteOptions.Label(zones.GetEnabledZone(zoneIdx).Name));
 			}
 		}
-
-		string presetBlob = "";
 		if (DmVoteService.GetInstance().IsPresetVoteOpen())
 		{
 			DmLoadoutFactory loadouts = DmLoadoutFactory.GetInstance();
 			for (int presetIdx = 0; presetIdx < loadouts.GetValidPresetCount(); presetIdx++)
 			{
-				if (presetIdx > 0) presetBlob = presetBlob + "\n";
-				presetBlob = presetBlob + loadouts.GetValidPreset(presetIdx).Name;
+				m_VotePresets.Insert(DmVoteOptions.Label(loadouts.GetValidPreset(presetIdx).Name));
 			}
 		}
-
-		SendParamToAll(DmRpc.VOTE_OPEN, new Param3<float, string, string>(voteSeconds, zoneBlob, presetBlob));
+		SendVoteOptionsTo(null);
 	}
 
+	private void SendVoteOptionsTo(PlayerBase target)
+	{
+		if (m_VoteWindowId <= 0) return;
+		PlayerIdentity voteIdentity;
+		if (target)
+		{
+			voteIdentity = target.GetIdentity();
+			if (!voteIdentity) return;
+		}
+		int maxCount = m_VoteZones.Count();
+		if (m_VotePresets.Count() > maxCount) maxCount = m_VotePresets.Count();
+		int chunkCount = 1;
+		if (maxCount > 0) chunkCount = ((maxCount - 1) / DmVoteOptions.CHUNK_SIZE) + 1;
+		for (int chunkIdx = 0; chunkIdx < chunkCount; chunkIdx++)
+		{
+			int offset = chunkIdx * DmVoteOptions.CHUNK_SIZE;
+			float remain = DmRoundEngine.GetInstance().GetPhaseDeadline() - GetGame().GetTickTime();
+			if (remain < 0) remain = 0;
+			ref array<string> zoneChunk = DmVoteOptions.Chunk(m_VoteZones, offset);
+			ref array<string> presetChunk = DmVoteOptions.Chunk(m_VotePresets, offset);
+			Param7<int, float, int, int, int, array<string>, array<string>> payload = new Param7<int, float, int, int, int, array<string>, array<string>>(m_VoteWindowId, remain, m_VoteZones.Count(), m_VotePresets.Count(), offset, zoneChunk, presetChunk);
+			if (target) GetGame().RPCSingleParam(target, DmRpc.VOTE_OPTIONS, payload, true, voteIdentity);
+			else SendParamToAll(DmRpc.VOTE_OPTIONS, payload);
+		}
+	}
 	void SendVoteResultAll(string zoneName, string presetName, int votesCast)
 	{
 		SendParamToAll(DmRpc.VOTE_RESULT, new Param3<string, string, int>(zoneName, presetName, votesCast));

@@ -18,11 +18,11 @@ with these intended terms:
 
 The following limited exception is granted despite the no-repacking and
 no-redistribution terms above: you may create and distribute an original
-companion add-on containing a leaderboard theme configuration and your own
-branding assets for use with an unmodified official Sentinel Deathmatch
-release. Such an add-on may replace the leaderboard logo, community name,
-colors, subtitle, and promotional footer. It does not need to mention or
-promote any particular community or website.
+companion add-on containing leaderboard and/or voting theme configurations
+and your own branding assets for use with an unmodified official Sentinel
+Deathmatch release. Such an add-on may replace the leaderboard and voting
+logo, community name, colors, subtitle, and promotional footer. It does not
+need to mention or promote any particular community or website.
 
 The exception does not permit copying, modifying, repacking, bundling, or
 redistributing any Sentinel Deathmatch code, PBO, layout, texture, or other

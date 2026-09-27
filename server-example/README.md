@@ -98,7 +98,7 @@ Reference copies of all config files live in `../docs/examples/`.
 - Keep `verifySignatures = 2` (the example cfg default) so clients are
   checked against the shipped bikey.
 - Port-forward/allow UDP 2302-2305 and the Steam query port 27016.
-- Players need the Sentinel Deathmatch Workshop item. If your leaderboard uses a custom logo, they also need its companion branding mod. Load both through `-mod=` so the in-game browser and launchers can resolve them. See [community branding](../docs/branding.md).
+- Players need the Sentinel Deathmatch Workshop item. If your leaderboard or voting screen uses a custom logo, they also need its companion branding mod. Load both through `-mod=` so the in-game browser and launchers can resolve them. See [community branding](../docs/branding.md).
 
 ## Running alongside other mods
 

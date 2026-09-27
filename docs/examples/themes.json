@@ -1,0 +1,14 @@
+{
+    "BrandName": "YOUR COMMUNITY",
+    "Subtitle": "DEATHMATCH",
+    "Footer": "WELCOME TO THE ARENA",
+    "LogoPath": "",
+    "ShowLogo": true,
+    "AccentR": 59,
+    "AccentG": 130,
+    "AccentB": 246,
+    "SurfaceR": 7,
+    "SurfaceG": 8,
+    "SurfaceB": 10,
+    "PanelOpacity": 0.97
+}

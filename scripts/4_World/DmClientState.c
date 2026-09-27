@@ -26,6 +26,8 @@ class DmClientState
 	ref array<string> m_PresetOptions = new array<string>;
 	float m_VoteEndTime = 0;
 	int m_VoteSeq = 0;
+	private ref DmVoteOptions m_VoteOptions = new DmVoteOptions();
+	private float m_VoteStagingDeadline = 0;
 	string m_VoteResultText = "";
 	int m_VoteResultSeq = 0;
 
@@ -46,6 +48,8 @@ class DmClientState
 	string m_LeaderboardError = "";
 	ref DmLeaderboardTheme m_LeaderboardTheme = new DmLeaderboardTheme();
 	int m_LeaderboardThemeSeq = 0;
+	ref DmLeaderboardTheme m_VoteTheme = new DmLeaderboardTheme();
+	int m_VoteThemeSeq = 0;
 	private int m_LeaderboardNextRequestId = 0;
 	private int m_LeaderboardPendingRequestId = 0;
 	private int m_LeaderboardRoundRevision = -1;
@@ -105,6 +109,29 @@ class DmClientState
 		m_StateSeq = m_StateSeq + 1;
 	}
 
+	void ResetVoteOptions()
+	{
+		// Window ids belong to one connection; a restarted server begins at one.
+		m_VoteOptions = new DmVoteOptions();
+		m_ZoneOptions = new array<string>;
+		m_PresetOptions = new array<string>;
+		m_VoteStagingDeadline = 0;
+		m_VoteEndTime = 0;
+		m_VoteSeq = 0;
+	}
+
+	void ApplyVoteOptions(int windowId, float remainSeconds, int zoneTotal, int presetTotal, int offset, array<string> zones, array<string> presets)
+	{
+		if (m_Phase != DmPhase.VOTING || remainSeconds < 0) return;
+		int previousWindow = m_VoteOptions.WindowId;
+		bool complete = m_VoteOptions.Accept(windowId, zoneTotal, presetTotal, offset, zones, presets);
+		if (m_VoteOptions.WindowId != previousWindow) m_VoteStagingDeadline = GetGame().GetTickTime() + remainSeconds;
+		if (!complete) return;
+		m_ZoneOptions = m_VoteOptions.Zones;
+		m_PresetOptions = m_VoteOptions.Presets;
+		m_VoteEndTime = m_VoteStagingDeadline;
+		m_VoteSeq = m_VoteSeq + 1;
+	}
 	void ApplyVoteOpen(float voteSeconds, string zoneBlob, string presetBlob)
 	{
 		SplitBlob(zoneBlob, m_ZoneOptions);
@@ -146,6 +173,18 @@ class DmClientState
 		m_LeaderboardThemeSeq = m_LeaderboardThemeSeq + 1;
 	}
 
+	void ApplyVoteTheme(DmLeaderboardTheme theme)
+	{
+		if (!theme)
+		{
+			m_VoteTheme = new DmLeaderboardTheme();
+			m_VoteThemeSeq = m_VoteThemeSeq + 1;
+			return;
+		}
+		theme.Validate();
+		m_VoteTheme = theme;
+		m_VoteThemeSeq = m_VoteThemeSeq + 1;
+	}
 	static bool CanApplyLeaderboardResponse(int pendingRequestId, int acceptedRevision, int responseRequestId, int responseRevision)
 	{
 		if (pendingRequestId <= 0) return false;

@@ -20,27 +20,15 @@ menus do not poll. Rankings are cached until scores change.
 
 ## Theme file
 
-The server owns the leaderboard theme. Add this append-only setting to
-`$profile:SentinelDeathmatch\config.json`:
+The server owns the leaderboard theme. It inherits shared settings from
+`themes.json`, then applies fields in `leaderboard-theme.json` on top.
+Both files live in `$profile:SentinelDeathmatch\`. See [UI themes](themes.md)
+for file selection, inheritance, validation, and examples shared with voting.
 
-```json
-"LeaderboardThemeFile": "leaderboard-theme.json"
-```
-
-The value must be a 6-80 character `.json` basename. Before the `.json`
-suffix, only letters, digits, underscores, and hyphens are accepted; no
-directory separators, `..`, or paths. An invalid or missing value falls back
-to `leaderboard-theme.json`.
-At boot, the server loads the selected file from
-`$profile:SentinelDeathmatch\`, validates it, falls back to neutral defaults
-where necessary, and sends the accepted theme to clients through the game
-RPC path. Change the file and restart the server; themes do not hot-reload.
-
-Start with [leaderboard-theme.json](examples/leaderboard-theme.json). Omitted
-fields keep their neutral defaults. Numeric values outside their allowed range
-are clamped to the nearest bound, while line-control characters in text are
-flattened to spaces. A malformed JSON document falls back as a whole to the
-neutral theme.
+Existing leaderboard files continue working without migration or automatic
+rewriting. The [full leaderboard example](examples/leaderboard-theme.json)
+sets every field: copying it overrides every shared value for this screen.
+For inheritance, include only the fields you want to differ.
 
 | Field | Default | Rules |
 |---|---|---|

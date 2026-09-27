@@ -134,6 +134,13 @@ void DmHandleClientRpc(int rpcType, ParamsReadContext ctx)
 		state.ApplyStateSync(syncData.param1, syncData.param2, syncData.param3, syncData.param4, syncData.param5, syncData.param6, syncData.param7, syncData.param8, syncData.param9);
 		return;
 	}
+	if (rpcType == DmRpc.VOTE_OPTIONS)
+	{
+		Param7<int, float, int, int, int, array<string>, array<string>> voteOptionsData;
+		if (!ctx.Read(voteOptionsData)) return;
+		state.ApplyVoteOptions(voteOptionsData.param1, voteOptionsData.param2, voteOptionsData.param3, voteOptionsData.param4, voteOptionsData.param5, voteOptionsData.param6, voteOptionsData.param7);
+		return;
+	}
 	if (rpcType == DmRpc.VOTE_OPEN)
 	{
 		Param3<float, string, string> voteOpenData;
@@ -188,6 +195,13 @@ void DmHandleClientRpc(int rpcType, ParamsReadContext ctx)
 		Param1<string> roundEndData;
 		if (!ctx.Read(roundEndData)) return;
 		state.ApplyRoundEndNotice(roundEndData.param1);
+		return;
+	}
+	if (rpcType == DmRpc.VOTE_THEME)
+	{
+		Param1<ref DmLeaderboardTheme> voteThemeData;
+		if (!ctx.Read(voteThemeData)) return;
+		state.ApplyVoteTheme(voteThemeData.param1);
 		return;
 	}
 	if (rpcType == DmRpc.LEADERBOARD_THEME)
