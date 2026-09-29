@@ -7,6 +7,19 @@ passes, not before.
 
 ## [Unreleased]
 
+### Fixed
+- Spawn protection now holds against every damage source for the whole
+  `SpawnProtectSeconds` window, not just gunfire. Bleeding, script damage
+  (such as the zone soft wall or other mods' effects) and modifiers used to
+  get through; the window now keeps health, blood, and shock topped up and
+  clears bleeds and broken legs until it closes.
+- A player who died and respawned inside their protection window no longer
+  loses the new body's protection when the old body's timer expires.
+
+### Changed
+- README documents `SpawnProtectSeconds` (default 3 seconds, 0 disables)
+  and no longer advertises the deprecated respawn delay.
+
 ## [0.1.31] - 2026-09-27
 
 ### Added
