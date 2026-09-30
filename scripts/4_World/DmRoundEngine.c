@@ -273,14 +273,7 @@ class DmRoundEngine
 	// are the pressure-removal loop's job.
 	private void FullHealPlayer(PlayerBase pb)
 	{
-		pb.SetHealth("GlobalHealth", "Health", pb.GetMaxHealth("GlobalHealth", "Health"));
-		pb.SetHealth("GlobalHealth", "Blood", pb.GetMaxHealth("GlobalHealth", "Blood"));
-		pb.SetHealth("GlobalHealth", "Shock", pb.GetMaxHealth("GlobalHealth", "Shock"));
-		if (pb.GetBleedingManagerServer())
-		{
-			pb.GetBleedingManagerServer().RemoveAllSources();
-		}
-		pb.SetBrokenLegs(eBrokenLegs.NO_BROKEN_LEGS);
+		DmSpawnService.RestoreVitals(pb);
 	}
 
 	private void EnterLive(float nowSeconds, int playerCount)

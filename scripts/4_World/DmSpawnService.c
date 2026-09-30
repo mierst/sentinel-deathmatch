@@ -184,6 +184,15 @@ class DmSpawnService
 		return deathPos;
 	}
 
+	// SetAllowDamage(false) only stops engine hit damage. Script-side health
+	// writes still land on a protected player: DecreaseHealth (zone soft
+	// wall, other mods), modifiers, and bleeding (vanilla skips bleed
+	// creation for invincible players in DEVELOPER builds only). Players
+	// took damage inside the window (field report, 09-27), so the window
+	// also re-tops vitals on a short timer. Cost: SpawnProtectSeconds * 4 calls
+	// per spawn, off every tick and hook path.
+	static const int PROTECT_HOLD_MS = 250;
+
 	void ApplyProtection(PlayerBase pb)
 	{
 		int protectSeconds = DmConfig.GetInstance().GetSpawnProtectSeconds();
@@ -193,18 +202,73 @@ class DmSpawnService
 		if (!ident) return;
 
 		pb.SetAllowDamage(false);
-		m_ProtectUntil.Set(ident.GetPlainId(), GetGame().GetTickTime() + protectSeconds);
+		StartProtectionById(ident.GetPlainId(), GetGame().GetTickTime(), protectSeconds);
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(EndProtection, protectSeconds * 1000, false, pb);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(HoldProtection, PROTECT_HOLD_MS, false, pb);
+	}
+
+	void StartProtectionById(string playerId, float nowSeconds, int protectSeconds)
+	{
+		if (protectSeconds <= 0) return;
+		m_ProtectUntil.Set(playerId, nowSeconds + protectSeconds);
+	}
+
+	bool IsProtectedById(string playerId, float nowSeconds)
+	{
+		float until;
+		if (!m_ProtectUntil.Find(playerId, until)) return false;
+		return nowSeconds < until;
+	}
+
+	// Self-rescheduling until the window closes or the body is gone.
+	void HoldProtection(PlayerBase pb)
+	{
+		if (!pb || !pb.IsAlive()) return;
+		PlayerIdentity ident = pb.GetIdentity();
+		if (!ident) return;
+		if (!IsProtectedById(ident.GetPlainId(), GetGame().GetTickTime())) return;
+
+		RestoreVitals(pb);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(HoldProtection, PROTECT_HOLD_MS, false, pb);
 	}
 
 	void EndProtection(PlayerBase pb)
 	{
 		if (!pb) return;
 		pb.SetAllowDamage(true);
+		// A body that died inside its window has already been replaced: the
+		// record now belongs to the respawned body and must survive.
+		if (!pb.IsAlive()) return;
 		PlayerIdentity ident = pb.GetIdentity();
 		if (ident)
 		{
 			m_ProtectUntil.Remove(ident.GetPlainId());
+		}
+	}
+
+	// Full vitals, no bleeds, sound legs. Guarded so an already-healthy
+	// player costs reads only (no synced writes).
+	static void RestoreVitals(PlayerBase pb)
+	{
+		RestoreHealthType(pb, "Health");
+		RestoreHealthType(pb, "Blood");
+		RestoreHealthType(pb, "Shock");
+		if (pb.GetBleedingSourceCount() > 0 && pb.GetBleedingManagerServer())
+		{
+			pb.GetBleedingManagerServer().RemoveAllSources();
+		}
+		if (pb.GetBrokenLegs() != eBrokenLegs.NO_BROKEN_LEGS)
+		{
+			pb.SetBrokenLegs(eBrokenLegs.NO_BROKEN_LEGS);
+		}
+	}
+
+	private static void RestoreHealthType(PlayerBase pb, string healthType)
+	{
+		float maxValue = pb.GetMaxHealth("GlobalHealth", healthType);
+		if (pb.GetHealth("GlobalHealth", healthType) < maxValue)
+		{
+			pb.SetHealth("GlobalHealth", healthType, maxValue);
 		}
 	}
 
@@ -278,5 +342,18 @@ class DmSpawnService
 		if (stale[0] != 0 || stale[2] != 0) memOk = 0;
 		if (memProbe.ConsumeDeathPosById("never-died", 1000.0) != Vector(0, 0, 0)) memOk = 0;
 		Print("[DM] fixture DmSpawnService death memory: expected=1 got=" + memOk.ToString() + " " + DmFixture.Verdict(memOk == 1));
+
+		// Protection window: open for exactly its configured span, per player;
+		// a zero-second window never opens.
+		DmSpawnService protProbe = new DmSpawnService();
+		int protOk = 1;
+		protProbe.StartProtectionById("p1", 100.0, 3);
+		if (!protProbe.IsProtectedById("p1", 100.0)) protOk = 0;
+		if (!protProbe.IsProtectedById("p1", 102.9)) protOk = 0;
+		if (protProbe.IsProtectedById("p1", 103.0)) protOk = 0;
+		if (protProbe.IsProtectedById("p2", 101.0)) protOk = 0;
+		protProbe.StartProtectionById("p3", 100.0, 0);
+		if (protProbe.IsProtectedById("p3", 100.0)) protOk = 0;
+		Print("[DM] fixture DmSpawnService protection window: expected=1 got=" + protOk.ToString() + " " + DmFixture.Verdict(protOk == 1));
 	}
 }

@@ -23,8 +23,9 @@ UI and configuration before a stable release.
 - **Weapon presets** in plain JSON: primary/secondary with attachments and
   mags, clothing, gear. Validated at boot - a typo disables the preset with a
   loud log line instead of breaking a round.
-- **Fast respawn**: no respawn dialog, configurable delay, spawn protection,
-  smart spawn selection away from enemies.
+- **Fast respawn**: no respawn dialog, smart spawn selection away from
+  enemies, and spawn protection: every fresh body is immune to all damage
+  for `SpawnProtectSeconds` (default `3`, `0` turns it off) in `config.json`.
 - **Zone confinement**: soft-wall damage or hard teleport, with on-screen
   boundary warnings. Optional shrinking-zone mode.
 - **In-game leaderboard**: live round standings and session totals, with a
