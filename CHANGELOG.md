@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.32] - 2026-09-29
+
 ### Fixed
 - Spawn protection now holds against every damage source for the whole
   `SpawnProtectSeconds` window, not just gunfire. Bleeding, script damage
