@@ -18,7 +18,10 @@ passes, not before.
 
 ### Changed
 - README documents `SpawnProtectSeconds` (default 3 seconds, 0 disables)
-  and no longer advertises the deprecated respawn delay.
+  and no longer advertises the deprecated respawn delay. The example
+  `config.json` drops the deprecated `RespawnDelaySeconds` (the loader
+  still accepts it), and the example `serverDZ.cfg` explains that vanilla
+  `respawnTime` is the real respawn timer.
 
 ## [0.1.31] - 2026-09-27
 

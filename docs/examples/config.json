@@ -7,7 +7,6 @@
     "RoundSeconds": 600,
     "ScoreboardSeconds": 15,
     "ScoreLimit": 30,
-    "RespawnDelaySeconds": 2,
     "SpawnProtectSeconds": 3,
     "CorpseLifetimeSeconds": 45,
     "MaxDeletesPerTick": 3,
