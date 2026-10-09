@@ -26,6 +26,14 @@ UI and configuration before a stable release.
 - **Fast respawn**: no respawn dialog, smart spawn selection away from
   enemies, and spawn protection: every fresh body is immune to all damage
   for `SpawnProtectSeconds` (default `3`, `0` turns it off) in `config.json`.
+- **Medical modes**: `MedicalMode` defaults to `"bandages"`, preserving the
+  existing bandage-based loadout and its medical items. Set it to `"regen"`
+  for server-wide healing and bleed clearing in all round phases. The default
+  restores 5 health every 5 seconds. `RegenIntervalSeconds` and
+  `RegenHealthPerTick` configure the interval and health restored; intervals
+  are rounded up to the next 500 ms engine tick with no catch-up bursts. Regen
+  clears bleeds even at full health, and affects health only; blood and shock
+  are unchanged.
 - **Zone confinement**: soft-wall damage or hard teleport, with on-screen
   boundary warnings. Optional shrinking-zone mode.
 - **In-game leaderboard**: live round standings and session totals, with a

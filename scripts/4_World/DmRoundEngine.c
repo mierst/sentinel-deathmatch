@@ -18,6 +18,7 @@ class DmRoundEngine
 
 	private ref array<Man> m_PlayerScratch = new array<Man>;
 	private int m_TopUpCounter = 0;
+	private float m_NextRegenAt = -1;
 
 	static DmRoundEngine GetInstance()
 	{
@@ -59,6 +60,7 @@ class DmRoundEngine
 		GetGame().GetPlayers(m_PlayerScratch);
 		int playerCount = m_PlayerScratch.Count();
 		float nowSeconds = GetGame().GetTickTime();
+		TickMedical(m_PlayerScratch, nowSeconds);
 
 		// Survival pressure removal: every 20 ticks (~10 s), all phases.
 		m_TopUpCounter = m_TopUpCounter + 1;
@@ -446,8 +448,65 @@ class DmRoundEngine
 		return PlayerBase.Cast(killerEntity.GetHierarchyRootPlayer());
 	}
 
+	static float HealthAfterRegen(float health, float maxHealth, float amount)
+	{
+		if (health <= 0) return health;
+		return Math.Min(maxHealth, health + amount);
+	}
+
+	static bool RegenDue(bool enabled, float nowSeconds, float deadline)
+	{
+		return enabled && nowSeconds >= deadline;
+	}
+
+	// Uses the already-collected player list; disabled mode performs no scan.
+	// Missed intervals never accumulate into a burst heal after a server stall.
+	void TickMedical(array<Man> players, float nowSeconds)
+	{
+		DmConfig medicalConfig = DmConfig.GetInstance();
+		if (!medicalConfig.IsMedicalRegenEnabled())
+		{
+			m_NextRegenAt = -1;
+			return;
+		}
+		if (m_NextRegenAt < 0)
+		{
+			m_NextRegenAt = nowSeconds + medicalConfig.GetRegenIntervalSeconds();
+			return;
+		}
+		if (!RegenDue(true, nowSeconds, m_NextRegenAt)) return;
+		m_NextRegenAt = nowSeconds + medicalConfig.GetRegenIntervalSeconds();
+
+		for (int medicalIdx = 0; medicalIdx < players.Count(); medicalIdx++)
+		{
+			PlayerBase medicalPlayer = PlayerBase.Cast(players[medicalIdx]);
+			if (!medicalPlayer || !medicalPlayer.IsAlive()) continue;
+			float currentHealth = medicalPlayer.GetHealth("GlobalHealth", "Health");
+			float healedHealth = HealthAfterRegen(currentHealth, medicalPlayer.GetMaxHealth("GlobalHealth", "Health"), medicalConfig.GetRegenHealthPerTick());
+			if (healedHealth > currentHealth) medicalPlayer.SetHealth("GlobalHealth", "Health", healedHealth);
+			if (medicalPlayer.GetBleedingSourceCount() > 0 && medicalPlayer.GetBleedingManagerServer())
+			{
+				medicalPlayer.GetBleedingManagerServer().RemoveAllSources();
+			}
+		}
+	}
+
 	static void SelfTest()
 	{
+		int regenHealthOk = 1;
+		if (HealthAfterRegen(50, 100, 5) != 55) regenHealthOk = 0;
+		if (HealthAfterRegen(98, 100, 5) != 100) regenHealthOk = 0;
+		if (HealthAfterRegen(100, 100, 5) != 100) regenHealthOk = 0;
+		if (HealthAfterRegen(0, 100, 5) != 0) regenHealthOk = 0;
+		Print("[DM] fixture DmRoundEngine regen health: expected=1 got=" + regenHealthOk.ToString() + " " + DmFixture.Verdict(regenHealthOk == 1));
+
+		int regenTimingOk = 1;
+		if (RegenDue(false, 105, 105)) regenTimingOk = 0;
+		if (RegenDue(true, 104.5, 105)) regenTimingOk = 0;
+		if (!RegenDue(true, 105, 105)) regenTimingOk = 0;
+		if (!RegenDue(true, 120, 105)) regenTimingOk = 0;
+		Print("[DM] fixture DmRoundEngine regen timing: expected=1 got=" + regenTimingOk.ToString() + " " + DmFixture.Verdict(regenTimingOk == 1));
+
 		DmRoundEngine probe = new DmRoundEngine();
 		int initOk = 1;
 		if (probe.GetPhase() != DmPhase.IDLE) initOk = 0;

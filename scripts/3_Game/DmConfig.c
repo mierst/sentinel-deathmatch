@@ -44,6 +44,13 @@ class DmConfigData
 	// neutralize heat comfort, and refill stamina for every player.
 	bool DisableSurvivalPressure = true;
 
+	// Medical mode: "bandages" preserves the existing loadout-based behavior;
+	// "regen" restores health and clears bleeds on the configured interval.
+	// Blood and shock remain unchanged by regeneration.
+	string MedicalMode = "bandages";
+	float RegenIntervalSeconds = 5.0;
+	float RegenHealthPerTick = 5.0;
+
 	// Every spawn gets one random melee weapon from presets.json's MeleePool
 	// (hotbar slot 4). The on/off switch lives here because an empty
 	// MeleePool array cannot mean "disabled": the JSON loader clears
@@ -129,6 +136,7 @@ class DmConfig
 
 	private ref DmConfigData m_Data;
 	private bool m_CachedEnabled;
+	private bool m_CachedMedicalRegen;
 
 	static DmConfig GetInstance()
 	{
@@ -171,6 +179,7 @@ class DmConfig
 	void RefreshCachedFlags()
 	{
 		m_CachedEnabled = m_Data.Enabled;
+		m_CachedMedicalRegen = m_Data.MedicalMode == "regen";
 	}
 
 	// Defensive floors so a hand-edited file cannot produce a broken loop
@@ -195,6 +204,12 @@ class DmConfig
 		if (m_Data.MaxArenaObjects < 1) m_Data.MaxArenaObjects = 1;
 		if (m_Data.MaxArenaSpawnsPerTick < 1) m_Data.MaxArenaSpawnsPerTick = 1;
 		if (m_Data.MaxArenaDeletesPerTick < 1) m_Data.MaxArenaDeletesPerTick = 1;
+		if (m_Data.MedicalMode != "bandages" && m_Data.MedicalMode != "regen") m_Data.MedicalMode = "bandages";
+		if (m_Data.RegenIntervalSeconds < 0.5) m_Data.RegenIntervalSeconds = 0.5;
+		if (m_Data.RegenIntervalSeconds > 3600.0) m_Data.RegenIntervalSeconds = 3600.0;
+		if (m_Data.RegenHealthPerTick < 0.1) m_Data.RegenHealthPerTick = 0.1;
+		if (m_Data.RegenHealthPerTick > 100.0) m_Data.RegenHealthPerTick = 100.0;
+		RefreshCachedFlags();
 
 		// Announcements: 0 = off, otherwise a 30 s floor so a typo cannot
 		// turn chat into a wall of red. Blank/newline-only lines are dropped
@@ -275,6 +290,9 @@ class DmConfig
 	string GetDropPolicy() { return m_Data.DropPolicy; }
 	string GetGunCleanupMode() { return m_Data.GunCleanupMode; }
 	bool IsSurvivalPressureDisabled() { return m_Data.DisableSurvivalPressure; }
+	bool IsMedicalRegenEnabled() { return m_CachedMedicalRegen; }
+	float GetRegenIntervalSeconds() { return m_Data.RegenIntervalSeconds; }
+	float GetRegenHealthPerTick() { return m_Data.RegenHealthPerTick; }
 	bool IsMeleeSpawnEnabled() { return m_Data.MeleeSpawn; }
 	bool IsKillfeedToChatEnabled() { return m_Data.KillfeedToChat; }
 	bool IsKillfeedEnabled() { return m_Data.Killfeed; }
@@ -313,6 +331,9 @@ class DmConfig
 		if (!defaults.KillfeedToChat) defOk = 0;
 		if (!defaults.Killfeed) defOk = 0;
 		if (!defaults.DisableUnconsciousness) defOk = 0;
+		if (defaults.MedicalMode != "bandages") defOk = 0;
+		if (defaults.RegenIntervalSeconds != 5.0) defOk = 0;
+		if (defaults.RegenHealthPerTick != 5.0) defOk = 0;
 		if (defaults.MaxArenaObjects != 1000) defOk = 0;
 		if (defaults.MaxArenaSpawnsPerTick != 50) defOk = 0;
 		if (defaults.RespawnAvoidDeathMeters != 75) defOk = 0;
@@ -326,6 +347,33 @@ class DmConfig
 		if (defaults.GunCleanupMode != "round_end") defOk = 0;
 		if (!defaults.AllowRandomChoice) defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
+
+		DmConfig medicalProbe = new DmConfig();
+		medicalProbe.m_Data = new DmConfigData();
+		medicalProbe.ClampLoadedValues();
+		int medicalDefaultsOk = 1;
+		if (medicalProbe.IsMedicalRegenEnabled()) medicalDefaultsOk = 0;
+		if (medicalProbe.GetRegenIntervalSeconds() != 5.0) medicalDefaultsOk = 0;
+		if (medicalProbe.GetRegenHealthPerTick() != 5.0) medicalDefaultsOk = 0;
+		Print("[DM] fixture DmConfig medical defaults: expected=1 got=" + medicalDefaultsOk.ToString() + " " + DmFixture.Verdict(medicalDefaultsOk == 1));
+
+		medicalProbe.m_Data.MedicalMode = "regen";
+		medicalProbe.m_Data.RegenIntervalSeconds = 0.1;
+		medicalProbe.m_Data.RegenHealthPerTick = 200.0;
+		medicalProbe.ClampLoadedValues();
+		int medicalClampOk = 1;
+		if (!medicalProbe.IsMedicalRegenEnabled()) medicalClampOk = 0;
+		if (medicalProbe.GetRegenIntervalSeconds() != 0.5) medicalClampOk = 0;
+		if (medicalProbe.GetRegenHealthPerTick() != 100.0) medicalClampOk = 0;
+		medicalProbe.m_Data.RegenIntervalSeconds = 3601.0;
+		medicalProbe.m_Data.RegenHealthPerTick = 0.0;
+		medicalProbe.ClampLoadedValues();
+		if (medicalProbe.GetRegenIntervalSeconds() != 3600.0) medicalClampOk = 0;
+		if (medicalProbe.GetRegenHealthPerTick() != 0.1) medicalClampOk = 0;
+		medicalProbe.m_Data.MedicalMode = "unknown";
+		medicalProbe.ClampLoadedValues();
+		if (medicalProbe.IsMedicalRegenEnabled()) medicalClampOk = 0;
+		Print("[DM] fixture DmConfig medical clamp: expected=1 got=" + medicalClampOk.ToString() + " " + DmFixture.Verdict(medicalClampOk == 1));
 
 		DmConfig probe = new DmConfig();
 		probe.m_Data = new DmConfigData();
