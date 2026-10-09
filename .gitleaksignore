@@ -1,0 +1,3 @@
+# Historical docs prose falsely matched a list of local-server options.
+# No credential was present; exclude only this exact pre-fix finding.
+d773057b1b014fc7b80f6835aaa6978014ffd531:docs/medical-validation.md:generic-api-key:46

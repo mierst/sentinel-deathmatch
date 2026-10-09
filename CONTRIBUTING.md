@@ -55,6 +55,18 @@ There is no unit-test framework for Enforce Script. This project's answer is
 - Design for testability: put decision logic in static/pure functions
   (see `DmPhase.Next`) so fixtures can cover it without a live round.
 
+Medical-mode integration tests run against a local Windows dedicated server:
+
+```powershell
+./tools/ci/test-medical.ps1 -ServerRoot '<DayZ dedicated server installation>'
+```
+
+This builds the current mod and tests six isolated configurations with real
+health and bleeding APIs. Logs and machine-readable results stay under
+ignored `build/medical-tests/`; the command fails if a case does not pass.
+See `docs/medical-validation.md` for coverage and limits. CI runs the runner's
+`-SelfTest` checks without requiring a DayZ installation.
+
 **Definition of done for a PR:**
 
 1. CI green (static checks + secret scan).
