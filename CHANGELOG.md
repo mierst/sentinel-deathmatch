@@ -7,6 +7,13 @@ passes, not before.
 
 ## [Unreleased]
 
+### Added
+- Configurable `MedicalMode` (`"bandages"` by default, or `"regen"`). Regen
+  restores configurable health at a configurable interval and clears bleeds;
+  blood and shock are unchanged. `RegenIntervalSeconds` defaults to 5
+  (clamped to 0.5-3600), and `RegenHealthPerTick` defaults to 5 (clamped to
+  0.1-100).
+
 ## [0.1.32] - 2026-09-29
 
 ### Fixed
