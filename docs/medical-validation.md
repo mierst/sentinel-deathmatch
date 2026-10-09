@@ -31,19 +31,42 @@ before a tick still needs its normal recovery.
 
 ## Reproducible engine smoke
 
+Run the automated suite on a Windows PC with the dedicated server installed:
+
+```powershell
+./tools/ci/test-medical.ps1 -ServerRoot '<DayZ dedicated server installation>'
+```
+
+The command builds the current checkout, boots six isolated local-only cases,
+and exits unsuccessfully for failed/missing assertions, compile/runtime errors,
+an incomplete boot, or a timeout. It preserves profiles, logs, and a JSON
+result under `build/medical-tests/`. Each case tests the real medical tick
+against independently specified configuration expectations: missing fields,
+default Regen, tuned 2-second/7-HP Regen, an unknown mode, and both numeric
+clamp extremes. The 3600-second case advances explicit times, so it does not
+require waiting an hour. Run `-SkipBuild` only when intentionally testing the
+existing PBO. CI runs `-SelfTest` to check the runner's rejection of invalid
+logs; full engine tests require the local installed server.
+
 `tools/ci/medical-smoke/init.c` is a standalone test mission that creates
 temporary identityless player bodies. It is separate from production boot
 fixtures. Run only on an isolated local dedicated server with no clients.
 
 1. Run `bash tools/ci/checks.sh` and `./tools/build.ps1`.
-2. Create a disposable `dayzOffline.medical.chernarusplus` mission folder
+2. Prefer the automated runner above, which also creates the expectations
+   file used by the mission. For manual runs, create a disposable
+   `dayzOffline.medical.chernarusplus` mission folder
    and copy the smoke `init.c` into it.
 3. Create a fresh profile. For the compatibility run, put `{}` in
    `SentinelDeathmatch/config.json`. For the Regen run, use the JSON above.
+   Supply `medical-expectations.json` in the profile root with the keys
+   `Mode`, `IntervalSeconds`, and `HealthPerTick` containing the expected
+   loaded values (for example `regen`, `5`, and `5`).
 4. Launch a local-only dedicated server with `-ip=127.0.0.1`, an unused
    port, that profile, `-mission=<absolute smoke mission folder>`, and
-   `-mod=<absolute build/@SentinelDeathmatch folder>`. Use a private test
-   password, `verifySignatures=0`, `BattlEye=0`, and `-doLogs -NO_GUI`.
+   `-mod=<absolute build/@SentinelDeathmatch folder>`. Restrict access with a
+   test-only passphrase. Set `verifySignatures` and `BattlEye` to zero, and
+   enable `-doLogs -NO_GUI`.
 5. Require every `[DM] fixture` and `[DM-MEDICAL]` assertion to pass, the
    `smoke complete` marker, and zero script compile/runtime errors. Stop
    the process between runs. Keep all mission persistence in the disposable
@@ -58,6 +81,25 @@ are outside the timed region. It calls the production medical tick with
 explicit times, rather than requiring connected clients or waiting minutes.
 
 ## Verification record (2026-10-09)
+
+The automated suite passed on this PC using the signed v0.1.33 build:
+
+| Case | Loaded mode | Interval / HP | Result |
+| --- | --- | --- | --- |
+| Missing medical fields | bandages | 5 s / 5 HP | PASS |
+| Regen defaults | regen | 5 s / 5 HP | PASS |
+| Tuned Regen | regen | 2 s / 7 HP | PASS |
+| Unknown mode | bandages | 5 s / 5 HP | PASS |
+| Low interval / high HP | regen | 0.5 s / 100 HP | PASS |
+| High interval / low HP | regen | 3600 s / 0.1 HP | PASS |
+
+Every case passed all 66 boot fixtures and its exact medical assertions (5
+for Bandages, 12 for Regen), with no script errors. All six operator-config
+hashes remained unchanged. The runner's 17 parser regression checks also
+passed under PowerShell 7 and Windows PowerShell 5.1. Independent review of
+the automated runner and parameterized mission found no blockers.
+
+Earlier incremental validation:
 
 - Red: dedicated-server boot produced the expected failures for both new
   regen helper fixtures with no-op implementations.

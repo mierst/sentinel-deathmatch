@@ -7,12 +7,17 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.33] - 2026-10-09
+
 ### Added
 - Configurable `MedicalMode` (`"bandages"` by default, or `"regen"`). Regen
   restores configurable health at a configurable interval and clears bleeds;
   blood and shock are unchanged. `RegenIntervalSeconds` defaults to 5
   (clamped to 0.5-3600), and `RegenHealthPerTick` defaults to 5 (clamped to
   0.1-100).
+- Automated local medical-mode suite covers existing configs, tuned Regen,
+  invalid-mode fallback, and numeric limits against real server health and
+  bleeding APIs. CI checks that the runner rejects incomplete or failing logs.
 
 ## [0.1.32] - 2026-09-29
 

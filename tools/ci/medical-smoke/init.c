@@ -1,5 +1,16 @@
 // Isolated dedicated-server mission; never load on a production server.
-// Run once with missing medical fields and once with regen/5 seconds/5 HP.
+// tools/ci/test-medical.ps1 supplies independently expected config values.
+class DmMedicalSmokeExpectations
+{
+	string Mode;
+	float IntervalSeconds;
+	float HealthPerTick;
+}
+
+bool MedicalHealthNear(PlayerBase patient, float expected)
+{
+	return Math.AbsFloat(patient.GetHealth("GlobalHealth", "Health") - expected) < 0.001;
+}
 void MedicalCheck(string name, bool passed)
 {
 	Print("[DM-MEDICAL] " + name + " " + DmFixture.Verdict(passed));
@@ -19,6 +30,7 @@ void BenchmarkMedical()
 	benchmark.TickMedical(crowd, 1000);
 	float elapsed = 0;
 	float slowest = 0;
+	float interval = DmConfig.GetInstance().GetRegenIntervalSeconds();
 	for (int sampleIdx = 1; sampleIdx <= 100; sampleIdx++)
 	{
 		for (int prepIdx = 0; prepIdx < crowd.Count(); prepIdx++)
@@ -28,7 +40,7 @@ void BenchmarkMedical()
 			prepared.GetBleedingManagerServer().AttemptAddBleedingSourceBySelection("LeftForeArmRoll");
 		}
 		float started = GetGame().GetTickTime();
-		benchmark.TickMedical(crowd, 1000 + sampleIdx * 5);
+		benchmark.TickMedical(crowd, 1000 + sampleIdx * interval);
 		float sampleSeconds = GetGame().GetTickTime() - started;
 		elapsed = elapsed + sampleSeconds;
 		if (sampleSeconds > slowest) slowest = sampleSeconds;
@@ -40,6 +52,16 @@ void BenchmarkMedical()
 
 void RunMedicalSmoke()
 {
+	DmMedicalSmokeExpectations expected = new DmMedicalSmokeExpectations();
+	if (!FileExist("$profile:medical-expectations.json"))
+	{
+		MedicalCheck("expectations file exists", false);
+		return;
+	}
+	JsonFileLoader<DmMedicalSmokeExpectations>.JsonLoadFile("$profile:medical-expectations.json", expected);
+	DmConfig config = DmConfig.GetInstance();
+	bool expectedRegen = expected.Mode == "regen";
+	MedicalCheck("configured mode, interval and HP", config.IsMedicalRegenEnabled() == expectedRegen && config.GetRegenIntervalSeconds() == expected.IntervalSeconds && config.GetRegenHealthPerTick() == expected.HealthPerTick);
 	PlayerBase patient = PlayerBase.Cast(GetGame().CreatePlayer(null, "SurvivorM_Mirek", Vector(7500, GetGame().SurfaceY(7500, 7500), 7500), 0, "NONE"));
 	if (!patient)
 	{
@@ -56,31 +78,36 @@ void RunMedicalSmoke()
 	MedicalCheck("bleeding precondition", patient.GetBleedingSourceCount() > 0);
 	DmRoundEngine engine = new DmRoundEngine();
 	engine.TickMedical(patients, 100);
-	engine.TickMedical(patients, 104.5);
+	engine.TickMedical(patients, 100 + expected.IntervalSeconds - 0.25);
 	MedicalCheck("no early heal", patient.GetHealth("GlobalHealth", "Health") == 50 && patient.GetBleedingSourceCount() > 0);
-	engine.TickMedical(patients, 105);
-	if (!DmConfig.GetInstance().IsMedicalRegenEnabled())
+	float firstDeadline = 100 + expected.IntervalSeconds;
+	engine.TickMedical(patients, firstDeadline);
+	if (!expectedRegen)
 	{
 		MedicalCheck("bandages preserves health and bleeding", patient.GetHealth("GlobalHealth", "Health") == 50 && patient.GetBleedingSourceCount() > 0);
 	}
 	else
 	{
-		MedicalCheck("configured HP and bleed clearing", patient.GetHealth("GlobalHealth", "Health") == 55 && patient.GetBleedingSourceCount() == 0);
+		float firstHealth = Math.Min(100, 50 + expected.HealthPerTick);
+		MedicalCheck("configured HP and bleed clearing", MedicalHealthNear(patient, firstHealth) && patient.GetBleedingSourceCount() == 0);
 		MedicalCheck("blood and shock unchanged", patient.GetHealth("GlobalHealth", "Blood") == 4000 && patient.GetHealth("GlobalHealth", "Shock") == 80);
-		engine.TickMedical(patients, 150);
-		MedicalCheck("stall heals once", patient.GetHealth("GlobalHealth", "Health") == 60);
-		engine.TickMedical(patients, 150);
-		engine.TickMedical(patients, 154.5);
-		MedicalCheck("no catch-up burst", patient.GetHealth("GlobalHealth", "Health") == 60);
-		patient.SetHealth("GlobalHealth", "Health", 98);
-		engine.TickMedical(patients, 155);
-		MedicalCheck("maximum HP cap", patient.GetHealth("GlobalHealth", "Health") == 100);
+		patient.SetHealth("GlobalHealth", "Health", 10);
+		float afterStall = firstDeadline + expected.IntervalSeconds * 10;
+		engine.TickMedical(patients, afterStall);
+		float stallHealth = Math.Min(100, 10 + expected.HealthPerTick);
+		MedicalCheck("stall heals once", MedicalHealthNear(patient, stallHealth));
+		engine.TickMedical(patients, afterStall);
+		engine.TickMedical(patients, afterStall + expected.IntervalSeconds - 0.25);
+		MedicalCheck("no catch-up burst", MedicalHealthNear(patient, stallHealth));
+		patient.SetHealth("GlobalHealth", "Health", 100 - expected.HealthPerTick * 0.5);
+		engine.TickMedical(patients, afterStall + expected.IntervalSeconds);
+		MedicalCheck("maximum HP cap", MedicalHealthNear(patient, 100));
 		patient.GetBleedingManagerServer().AttemptAddBleedingSourceBySelection("LeftForeArmRoll");
 		MedicalCheck("full HP bleeding precondition", patient.GetBleedingSourceCount() > 0);
-		engine.TickMedical(patients, 160);
+		engine.TickMedical(patients, afterStall + expected.IntervalSeconds * 2);
 		MedicalCheck("full HP still clears bleeds", patient.GetBleedingSourceCount() == 0);
 		patient.SetHealth("GlobalHealth", "Health", 0);
-		engine.TickMedical(patients, 165);
+		engine.TickMedical(patients, afterStall + expected.IntervalSeconds * 3);
 		MedicalCheck("dead player remains dead", !patient.IsAlive() && patient.GetHealth("GlobalHealth", "Health") == 0);
 	}
 	GetGame().ObjectDelete(patient);
