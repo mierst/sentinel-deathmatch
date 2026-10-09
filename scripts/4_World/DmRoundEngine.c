@@ -245,7 +245,7 @@ class DmRoundEngine
 		// streaming warm-up for the (possibly new) arena footprint.
 		DmZoneData zone = DmZoneService.GetInstance().GetActiveZone();
 
-		// Last round's dropped guns are not this round's loot.
+		// Guns follow GunCleanupMode; other loose items clear before countdown.
 		DmCleanupService.GetInstance().SweepGroundItems(zone);
 		int presetIdx = DmVoteService.GetInstance().GetActivePresetIndex();
 		for (int playerIdx = 0; playerIdx < m_PlayerScratch.Count(); playerIdx++)
@@ -293,7 +293,6 @@ class DmRoundEngine
 		string winnerId = DmScoreService.GetInstance().LeaderId();
 
 		DmScoreService.GetInstance().PrintSummary();
-		DmCleanupService.GetInstance().ExpireAll();
 
 		m_PhaseDeadline = nowSeconds + DmConfig.GetInstance().GetScoreboardSeconds();
 		TransitionTo(DmPhase.ROUNDEND);
@@ -325,6 +324,12 @@ class DmRoundEngine
 	void TransitionTo(int nextPhase)
 	{
 		int prevPhase = m_Phase;
+		// Map votes and population loss can end LIVE without a scoreboard.
+		if (prevPhase == DmPhase.LIVE && nextPhase != DmPhase.LIVE)
+		{
+			DmCleanupService.GetInstance().SweepGroundItems(DmZoneService.GetInstance().GetActiveZone(), true);
+			DmCleanupService.GetInstance().ExpireAll();
+		}
 		m_Phase = nextPhase;
 		if (DmConfig.GetInstance().IsDebug())
 		{
@@ -333,7 +338,7 @@ class DmRoundEngine
 	}
 
 	// Called from the consolidated PlayerBase hook (capture/DmPlayerHook.c).
-	void OnPlayerKilled(PlayerBase victim, Object killerSource)
+	void OnPlayerKilled(PlayerBase victim, Object killerSource, Weapon_Base deathGun = null)
 	{
 		if (!DmConfig.GetInstance().IsEnabled()) return;
 		if (!victim) return;
@@ -342,7 +347,7 @@ class DmRoundEngine
 		if (!victimIdent) return;
 
 		// Corpse cleanup + respawn run in every phase; scoring only in LIVE.
-		DmCleanupService.GetInstance().RegisterCorpse(victim);
+		DmCleanupService.GetInstance().RegisterCorpse(victim, deathGun);
 		// Respawn itself is client-driven (engine respawn login -> our
 		// OnClientNewEvent); we only remember where they fell.
 		DmSpawnService.GetInstance().NoteDeath(victimIdent, victim.GetPosition());

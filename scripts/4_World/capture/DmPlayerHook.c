@@ -16,11 +16,17 @@ modded class PlayerBase
 
 	override void EEKilled(Object killer)
 	{
+		Weapon_Base deathGun;
+		if (GetGame() && GetGame().IsDedicatedServer() && DmConfig.GetInstance().IsEnabled())
+		{
+			// Vanilla death handling can drop the hand item before OnPlayerKilled.
+			deathGun = Weapon_Base.Cast(GetHumanInventory().GetEntityInHands());
+		}
 		super.EEKilled(killer);
 
 		if (!GetGame() || !GetGame().IsDedicatedServer()) return;
 
-		DmRoundEngine.GetInstance().OnPlayerKilled(this, killer);
+		DmRoundEngine.GetInstance().OnPlayerKilled(this, killer, deathGun);
 	}
 
 	override void EEHitBy(TotalDamageResult damageResult, int damageType, EntityAI source, int component, string dmgZone, string ammo, vector modelPos, float speedCoef)

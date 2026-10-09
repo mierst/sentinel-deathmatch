@@ -85,6 +85,21 @@ log line - it never crashes the round loop.
 
 ## 6. Make it yours
 
+Set `GunCleanupMode` in `config.json` to control dropped guns:
+
+| Value | Behavior |
+|---|---|
+| `server` | Leave guns to the server's normal Central Economy item lifetimes and cleanup settings (`types.xml` and `db/globals.xml`). |
+| `round_end` | Default. Clean dropped guns at round end. |
+| `player_death` | Clean dropped guns 10 seconds after their owner's death. |
+
+Guns picked up by a living player before cleanup are kept. Guns in a dead
+player's inventory are dropped at death so corpse deletion cannot shorten
+their lifetime. Round-end cleanup also runs when a map vote or population loss
+ends a live round. Death cleanup runs on the one-second sweep, subject to
+`MaxDeletesPerTick`, so large backlogs can take longer than 10 seconds. Normal
+server cleanup remains active in all modes. Restart after changing the setting.
+
 Edit `zones.json` with arenas for your map (coordinates are world X/Z;
 `Y: 0` snaps to terrain; 2+ spawn points per zone; keep each arena under
 ~600 m across so every player stays inside everyone's network bubble).

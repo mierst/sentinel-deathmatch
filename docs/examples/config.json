@@ -11,6 +11,7 @@
     "CorpseLifetimeSeconds": 45,
     "MaxDeletesPerTick": 3,
     "DropPolicy": "allow",
+    "GunCleanupMode": "round_end",
     "ArenaSelection": "vote",
     "PresetSelection": "vote",
     "AllowRandomChoice": 1,
