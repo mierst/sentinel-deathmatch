@@ -38,6 +38,7 @@ class DmConfigData
 	int CorpseLifetimeSeconds = 45;
 	int MaxDeletesPerTick = 3;
 	string DropPolicy = "allow"; // "allow" | "block"
+	string GunCleanupMode = "round_end"; // "server" | "round_end" | "player_death"
 
 	// Deathmatch is not a survival game: periodically top up water/energy,
 	// neutralize heat comfort, and refill stamina for every player.
@@ -220,12 +221,21 @@ class DmConfig
 		m_Data.WelcomeMessage = FlattenLine(m_Data.WelcomeMessage);
 		if (!IsKnownPresetSelection(m_Data.PresetSelection)) m_Data.PresetSelection = "vote";
 		if (!IsKnownPresetSelection(m_Data.ArenaSelection)) m_Data.ArenaSelection = "vote";
+		if (!IsKnownGunCleanupMode(m_Data.GunCleanupMode)) m_Data.GunCleanupMode = "round_end";
 	}
 
 	static bool IsKnownPresetSelection(string mode)
 	{
 		if (mode == "vote") return true;
 		if (mode == "random") return true;
+		return false;
+	}
+
+	static bool IsKnownGunCleanupMode(string mode)
+	{
+		if (mode == "server") return true;
+		if (mode == "round_end") return true;
+		if (mode == "player_death") return true;
 		return false;
 	}
 
@@ -278,6 +288,7 @@ class DmConfig
 	int GetCorpseLifetimeSeconds() { return m_Data.CorpseLifetimeSeconds; }
 	int GetMaxDeletesPerTick() { return m_Data.MaxDeletesPerTick; }
 	string GetDropPolicy() { return m_Data.DropPolicy; }
+	string GetGunCleanupMode() { return m_Data.GunCleanupMode; }
 	bool IsSurvivalPressureDisabled() { return m_Data.DisableSurvivalPressure; }
 	bool IsMedicalRegenEnabled() { return m_CachedMedicalRegen; }
 	float GetRegenIntervalSeconds() { return m_Data.RegenIntervalSeconds; }
@@ -333,6 +344,7 @@ class DmConfig
 		if (defaults.ChatHistoryOnOpen) defOk = 0;
 		if (defaults.PresetSelection != "vote") defOk = 0;
 		if (defaults.ArenaSelection != "vote") defOk = 0;
+		if (defaults.GunCleanupMode != "round_end") defOk = 0;
 		if (!defaults.AllowRandomChoice) defOk = 0;
 		Print("[DM] fixture DmConfig defaults: expected=1 got=" + defOk.ToString() + " " + DmFixture.Verdict(defOk == 1));
 
@@ -371,6 +383,7 @@ class DmConfig
 		probe.m_Data.AnnouncementColor = "hotpink";
 		probe.m_Data.PresetSelection = "sometimes";
 		probe.m_Data.ArenaSelection = "everywhere";
+		probe.m_Data.GunCleanupMode = "sometimes";
 		probe.ClampLoadedValues();
 		int clampOk = 1;
 		if (probe.m_Data.ArenaSelection != "vote") clampOk = 0;
@@ -380,6 +393,7 @@ class DmConfig
 		if (probe.m_Data.AnnouncementIntervalSeconds != 30) clampOk = 0;
 		if (probe.m_Data.AnnouncementColor != "colorImportant") clampOk = 0;
 		if (probe.m_Data.PresetSelection != "vote") clampOk = 0;
+		if (probe.GetGunCleanupMode() != "round_end") clampOk = 0;
 		if (!probe.IsPresetVoteEnabled()) clampOk = 0;
 		Print("[DM] fixture DmConfig clamp floors: expected=1 got=" + clampOk.ToString() + " " + DmFixture.Verdict(clampOk == 1));
 
@@ -399,6 +413,25 @@ class DmConfig
 		if (!DmConfig.IsKnownPresetSelection("vote")) modeOk = 0;
 		if (DmConfig.IsKnownPresetSelection("")) modeOk = 0;
 		Print("[DM] fixture DmConfig preset selection: expected=1 got=" + modeOk.ToString() + " " + DmFixture.Verdict(modeOk == 1));
+
+		// Each supported gun cleanup mode survives config validation.
+		DmConfig gunCleanupProbe = new DmConfig();
+		gunCleanupProbe.m_Data = new DmConfigData();
+		int gunCleanupModeOk = 1;
+		gunCleanupProbe.m_Data.GunCleanupMode = "server";
+		gunCleanupProbe.ClampLoadedValues();
+		if (gunCleanupProbe.GetGunCleanupMode() != "server") gunCleanupModeOk = 0;
+		gunCleanupProbe.m_Data.GunCleanupMode = "round_end";
+		gunCleanupProbe.ClampLoadedValues();
+		if (gunCleanupProbe.GetGunCleanupMode() != "round_end") gunCleanupModeOk = 0;
+		gunCleanupProbe.m_Data.GunCleanupMode = "player_death";
+		gunCleanupProbe.ClampLoadedValues();
+		if (gunCleanupProbe.GetGunCleanupMode() != "player_death") gunCleanupModeOk = 0;
+		if (!DmConfig.IsKnownGunCleanupMode("server")) gunCleanupModeOk = 0;
+		if (!DmConfig.IsKnownGunCleanupMode("round_end")) gunCleanupModeOk = 0;
+		if (!DmConfig.IsKnownGunCleanupMode("player_death")) gunCleanupModeOk = 0;
+		if (DmConfig.IsKnownGunCleanupMode("")) gunCleanupModeOk = 0;
+		Print("[DM] fixture DmConfig gun cleanup modes: expected=1 got=" + gunCleanupModeOk.ToString() + " " + DmFixture.Verdict(gunCleanupModeOk == 1));
 
 		// Killfeed and KillfeedToChat both default on, so the defaults fixture
 		// cannot tell their accessors apart: flip each one alone.

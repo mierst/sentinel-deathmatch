@@ -16,6 +16,9 @@ jobs:
       - name: Medical test runner regression checks
         shell: pwsh
         run: ./tools/ci/test-medical.ps1 -SelfTest
+      - name: Gun cleanup smoke parser regression checks
+        shell: pwsh
+        run: ./tools/ci/gun-cleanup-smoke.ps1 -SelfTest
 
   secret-scan:
     name: Secret scan
