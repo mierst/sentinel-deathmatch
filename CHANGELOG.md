@@ -7,6 +7,20 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.34] - 2026-10-09
+
+### Added
+- `GunCleanupMode` controls dropped firearms: `"server"` uses normal DayZ
+  cleanup, `"round_end"` is the default, and `"player_death"` removes a dead
+  player's dropped guns after 10 seconds. Picked-up guns are protected.
+- Automated local gun cleanup tests cover combat past the death deadline,
+  corpse cleanup, ground containers, pickups, aborted rounds, and existing
+  or invalid configuration. CI verifies the runner rejects incomplete logs.
+
+### Changed
+- Corpse cleanup releases firearms so it cannot impose a shorter gun
+  lifetime. Round-end cleanup also covers map votes and population loss.
+
 ## [0.1.33] - 2026-10-09
 
 ### Added

@@ -67,6 +67,18 @@ ignored `build/medical-tests/`; the command fails if a case does not pass.
 See `docs/medical-validation.md` for coverage and limits. CI runs the runner's
 `-SelfTest` checks without requiring a DayZ installation.
 
+Gun cleanup integration tests run on the same local server installation:
+
+```powershell
+./tools/ci/gun-cleanup-smoke.ps1 -ServerRoot '<DayZ dedicated server installation>'
+```
+
+This tests all three modes plus missing/invalid settings, using real entities,
+gunshot damage, and the cleanup timer during a simulated LIVE round. It checks
+pickups, containers, corpse deletion, and early round endings. Evidence stays
+under ignored `build/gun-cleanup-smoke/`. CI runs `-SelfTest` parser regressions.
+See `docs/gun-cleanup-validation.md` for coverage and limits.
+
 **Definition of done for a PR:**
 
 1. CI green (static checks + secret scan).
