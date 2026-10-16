@@ -20,6 +20,9 @@ class DmZoneData
 	float CenterX = 0;
 	float CenterZ = 0;
 	float Radius = 200;
+	// Extra meters past Radius the round-end corpse/gun sweep covers. The
+	// HUD "RETURN TO THE ZONE" warning ignores it: it shows only at or
+	// beyond the boundary, where enforcement starts.
 	float WarnMargin = 30;
 
 	// "damage"    = soft wall (BR-gas style, scales with overshoot)

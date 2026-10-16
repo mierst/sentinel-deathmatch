@@ -26,6 +26,9 @@ passes, not before.
   and forgets them when the arena changes.
 - Round-start seating rotates by a random offset each round, so the same
   players no longer start on the same points every round.
+- The HUD "RETURN TO THE ZONE" warning now appears only at or beyond the
+  arena boundary, where enforcement starts, instead of anywhere inside the
+  `WarnMargin` band. `WarnMargin` still widens the round-end cleanup sweep.
 
 ## [0.1.34] - 2026-10-09
 
