@@ -7,6 +7,26 @@ passes, not before.
 
 ## [Unreleased]
 
+### Added
+- `RespawnSafePoolPercent` (default `60`, clamped to 0-100): every spawn
+  point at least this percent as far from the nearest enemy as the safest
+  point is an equal candidate and the respawn picks one at random. `100`
+  restores the previous single-safest-point behavior; `0` ignores enemies.
+  The example `config.json` now lists it alongside `RespawnAvoidDeathMeters`.
+- Boot validation logs a `[DM] WARNING` for every spawn point that sits
+  outside its arena's circle, with the point's index, coordinates, and how
+  many meters it overshoots, so the marker can be found in DayZ Editor. The
+  zone stays enabled; `.dze` marker spawns are checked the same way.
+
+### Changed
+- Respawns no longer funnel a whole match through one or two spawn points.
+  Besides the safe pool, the server skips the last few spawn points it
+  handed out in the active arena while other safe points remain (up to
+  three on big arenas, fewer on small ones, none on a two-point arena),
+  and forgets them when the arena changes.
+- Round-start seating rotates by a random offset each round, so the same
+  players no longer start on the same points every round.
+
 ## [0.1.34] - 2026-10-09
 
 ### Added

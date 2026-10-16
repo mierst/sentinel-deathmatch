@@ -250,6 +250,11 @@ class DmRoundEngine
 		// Guns follow GunCleanupMode; other loose items clear before countdown.
 		DmCleanupService.GetInstance().SweepGroundItems(zone);
 		int presetIdx = DmVoteService.GetInstance().GetActivePresetIndex();
+		// Seats rotate by a per-round offset: the scratch list keeps its
+		// order between rounds, so without it the same people start on the
+		// same points every round.
+		int seatOffset = 0;
+		if (zone && zone.SpawnPoints.Count() > 0) seatOffset = Math.RandomInt(0, zone.SpawnPoints.Count());
 		for (int playerIdx = 0; playerIdx < m_PlayerScratch.Count(); playerIdx++)
 		{
 			PlayerBase pb = PlayerBase.Cast(m_PlayerScratch[playerIdx]);
@@ -257,7 +262,7 @@ class DmRoundEngine
 
 			if (zone && zone.SpawnPoints.Count() > 0)
 			{
-				DmSpawnPointData sp = zone.SpawnPoints[playerIdx % zone.SpawnPoints.Count()];
+				DmSpawnPointData sp = zone.SpawnPoints[(playerIdx + seatOffset) % zone.SpawnPoints.Count()];
 				pb.SetPosition(DmSpawnService.ResolveSpawnPos(sp));
 				pb.SetOrientation(Vector(sp.Yaw, 0, 0));
 			}
