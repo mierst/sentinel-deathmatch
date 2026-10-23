@@ -213,8 +213,10 @@ class DmHudController
 			if (ownPlayer)
 			{
 				float overshoot = state.OwnOvershoot(ownPlayer.GetPosition());
-				// Warn inside the margin band and anywhere beyond.
-				if (overshoot > -state.m_ZoneWarnMargin) warn = true;
+				// Only at or beyond the boundary - the same line the server
+				// enforces. Showing it inside the WarnMargin band read as a
+				// false alarm to players standing safely near the edge.
+				if (overshoot >= 0) warn = true;
 			}
 		}
 		if (warn)

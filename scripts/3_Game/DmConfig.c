@@ -34,6 +34,11 @@ class DmConfigData
 	// Spawn points closer than this to where the player died are avoided on
 	// respawn (0 disables). Falls back to all points on tiny arenas.
 	int RespawnAvoidDeathMeters = 75;
+	// Respawn variety: every spawn point whose nearest enemy is at least
+	// this percent as far as the safest point's is an equal candidate, and
+	// the pick is random among them. 100 = always the single safest point
+	// (a whole match on two spots); 0 = enemies ignored.
+	int RespawnSafePoolPercent = 60;
 
 	int CorpseLifetimeSeconds = 45;
 	int MaxDeletesPerTick = 3;
@@ -199,6 +204,8 @@ class DmConfig
 		if (m_Data.RespawnDelaySeconds < 0) m_Data.RespawnDelaySeconds = 0;
 		if (m_Data.SpawnProtectSeconds < 0) m_Data.SpawnProtectSeconds = 0;
 		if (m_Data.RespawnAvoidDeathMeters < 0) m_Data.RespawnAvoidDeathMeters = 0;
+		if (m_Data.RespawnSafePoolPercent < 0) m_Data.RespawnSafePoolPercent = 0;
+		if (m_Data.RespawnSafePoolPercent > 100) m_Data.RespawnSafePoolPercent = 100;
 		if (m_Data.CorpseLifetimeSeconds < 5) m_Data.CorpseLifetimeSeconds = 5;
 		if (m_Data.MaxDeletesPerTick < 1) m_Data.MaxDeletesPerTick = 1;
 		if (m_Data.MaxArenaObjects < 1) m_Data.MaxArenaObjects = 1;
@@ -285,6 +292,7 @@ class DmConfig
 	int GetRespawnDelaySeconds() { return m_Data.RespawnDelaySeconds; }
 	int GetSpawnProtectSeconds() { return m_Data.SpawnProtectSeconds; }
 	int GetRespawnAvoidDeathMeters() { return m_Data.RespawnAvoidDeathMeters; }
+	int GetRespawnSafePoolPercent() { return m_Data.RespawnSafePoolPercent; }
 	int GetCorpseLifetimeSeconds() { return m_Data.CorpseLifetimeSeconds; }
 	int GetMaxDeletesPerTick() { return m_Data.MaxDeletesPerTick; }
 	string GetDropPolicy() { return m_Data.DropPolicy; }
@@ -337,6 +345,7 @@ class DmConfig
 		if (defaults.MaxArenaObjects != 1000) defOk = 0;
 		if (defaults.MaxArenaSpawnsPerTick != 50) defOk = 0;
 		if (defaults.RespawnAvoidDeathMeters != 75) defOk = 0;
+		if (defaults.RespawnSafePoolPercent != 60) defOk = 0;
 		if (defaults.AnnouncementIntervalSeconds != 300) defOk = 0;
 		if (defaults.Announcements.Count() != 0) defOk = 0;
 		if (defaults.AnnouncementColor != "colorImportant") defOk = 0;
