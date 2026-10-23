@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.36] - 2026-10-23
+
 ### Added
 - Zones carry an optional `Map` (`"chernarusplus"`, `"nasdara"`, ...). At
   boot the server enables only the zones for the world it runs and skips
