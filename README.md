@@ -26,6 +26,11 @@ UI and configuration before a stable release.
 - **Fast respawn**: no respawn dialog, smart spawn selection away from
   enemies, and spawn protection: every fresh body is immune to all damage
   for `SpawnProtectSeconds` (default `3`, `0` turns it off) in `config.json`.
+  Respawns stay varied: every spawn point at least `RespawnSafePoolPercent`
+  (default `60`) as far from the nearest enemy as the safest one is an equal
+  candidate, the last few points used are skipped while others qualify, and
+  points within `RespawnAvoidDeathMeters` (default `75`) of where you died
+  are avoided. Set the percent to `100` for the old single-safest-point pick.
 - **Health regen by default**: `MedicalMode` defaults to `"regen"`:
   server-wide healing and bleed clearing in all round phases, 5 health every
   5 seconds out of the box. `RegenIntervalSeconds` and `RegenHealthPerTick`

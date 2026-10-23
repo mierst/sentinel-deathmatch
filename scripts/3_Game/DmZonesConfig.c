@@ -28,6 +28,9 @@ class DmZoneData
 	float CenterX = 0;
 	float CenterZ = 0;
 	float Radius = 200;
+	// Extra meters past Radius the round-end corpse/gun sweep covers. The
+	// HUD "RETURN TO THE ZONE" warning ignores it: it shows only at or
+	// beyond the boundary, where enforcement starts.
 	float WarnMargin = 30;
 
 	// "damage"    = soft wall (BR-gas style, scales with overshoot)
@@ -180,6 +183,15 @@ class DmZonesConfig
 		return zoneMapNorm == worldNorm;
 	}
 
+	// Meters a spawn point sits outside its zone's circle (2D). Negative while
+	// inside. Pure; fixtures.
+	static float SpawnOutDistance(DmSpawnPointData sp, DmZoneData zone)
+	{
+		float dx = sp.X - zone.CenterX;
+		float dz = sp.Z - zone.CenterZ;
+		return Math.Sqrt(dx * dx + dz * dz) - zone.Radius;
+	}
+
 	// Boot validation: a zone that cannot host a round is disabled with a loud
 	// log line, never a mid-round failure.
 	void Validate()
@@ -220,6 +232,18 @@ class DmZonesConfig
 			{
 				Print("[DM] zones.json: zone '" + zone.Name + "' unknown Enforcement '" + zone.Enforcement + "' - using 'damage'");
 				zone.Enforcement = "damage";
+			}
+			// A spawn point outside the circle kills whoever lands on it once
+			// the round is live. Loud, with the coordinates, so the author can
+			// find the marker in DayZ Editor; the zone stays enabled.
+			for (int spIdx = 0; spIdx < zone.SpawnPoints.Count(); spIdx++)
+			{
+				DmSpawnPointData sp = zone.SpawnPoints[spIdx];
+				float overshoot = SpawnOutDistance(sp, zone);
+				if (overshoot > 0)
+				{
+					Print("[DM] WARNING: zone '" + zone.Name + "' spawn point " + spIdx.ToString() + " at (" + sp.X.ToString() + ", " + sp.Y.ToString() + ", " + sp.Z.ToString() + ") is " + overshoot.ToString() + " m OUTSIDE the arena boundary (center " + zone.CenterX.ToString() + ", " + zone.CenterZ.ToString() + " radius " + zone.Radius.ToString() + ") - move it or it will kill whoever spawns there");
+				}
 			}
 			if (zone.OutOfZoneKillSeconds < 3.0) zone.OutOfZoneKillSeconds = 3.0;
 			m_EnabledIndices.Insert(zoneIdx);
@@ -314,5 +338,29 @@ class DmZonesConfig
 		int rejectOk = 1;
 		if (probeBad.GetEnabledCount() != 0) rejectOk = 0;
 		Print("[DM] fixture DmZonesConfig rejects invalid: expected=1 got=" + rejectOk.ToString() + " " + DmFixture.Verdict(rejectOk == 1));
+
+		// Out-of-bounds spawn point: measured by overshoot, zone stays enabled.
+		DmZoneData boundsZone = new DmZoneData();
+		boundsZone.Name = "EdgeCase";
+		boundsZone.CenterX = 1000;
+		boundsZone.CenterZ = 2000;
+		boundsZone.Radius = 100;
+		DmSpawnPointData inside = new DmSpawnPointData();
+		inside.X = 1060;
+		inside.Z = 2000;
+		DmSpawnPointData outside = new DmSpawnPointData();
+		outside.X = 1000;
+		outside.Z = 2130;
+		int boundsOk = 1;
+		if (SpawnOutDistance(inside, boundsZone) >= 0) boundsOk = 0;
+		if (Math.AbsFloat(SpawnOutDistance(outside, boundsZone) - 30.0) > 0.01) boundsOk = 0;
+		DmZonesConfig probeBounds = new DmZonesConfig();
+		probeBounds.m_Data = new DmZonesData();
+		boundsZone.SpawnPoints.Insert(inside);
+		boundsZone.SpawnPoints.Insert(outside);
+		probeBounds.m_Data.Zones.Insert(boundsZone);
+		probeBounds.Validate();
+		if (probeBounds.GetEnabledCount() != 1) boundsOk = 0;
+		Print("[DM] fixture DmZonesConfig spawn out of bounds: expected=1 got=" + boundsOk.ToString() + " " + DmFixture.Verdict(boundsOk == 1));
 	}
 }

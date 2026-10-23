@@ -8,6 +8,8 @@
     "ScoreboardSeconds": 15,
     "ScoreLimit": 30,
     "SpawnProtectSeconds": 3,
+    "RespawnAvoidDeathMeters": 75,
+    "RespawnSafePoolPercent": 60,
     "CorpseLifetimeSeconds": 45,
     "MaxDeletesPerTick": 3,
     "DropPolicy": "allow",
