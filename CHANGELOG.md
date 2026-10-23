@@ -7,6 +7,8 @@ passes, not before.
 
 ## [Unreleased]
 
+## [0.1.35] - 2026-10-23
+
 ### Added
 - `RespawnSafePoolPercent` (default `60`, clamped to 0-100): every spawn
   point at least this percent as far from the nearest enemy as the safest
