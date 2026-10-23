@@ -224,12 +224,14 @@ class DmZonesConfig
 			if (zone.OutOfZoneKillSeconds < 3.0) zone.OutOfZoneKillSeconds = 3.0;
 			m_EnabledIndices.Insert(zoneIdx);
 		}
-		string summary = "[DM] zones.json: " + m_EnabledIndices.Count().ToString() + " of " + m_Data.Zones.Count().ToString() + " zones enabled";
+		// Print(bareVariable) echoes it as "string x = '...'" - always hand
+		// Print an expression so the line keeps its grep-able prefix.
+		string skippedNote = "";
 		if (otherMapCount > 0)
 		{
-			summary = summary + " (" + otherMapCount.ToString() + " for other maps skipped on '" + worldName + "')";
+			skippedNote = " (" + otherMapCount.ToString() + " for other maps skipped on '" + worldName + "')";
 		}
-		Print(summary);
+		Print("[DM] zones.json: " + m_EnabledIndices.Count().ToString() + " of " + m_Data.Zones.Count().ToString() + " zones enabled" + skippedNote);
 	}
 
 	// Raw access (all zones, pre-validation) - the arena loader applies .dze
