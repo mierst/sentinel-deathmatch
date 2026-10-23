@@ -23,6 +23,12 @@ hand (or with tooling) - the mod cannot tell the difference.
 }
 ```
 
+`MapName` is the world the Editor saved the file on (`chernarusplus`,
+`nasdara`, ...). The mod compares it with the running world and skips the
+arena, quietly, when they differ - so a profile folder shared between a
+Chernarus and a Nasdara server can hold both sets of arenas. Leave it empty
+and the file loads on any map.
+
 Per object:
 
 | Field | Meaning |
@@ -62,10 +68,14 @@ identical.
 1. Drop the file in `$profile:SentinelDeathmatch\arenas\` (plain filename,
    no subdirectories).
 2. Reference it from `zones.json`:
-   `{ "Name": "VMC", "Enabled": 1, "Enforcement": "countdown", "DzeFile": "vmc.dze" }`
+   `{ "Name": "VMC", "Map": "chernarusplus", "Enabled": 1, "Enforcement": "countdown", "DzeFile": "vmc.dze" }`
+   (`Map` is optional; with it, a zone for another map is skipped before its
+   file is even looked for.)
 3. Restart the server. The boot log prints the derived geometry
    (`[DM] arenas: zone 'VMC' geometry from markers: ...`) and any problems.
 
 An arena over an existing map location (a military compound, a village)
 needs only markers - no scenery objects at all. See `vmc.dze` here for a
-complete markers-only example and `example_arena.dze` for markers + scenery.
+complete markers-only example on Chernarus, `mabar_ardistan.dze` for the
+same thing on Nasdara (a village with 22 spawn markers, straight out of the
+Editor), and `example_arena.dze` for markers + scenery.

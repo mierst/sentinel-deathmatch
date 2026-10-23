@@ -7,6 +7,23 @@ passes, not before.
 
 ## [Unreleased]
 
+### Added
+- Zones carry an optional `Map` (`"chernarusplus"`, `"nasdara"`, ...). At
+  boot the server enables only the zones for the world it runs and skips
+  the rest without a warning, so one `zones.json` and one `arenas\` folder
+  serve every map. A `.dze` arena whose `MapName` is another world is
+  skipped the same way instead of spawning into the wrong terrain.
+- First boot now writes two demo arenas keyed by map: the Chernarus Demo
+  Field and Ma'bar Ardistan on Nasdara. The full Nasdara arena ships as
+  `docs/examples/arenas/mabar_ardistan.dze`.
+
+### Changed
+- `MedicalMode` defaults to `"regen"`: health regeneration and bleed
+  clearing are on out of the box, and an unrecognized value falls back to
+  `regen`. A `config.json` without the field now regenerates; write
+  `"MedicalMode": "bandages"` to keep the old behavior. The medical test
+  runner gained an explicit-bandages case.
+
 ## [0.1.35] - 2026-10-23
 
 ### Added

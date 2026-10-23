@@ -18,7 +18,7 @@
     "PresetSelection": "vote",
     "AllowRandomChoice": 1,
     "DisableSurvivalPressure": 1,
-    "MedicalMode": "bandages",
+    "MedicalMode": "regen",
     "RegenIntervalSeconds": 5.0,
     "RegenHealthPerTick": 5.0,
     "Killfeed": 1,

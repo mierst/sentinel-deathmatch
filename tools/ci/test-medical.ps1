@@ -26,10 +26,11 @@ $ErrorActionPreference = "Stop"
 
 # Expected values are independent of the implementation's accessors/clamps.
 $Cases = @(
-    @{ Name = "missing-fields"; Config = @{}; Expected = @{ Mode = "bandages"; IntervalSeconds = 5.0; HealthPerTick = 5.0 } },
+    @{ Name = "missing-fields"; Config = @{}; Expected = @{ Mode = "regen"; IntervalSeconds = 5.0; HealthPerTick = 5.0 } },
+    @{ Name = "bandages-explicit"; Config = @{ MedicalMode = "bandages" }; Expected = @{ Mode = "bandages"; IntervalSeconds = 5.0; HealthPerTick = 5.0 } },
     @{ Name = "regen-default"; Config = @{ MedicalMode = "regen" }; Expected = @{ Mode = "regen"; IntervalSeconds = 5.0; HealthPerTick = 5.0 } },
     @{ Name = "regen-tuned"; Config = @{ MedicalMode = "regen"; RegenIntervalSeconds = 2.0; RegenHealthPerTick = 7.0 }; Expected = @{ Mode = "regen"; IntervalSeconds = 2.0; HealthPerTick = 7.0 } },
-    @{ Name = "unknown-mode"; Config = @{ MedicalMode = "unknown-medical-mode" }; Expected = @{ Mode = "bandages"; IntervalSeconds = 5.0; HealthPerTick = 5.0 } },
+    @{ Name = "unknown-mode"; Config = @{ MedicalMode = "unknown-medical-mode" }; Expected = @{ Mode = "regen"; IntervalSeconds = 5.0; HealthPerTick = 5.0 } },
     @{ Name = "low-interval-high-hp"; Config = @{ MedicalMode = "regen"; RegenIntervalSeconds = 0.1; RegenHealthPerTick = 200.0 }; Expected = @{ Mode = "regen"; IntervalSeconds = 0.5; HealthPerTick = 100.0 } },
     @{ Name = "high-interval-low-hp"; Config = @{ MedicalMode = "regen"; RegenIntervalSeconds = 4000.0; RegenHealthPerTick = 0.0 }; Expected = @{ Mode = "regen"; IntervalSeconds = 3600.0; HealthPerTick = 0.1 } }
 )

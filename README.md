@@ -31,14 +31,19 @@ UI and configuration before a stable release.
   candidate, the last few points used are skipped while others qualify, and
   points within `RespawnAvoidDeathMeters` (default `75`) of where you died
   are avoided. Set the percent to `100` for the old single-safest-point pick.
-- **Medical modes**: `MedicalMode` defaults to `"bandages"`, preserving the
-  existing bandage-based loadout and its medical items. Set it to `"regen"`
-  for server-wide healing and bleed clearing in all round phases. The default
-  restores 5 health every 5 seconds. `RegenIntervalSeconds` and
-  `RegenHealthPerTick` configure the interval and health restored; intervals
-  are rounded up to the next 500 ms engine tick with no catch-up bursts. Regen
-  clears bleeds even at full health, and affects health only; blood and shock
-  are unchanged.
+- **Health regen by default**: `MedicalMode` defaults to `"regen"`:
+  server-wide healing and bleed clearing in all round phases, 5 health every
+  5 seconds out of the box. `RegenIntervalSeconds` and `RegenHealthPerTick`
+  configure the interval and health restored; intervals are rounded up to the
+  next 500 ms engine tick with no catch-up bursts. Regen clears bleeds even at
+  full health, and affects health only; blood and shock are unchanged. Set
+  `"MedicalMode": "bandages"` to turn it off and leave healing to the
+  loadout's medical items (a `config.json` without the field regenerates).
+- **Multi-map arenas**: every zone in `zones.json` can carry a `Map`
+  (`"chernarusplus"`, `"nasdara"`, ...). The server enables only the zones
+  for the world it runs, so one file holds every map's arenas; a `.dze`
+  arena saved on another map is skipped the same way. First boot writes a
+  demo arena for Chernarus and one for Nasdara.
 - **Zone confinement**: soft-wall damage or hard teleport, with on-screen
   boundary warnings. Optional shrinking-zone mode.
 - **In-game leaderboard**: live round standings and session totals, with a
@@ -87,6 +92,12 @@ Any geometry the markers provide overrides the zone's numbers in
 `zones.json`; anything missing falls back to them. That means an "arena"
 over an existing map location - a military compound, a village - needs no
 placed scenery at all: markers only, ten minutes in the Editor.
+
+The Editor stamps the world it was saved on into the file's `MapName`. The
+mod compares it with the world the server runs and skips an arena built for
+another map, so a shared `zones.json` plus a shared `arenas\` folder work on
+every map; give the zone a matching `"Map"` as well and it is skipped before
+its file is even looked for.
 
 Rules of the road: classname objects only for now (`.p3d` path placements
 are skipped with a log); every classname is validated against the server's

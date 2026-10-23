@@ -1,7 +1,8 @@
 # Medical modes validation
 
 The medical mode is independent of spawn protection and survival-pressure
-removal. Existing configs missing the new fields use `bandages`. Regen uses
+removal. Regen is the default: existing configs missing the field use
+`regen`, and so does an unrecognized value. Regen uses
 one server-wide deadline in every round phase; it does not reset on damage
 or give every respawning body its own timer. It can offset nonlethal zone
 soft-wall damage, but does not prevent a zone kill or other lethal damage.
@@ -17,7 +18,8 @@ soft-wall damage, but does not prevent a zone kill or other lethal damage.
 ```
 
 `MedicalMode` accepts `bandages` and `regen` (lowercase). Other values fall
-back to `bandages`. Intervals clamp to 0.5-3600 seconds; HP clamps to
+back to `regen`, the default; write `bandages` explicitly to turn healing
+off. Intervals clamp to 0.5-3600 seconds; HP clamps to
 0.1-100 per tick. Timing uses the existing 500 ms timer, so fractional
 intervals round up to a timer tick and server stalls can delay healing.
 Missed intervals do not accumulate. Restart the server after editing its
@@ -37,13 +39,14 @@ Run the automated suite on a Windows PC with the dedicated server installed:
 ./tools/ci/test-medical.ps1 -ServerRoot '<DayZ dedicated server installation>'
 ```
 
-The command builds the current checkout, boots six isolated local-only cases,
-and exits unsuccessfully for failed/missing assertions, compile/runtime errors,
-an incomplete boot, or a timeout. It preserves profiles, logs, and a JSON
-result under `build/medical-tests/`. Each case tests the real medical tick
-against independently specified configuration expectations: missing fields,
-default Regen, tuned 2-second/7-HP Regen, an unknown mode, and both numeric
-clamp extremes. The 3600-second case advances explicit times, so it does not
+The command builds the current checkout, boots seven isolated local-only
+cases, and exits unsuccessfully for failed/missing assertions, compile/runtime
+errors, an incomplete boot, or a timeout. It preserves profiles, logs, and a
+JSON result under `build/medical-tests/`. Each case tests the real medical
+tick against independently specified configuration expectations: missing
+fields (now Regen), explicit Bandages, default Regen, tuned 2-second/7-HP
+Regen, an unknown mode (falls back to Regen), and both numeric clamp
+extremes. The 3600-second case advances explicit times, so it does not
 require waiting an hour. Run `-SkipBuild` only when intentionally testing the
 existing PBO. CI runs `-SelfTest` to check the runner's rejection of invalid
 logs; full engine tests require the local installed server.
@@ -81,6 +84,11 @@ are outside the timed region. It calls the production medical tick with
 explicit times, rather than requiring connected clients or waiting minutes.
 
 ## Verification record (2026-10-09)
+
+Recorded against v0.1.33, when `bandages` was the default. The missing-field
+and unknown-mode cases now expect `regen`, and an explicit-bandages case was
+added; the suite has not been re-run against a booted server since that
+flip.
 
 The automated suite passed on this PC using the signed v0.1.33 build:
 

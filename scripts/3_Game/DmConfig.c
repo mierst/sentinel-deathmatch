@@ -49,10 +49,12 @@ class DmConfigData
 	// neutralize heat comfort, and refill stamina for every player.
 	bool DisableSurvivalPressure = true;
 
-	// Medical mode: "bandages" preserves the existing loadout-based behavior;
-	// "regen" restores health and clears bleeds on the configured interval.
-	// Blood and shock remain unchanged by regeneration.
-	string MedicalMode = "bandages";
+	// Medical mode: "regen" (default) restores health and clears bleeds on
+	// the configured interval; "bandages" leaves healing to the loadout's
+	// medical items. Blood and shock remain unchanged by regeneration.
+	// Default flipped from "bandages" after 0.1.34: a config.json without
+	// the field now regenerates; write "bandages" explicitly to keep it off.
+	string MedicalMode = "regen";
 	float RegenIntervalSeconds = 5.0;
 	float RegenHealthPerTick = 5.0;
 
@@ -211,7 +213,7 @@ class DmConfig
 		if (m_Data.MaxArenaObjects < 1) m_Data.MaxArenaObjects = 1;
 		if (m_Data.MaxArenaSpawnsPerTick < 1) m_Data.MaxArenaSpawnsPerTick = 1;
 		if (m_Data.MaxArenaDeletesPerTick < 1) m_Data.MaxArenaDeletesPerTick = 1;
-		if (m_Data.MedicalMode != "bandages" && m_Data.MedicalMode != "regen") m_Data.MedicalMode = "bandages";
+		if (m_Data.MedicalMode != "bandages" && m_Data.MedicalMode != "regen") m_Data.MedicalMode = "regen";
 		if (m_Data.RegenIntervalSeconds < 0.5) m_Data.RegenIntervalSeconds = 0.5;
 		if (m_Data.RegenIntervalSeconds > 3600.0) m_Data.RegenIntervalSeconds = 3600.0;
 		if (m_Data.RegenHealthPerTick < 0.1) m_Data.RegenHealthPerTick = 0.1;
@@ -339,7 +341,7 @@ class DmConfig
 		if (!defaults.KillfeedToChat) defOk = 0;
 		if (!defaults.Killfeed) defOk = 0;
 		if (!defaults.DisableUnconsciousness) defOk = 0;
-		if (defaults.MedicalMode != "bandages") defOk = 0;
+		if (defaults.MedicalMode != "regen") defOk = 0;
 		if (defaults.RegenIntervalSeconds != 5.0) defOk = 0;
 		if (defaults.RegenHealthPerTick != 5.0) defOk = 0;
 		if (defaults.MaxArenaObjects != 1000) defOk = 0;
@@ -361,7 +363,7 @@ class DmConfig
 		medicalProbe.m_Data = new DmConfigData();
 		medicalProbe.ClampLoadedValues();
 		int medicalDefaultsOk = 1;
-		if (medicalProbe.IsMedicalRegenEnabled()) medicalDefaultsOk = 0;
+		if (!medicalProbe.IsMedicalRegenEnabled()) medicalDefaultsOk = 0;
 		if (medicalProbe.GetRegenIntervalSeconds() != 5.0) medicalDefaultsOk = 0;
 		if (medicalProbe.GetRegenHealthPerTick() != 5.0) medicalDefaultsOk = 0;
 		Print("[DM] fixture DmConfig medical defaults: expected=1 got=" + medicalDefaultsOk.ToString() + " " + DmFixture.Verdict(medicalDefaultsOk == 1));
@@ -379,9 +381,14 @@ class DmConfig
 		medicalProbe.ClampLoadedValues();
 		if (medicalProbe.GetRegenIntervalSeconds() != 3600.0) medicalClampOk = 0;
 		if (medicalProbe.GetRegenHealthPerTick() != 0.1) medicalClampOk = 0;
-		medicalProbe.m_Data.MedicalMode = "unknown";
+		medicalProbe.m_Data.MedicalMode = "bandages";
 		medicalProbe.ClampLoadedValues();
 		if (medicalProbe.IsMedicalRegenEnabled()) medicalClampOk = 0;
+		// Unknown values fall back to the default, which is now regen.
+		medicalProbe.m_Data.MedicalMode = "unknown";
+		medicalProbe.ClampLoadedValues();
+		if (!medicalProbe.IsMedicalRegenEnabled()) medicalClampOk = 0;
+		if (medicalProbe.m_Data.MedicalMode != "regen") medicalClampOk = 0;
 		Print("[DM] fixture DmConfig medical clamp: expected=1 got=" + medicalClampOk.ToString() + " " + DmFixture.Verdict(medicalClampOk == 1));
 
 		DmConfig probe = new DmConfig();

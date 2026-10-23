@@ -70,11 +70,15 @@ class DmArenaService
 		m_SetsByZone.Clear();
 		DmZonesConfig zones = DmZonesConfig.GetInstance();
 
+		string worldName = DmZonesConfig.CurrentWorldName();
 		int totalObjects = 0;
 		for (int zoneIdx = 0; zoneIdx < zones.GetZoneCount(); zoneIdx++)
 		{
 			DmZoneData zone = zones.GetZone(zoneIdx);
 			if (!zone || !zone.Enabled || zone.DzeFile == "") continue;
+			// Another map's arena: zones.json validation already left it
+			// out; its file need not even exist in this profile.
+			if (!DmZonesConfig.ZoneMatchesWorld(zone.Map, worldName)) continue;
 			string zoneName = zone.Name;
 			string dzeFile = zone.DzeFile;
 
@@ -97,6 +101,15 @@ class DmArenaService
 			if (save.EditorObjects.Count() == 0)
 			{
 				Print("[DM] arenas: zone '" + zoneName + "' " + dzeFile + " has no objects (binary .dze? re-save as JSON in the Editor) - zone disabled");
+				zone.Enabled = false;
+				continue;
+			}
+			// The Editor stamps the world it was saved on into MapName: an
+			// arena built on another map would spawn into the wrong terrain.
+			// Quiet skip, same rule as a zone's own Map field.
+			if (!DmZonesConfig.ZoneMatchesWorld(save.MapName, worldName))
+			{
+				Print("[DM] arenas: zone '" + zoneName + "' " + dzeFile + " was built on '" + save.MapName + "', server runs '" + worldName + "' - zone skipped");
 				zone.Enabled = false;
 				continue;
 			}
