@@ -3,6 +3,7 @@
     "Zones": [
         {
             "Name": "Demo Field",
+            "Map": "chernarusplus",
             "IconKey": "",
             "Enabled": 1,
             "CenterX": 4600.0,
@@ -22,6 +23,42 @@
                 { "X": 4450.0, "Y": 0.0, "Z": 10000.0, "Yaw": 0.0 },
                 { "X": 4600.0, "Y": 0.0, "Z": 9850.0, "Yaw": 90.0 }
             ]
+        },
+        {
+            "Name": "VMC",
+            "Map": "chernarusplus",
+            "IconKey": "",
+            "Enabled": 1,
+            "CenterX": 4520.0,
+            "CenterZ": 8295.0,
+            "Radius": 244.0,
+            "WarnMargin": 30.0,
+            "Enforcement": "countdown",
+            "OutOfZoneDmgPerSec": 5.0,
+            "OutOfZoneKillSeconds": 10.0,
+            "DzeFile": "vmc.dze",
+            "LobbyX": 4520.0,
+            "LobbyY": 0.0,
+            "LobbyZ": 8570.0,
+            "SpawnPoints": []
+        },
+        {
+            "Name": "Ma'bar Ardistan",
+            "Map": "nasdara",
+            "IconKey": "",
+            "Enabled": 1,
+            "CenterX": 3366.5,
+            "CenterZ": 4655.1,
+            "Radius": 81.0,
+            "WarnMargin": 15.0,
+            "Enforcement": "countdown",
+            "OutOfZoneDmgPerSec": 5.0,
+            "OutOfZoneKillSeconds": 10.0,
+            "DzeFile": "mabar_ardistan.dze",
+            "LobbyX": 3366.5,
+            "LobbyY": 0.0,
+            "LobbyZ": 4760.0,
+            "SpawnPoints": []
         }
     ]
 }

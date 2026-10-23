@@ -48,7 +48,11 @@ infected, animals, vehicles, and dynamic events OFF - see
 edits it asks for (globals.xml numbers and one cfggameplay.json flag).
 
 Any map works the same way - the mod is map-agnostic; your arenas live in
-config, not the mission.
+config, not the mission. For Nasdara (the Badlands map) the vanilla mission
+is `dayzOffline.nasdara`, so copy it to `dayzOffline.deathmatch.nasdara`,
+overlay the same two `db/` files, make the same two manual edits in that
+copy, and point `template` in `serverDZ.cfg` at it. Official maps ship
+with the server files; players need to own the map on their side.
 
 ## 4. Server config
 
@@ -73,8 +77,10 @@ Add `"-serverMod=@SentinelEnforcer"` if you run the Enforcer. Linux binary:
   connect - the natural place for a Discord invite), and `ChatHistoryOnOpen`
   (off by default: keeps the last chat lines visible while the chat box is
   open instead of letting them fade)
-- `zones.json` - arenas: boundary circle + spawn points (a demo arena on
-  Chernarus is written so the loop works out of the box)
+- `zones.json` - arenas: boundary circle + spawn points, each keyed by
+  `Map` (a demo arena on Chernarus and one on Nasdara are written so the
+  loop works out of the box on either; the server enables only the zones
+  for the world it runs)
 - `presets.json` - two vanilla-weapon loadouts to start from
 - `sentinel.json` - platform feed switches (only used with the Enforcer)
 
@@ -103,6 +109,10 @@ server cleanup remains active in all modes. Restart after changing the setting.
 Edit `zones.json` with arenas for your map (coordinates are world X/Z;
 `Y: 0` snaps to terrain; 2+ spawn points per zone; keep each arena under
 ~600 m across so every player stays inside everyone's network bubble).
+Give each zone a `Map` and you can keep every map's arenas in the one file:
+switching the server to another map (the `template` line in `serverDZ.cfg`)
+switches the arena rotation with it, and the other map's arenas are skipped
+at boot without a warning.
 Edit `presets.json` with your weapon sets - every classname is validated at
 boot against the mods you actually run. Restart between edits.
 

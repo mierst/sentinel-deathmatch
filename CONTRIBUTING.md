@@ -61,7 +61,7 @@ Medical-mode integration tests run against a local Windows dedicated server:
 ./tools/ci/test-medical.ps1 -ServerRoot '<DayZ dedicated server installation>'
 ```
 
-This builds the current mod and tests six isolated configurations with real
+This builds the current mod and tests seven isolated configurations with real
 health and bleeding APIs. Logs and machine-readable results stay under
 ignored `build/medical-tests/`; the command fails if a case does not pass.
 See `docs/medical-validation.md` for coverage and limits. CI runs the runner's
